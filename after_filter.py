@@ -12,7 +12,6 @@ from functions import plot_graph_on_img_straight, plot_graph_on_img_poly
 
 from functions_images import apply_img_mask
 
-from config import VIDEO_FILENAME
 from config import cropped_img_folder, filtered_img_folder, masked_img_folder, \
     threshed_img_folder, preproc_img_folder, landmarks_img_folder, \
     poly_graph_img_folder, overlay_img_folder
@@ -23,16 +22,6 @@ warnings.simplefilter('ignore', np.RankWarning)
 
 # apply mask
 apply_img_mask(filtered_img_folder, masked_img_folder)
-
-img_dir = os.path.join(os.getcwd(), VIDEO_FILENAME)
-
-img_dir_orig = os.path.join(os.getcwd(), cropped_img_folder)
-img_dir_filt = os.path.join(os.getcwd(), masked_img_folder)
-img_dir_thresh = os.path.join(os.getcwd(), threshed_img_folder)
-img_dir_preproc = os.path.join(os.getcwd(), preproc_img_folder)
-img_dir_lm = os.path.join(os.getcwd(), landmarks_img_folder)
-img_dir_poly = os.path.join(os.getcwd(), poly_graph_img_folder)
-img_dir_overlay = os.path.join(os.getcwd(), overlay_img_folder)
 
 # do: plot, save
 thr_plot = False
@@ -48,17 +37,17 @@ poly_save = True
 overlay_save = True
 
 # load filtered images
-filtered_imgs = glob.glob(img_dir_filt + '/*')
+filtered_imgs = glob.glob(masked_img_folder + '/*')
 
-for z, filepath_filt in enumerate(filtered_imgs):
+for filepath_filt in filtered_imgs:
     filename = os.path.basename(filepath_filt)
 
-    filepath_orig = os.path.join(img_dir_orig, filename)
-    filepath_thr = os.path.join(img_dir_thresh, filename)
-    filepath_pr = os.path.join(img_dir_preproc, filename)
-    filepath_lm = os.path.join(img_dir_lm, filename)
-    filepath_poly = os.path.join(img_dir_poly, filename)
-    filepath_overlay = os.path.join(img_dir_overlay, filename)
+    filepath_orig = os.path.join(cropped_img_folder, filename)
+    filepath_thr = os.path.join(threshed_img_folder, filename)
+    filepath_pr = os.path.join(preproc_img_folder, filename)
+    filepath_lm = os.path.join(landmarks_img_folder, filename)
+    filepath_poly = os.path.join(poly_graph_img_folder, filename)
+    filepath_overlay = os.path.join(overlay_img_folder, filename)
 
     original = cv2.imread(filepath_orig, cv2.IMREAD_COLOR)
     if original is None:

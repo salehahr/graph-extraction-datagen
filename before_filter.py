@@ -5,10 +5,10 @@ from functions_images import crop_imgs
 from video2img import video2img
 
 from config import make_folders
-from config import VIDEO_FILENAME_EXT, raw_img_folder, cropped_img_folder
+from config import VIDEO_FULL_FILEPATH_EXT, raw_img_folder, cropped_img_folder
 
 
 if __name__ == '__main__':
     make_folders()
-    video2img(VIDEO_FILENAME_EXT, raw_img_folder)
+    video2img(VIDEO_FULL_FILEPATH_EXT, raw_img_folder)
     crop_imgs(raw_img_folder, cropped_img_folder)

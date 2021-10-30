@@ -1,18 +1,19 @@
 import os
 from functions_files import make_folder
 
-VIDEO_FILENAME_EXT = 'data/GRK021_test.mp4'
-VIDEO_FILENAME = os.path.splitext(VIDEO_FILENAME_EXT)[0]
+VIDEO_FULL_FILEPATH_EXT = 'M:/ma/graph-training/data/GRK021_test.mp4'
+DATA_FILEPATH = os.path.splitext(VIDEO_FULL_FILEPATH_EXT)[0]
+assert(os.path.isfile(VIDEO_FULL_FILEPATH_EXT))
 
-raw_img_folder = f'{VIDEO_FILENAME}/raw'
-cropped_img_folder = f'{VIDEO_FILENAME}/cropped'
-filtered_img_folder = f'{VIDEO_FILENAME}/filtered'
-masked_img_folder = f'{VIDEO_FILENAME}/masked'
-threshed_img_folder = f'{VIDEO_FILENAME}/threshed'
-preproc_img_folder = f'{VIDEO_FILENAME}/skeleton'
-landmarks_img_folder = f'{VIDEO_FILENAME}/landmarks'
-poly_graph_img_folder = f'{VIDEO_FILENAME}/poly_graph'
-overlay_img_folder = f'{VIDEO_FILENAME}/overlay'
+raw_img_folder = f'{DATA_FILEPATH}/raw'
+cropped_img_folder = f'{DATA_FILEPATH}/cropped'
+filtered_img_folder = f'{DATA_FILEPATH}/filtered'
+masked_img_folder = f'{DATA_FILEPATH}/masked'
+threshed_img_folder = f'{DATA_FILEPATH}/threshed'
+preproc_img_folder = f'{DATA_FILEPATH}/skeleton'
+landmarks_img_folder = f'{DATA_FILEPATH}/landmarks'
+poly_graph_img_folder = f'{DATA_FILEPATH}/poly_graph'
+overlay_img_folder = f'{DATA_FILEPATH}/overlay'
 
 
 def make_folders():

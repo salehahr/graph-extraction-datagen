@@ -1,6 +1,10 @@
 clear all
 close all
 clc
+
+%% get video filepath
+extract_video_filepath;
+
 %%
 % Application() returns:
 %      output       A struct that contains the BCOSFIRE filters response
@@ -23,10 +27,11 @@ if ~exist('./COSFIRE/dilate')
 end
 
 %% Read Image
-VIDEO_NAME = 'GRK021_test';
 
-imageFolder = sprintf('../data/%s/cropped/*', VIDEO_NAME);
-ImageFolder_filtered_images = sprintf('../data/%s/filtered/', VIDEO_NAME);
+VIDEO_FILEPATH = VIDEO_FILEPATH_EXT(1:end-4);
+
+imageFolder = sprintf('%s/cropped/*', VIDEO_FILEPATH);
+ImageFolder_filtered_images = sprintf('%s/filtered/', VIDEO_FILEPATH);
 
 imds          = imageDatastore(imageFolder);
 path(path,'./sort_list/');
