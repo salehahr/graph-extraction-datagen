@@ -2,48 +2,83 @@ import cv2
 import networkx as nx
 import numpy as np
 import glob
-import time
+import os
 
-from functions import preprocess, node_extraction, edge_extraction, helpernodes_BasicGraph_for_polyfit, helpernodes_BasicGraph_for_structure
+from functions import thresholding, preprocess, node_extraction, edge_extraction, helpernodes_BasicGraph_for_polyfit, \
+    helpernodes_BasicGraph_for_structure
 from functions import polyfit_visualize, polyfit_training
 from functions import graph_extraction, get_position_vector, graph_straight, graph_poly
 from functions import plot_graph_on_img_straight, plot_graph_on_img_poly
+
+from functions_images import apply_img_mask
+
+from config import VIDEO_FILENAME
+from config import cropped_img_folder, filtered_img_folder, masked_img_folder, \
+    threshed_img_folder, preproc_img_folder, landmarks_img_folder, \
+    poly_graph_img_folder, overlay_img_folder
 
 import warnings
 
 warnings.simplefilter('ignore', np.RankWarning)
 
-#load filtered images
-video = 'video3'
-#video = 'video1'
-directory = 'S:/06_Studienarbeit/03_BuildGraph\img2graph\Data/' + video
-filtered_im_dir = directory + '/02_Filtered/*'
-#filtered_im_dir = directory + '/02_Filtered/frame13-57/*'
-filtered_imgs = glob.glob(filtered_im_dir)
-for z in range(len(filtered_imgs)):
-    #z = 10
-    key = filtered_imgs[z][-17:-12]
-    filtered_img = cv2.imread(filtered_imgs[z], 0)
+# apply mask
+apply_img_mask(filtered_img_folder, masked_img_folder)
 
-    pr_img_dir = directory + '/03_Preprocessed/'
-    pr_name = data_name = str(key).zfill(5) + 'preprocessed.png'
+img_dir = os.path.join(os.getcwd(), VIDEO_FILENAME)
+
+img_dir_orig = os.path.join(os.getcwd(), cropped_img_folder)
+img_dir_filt = os.path.join(os.getcwd(), masked_img_folder)
+img_dir_thresh = os.path.join(os.getcwd(), threshed_img_folder)
+img_dir_preproc = os.path.join(os.getcwd(), preproc_img_folder)
+img_dir_lm = os.path.join(os.getcwd(), landmarks_img_folder)
+img_dir_poly = os.path.join(os.getcwd(), poly_graph_img_folder)
+img_dir_overlay = os.path.join(os.getcwd(), overlay_img_folder)
+
+# do: plot, save
+thr_plot = False
+pr_plot = False
+lm_plot = False
+poly_plot = False
+overlay_plot = False
+
+thr_save = True
+pr_save = True
+lm_save = True
+poly_save = True
+overlay_save = True
+
+# load filtered images
+filtered_imgs = glob.glob(img_dir_filt + '/*')
+
+for z, filepath_filt in enumerate(filtered_imgs):
+    filename = os.path.basename(filepath_filt)
+
+    filepath_orig = os.path.join(img_dir_orig, filename)
+    filepath_thr = os.path.join(img_dir_thresh, filename)
+    filepath_pr = os.path.join(img_dir_preproc, filename)
+    filepath_lm = os.path.join(img_dir_lm, filename)
+    filepath_poly = os.path.join(img_dir_poly, filename)
+    filepath_overlay = os.path.join(img_dir_overlay, filename)
+
+    original = cv2.imread(filepath_orig, cv2.IMREAD_COLOR)
+    if original is None:
+        print(f'No original found.')
+        sys.exit(1)
+
+    filtered_img = cv2.imread(filepath_filt, 0)
+
+    # thresholding
     gausskernel = (5, 5)
+    thresholded = thresholding(filtered_img, gausskernel,
+                               thr_plot, thr_save, filepath_thr)
+
+    # skeletonise
     edgelength = 10
-    pr_plot = True
-    pr_save = False
+    preprocessed_image = preprocess(thresholded, original, edgelength,
+                                    pr_plot, pr_save, filepath_pr)
 
-    zeitanfang_p = time.time()
-    preprocessed_image = preprocess(filtered_img, gausskernel, edgelength, pr_plot, pr_save, pr_img_dir + pr_name)
-    preprocessed_image = np.uint8(preprocessed_image)
-    zeitende_p = time.time()
-    preprocessing_time = zeitende_p - zeitanfang_p
-
-    zeitanfang_graph = time.time()
+    # landmarks
     node_thick = 6
-    lm_plot = True
-    lm_save = False
-    lm_img_dir = directory + '/04_Landmarks/'
-    lm_name = data_name = str(key).zfill(5) + 'landmarks.png'
     bcnodes, bcnodescoor, endpoints, endpointscoor, allnodes, allnodescoor, marked_img = node_extraction(
             preprocessed_image, node_thick)
 
@@ -53,9 +88,9 @@ for z in range(len(filtered_imgs)):
             allnodescoor)
 
     helperedges_structure, ese_helperedges_structure, helpernodescoor_structure = helpernodes_BasicGraph_for_structure(
-            coordinates_global, esecoor,allnodescoor, marked_img,  lm_plot, lm_save, node_thick, lm_img_dir + lm_name)
+            coordinates_global, esecoor,allnodescoor, marked_img,  lm_plot, lm_save, node_thick, filepath_lm)
 
-
+    # polynomial
     visual_degree = 5
     point_density = 2
     cubic_thresh = 10 #deg3 > 10, otherwise only deg2 coefficients for training
@@ -73,58 +108,47 @@ for z in range(len(filtered_imgs)):
     label_selection = [edgelength_bool, deg3_bool, deg2_bool]
     graph = graph_extraction(helpernodescoor_structure, ese_helperedges_structure, deg3, deg2, edgelength, label_selection)
 
-    zeitende_graph = time.time()
-    Graph_time = zeitende_graph - zeitanfang_graph
-
     pos = nx.get_node_attributes(graph, 'pos')
-    original_name = str(key).zfill(5) + 'original.png'
-    original = cv2.imread(directory + '/01_Original/' + original_name, cv2.IMREAD_COLOR)
 
-    #plot Graph, only connections
-    g_s_dir = directory + '/05_Straight_Graph/'
-    g_s_name = str(key).zfill(5) + 'straight_graph.png'
-    fig1_plot = True
-    fig1_save = False
-    node_size = 150
-    #node_size = 60
-    edge_width = 4
-    #edge_width = 2
-    fig1 = graph_straight(graph, node_size, edge_width, fig1_plot, fig1_save, g_s_dir + g_s_name)
+    # #plot Graph, only connections
+    # g_s_dir = directory + '/05_Straight_Graph/'
+    # g_s_name = str(key).zfill(5) + 'straight_graph.png'
+    # fig1_plot = True
+    # fig1_save = False
+    # node_size = 150
+    # #node_size = 60
+    # edge_width = 4
+    # #edge_width = 2
+    # fig1 = graph_straight(graph, node_size, edge_width, fig1_plot, fig1_save, g_s_dir + g_s_name)
 
     # #plot Graph, polynom edges
-    g_p_dir = directory + '/06_Polynom_Graph/'
-    g_p_name = str(key).zfill(5) + 'polynom_graph.png'
-    fig2_plot = True
-    fig2_save = False
     node_thick = 10
     #node_thick = 6
     edge_thick = 2
-    fig2 = graph_poly(original, helpernodescoor, polyfit_coordinates, fig2_plot, fig2_save, node_thick, edge_thick, g_p_dir + g_p_name)
+    fig2 = graph_poly(original, helpernodescoor, polyfit_coordinates, poly_plot, poly_save, node_thick, edge_thick,
+                      filepath_poly)
 
-    #plot graph on image, only connections
-    g_s_img_dir = directory + '/07_Straight_Graph_Original/'
-    g_s_img_name = str(key).zfill(5) + 'straight_graph_original.png'
-    #node_size = 100
-    node_size = 60
-    node_color = 'y'
-    #edge_width = 4
-    edge_width = 2
-    edge_color = 'y'
-    fig3_plot = True
-    fig3_save = False
-    fig3 = plot_graph_on_img_straight(original, graph, node_size, node_color, edge_width, edge_color, fig3_plot, fig3_save,
-                                   g_s_img_dir + g_s_img_name)
+    # #plot graph on image, only connections
+    # g_s_img_dir = directory + '/07_Straight_Graph_Original/'
+    # g_s_img_name = str(key).zfill(5) + 'straight_graph_original.png'
+    # #node_size = 100
+    # node_size = 60
+    # node_color = 'y'
+    # #edge_width = 4
+    # edge_width = 2
+    # edge_color = 'y'
+    # fig3_plot = True
+    # fig3_save = False
+    # fig3 = plot_graph_on_img_straight(original, graph, node_size, node_color, edge_width, edge_color, fig3_plot, fig3_save,
+                                   # g_s_img_dir + g_s_img_name)
 
     #plot graph on image, polynom edges
-    g_p_img_dir = directory + '/08_Polynom_Graph_Original/'
-    g_p_img_name = str(key).zfill(5) + 'polynom_graph_original.png'
-    fig4_plot = True
-    fig4_save = False
     #node_thick = 6
     node_thick = 7
     edge_thick = 2
-    fig4= plot_graph_on_img_poly(original, helpernodescoor, polyfit_coordinates, fig4_plot, fig4_save, node_thick, edge_thick,
-                                  g_p_img_dir + g_p_img_name)
+    fig4 = plot_graph_on_img_poly(original, helpernodescoor, polyfit_coordinates,
+                                  overlay_plot, overlay_save,
+                                  node_thick, edge_thick, filepath_overlay)
 
 
 

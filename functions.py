@@ -68,17 +68,23 @@ def distance(a: list, b: list):
     return d
 
 
-def preprocess(image: np.ndarray, kernel: tuple, edgelength: int, plot: bool, save: bool, directory: str):
-    img = image.copy()
+def thresholding(filt_img, blur_kernel: tuple,
+                 do_plot, do_save, filepath=''):
+    blurred_im = cv2.GaussianBlur(filt_img, blur_kernel, 0)
 
-    #Gaussfilter
-    blur = cv2.GaussianBlur(img, kernel,0)
+    _, thresholded = cv2.threshold(blurred_im, 0, 255,
+                                   cv2.THRESH_BINARY + cv2.THRESH_OTSU)
 
-    #Otsu Threshold
-    ret,thresholded = cv2.threshold(blur,0,255,cv2.THRESH_BINARY+cv2.THRESH_OTSU)
+    if do_save:
+        cv2.imwrite(filepath, thresholded)
 
-    img = thresholded.copy()
-    img = img/255
+    return thresholded
+
+
+def preprocess(thr_image: np.ndarray, orig_img,
+               edgelength: int, plot: bool, save: bool, directory: str):
+    # skeletonize
+    img = thr_image.copy() / 255
     img = img.astype(int)
     skeleton = skeletonize(img)
     skeleton = skeleton.astype(int)*255
@@ -116,14 +122,25 @@ def preprocess(image: np.ndarray, kernel: tuple, edgelength: int, plot: bool, sa
     skeleton_filtered = np.uint8(np.multiply(mask, skeleton_cleaned))
 
     if plot:
-        plt.imshow(skeleton_filtered, 'gray')
-        plt.xticks([]), plt.yticks([])
-        plt.title('preprocessed')
+        fig, axes = plt.subplots(1, 3)
+        for a in axes:
+            a.set_xticks([])
+            a.set_yticks([])
+
+        axes[0].imshow(orig_img)
+        axes[0].set_title('original')
+
+        axes[1].imshow(thr_image, 'gray')
+        axes[1].set_title('thresholded')
+
+        axes[2].imshow(skeleton_filtered, 'gray')
+        axes[2].set_title('skeletonised')
+
         plt.show()
     if save:
         cv2.imwrite(directory, skeleton_filtered)
 
-    return skeleton_filtered
+    return np.uint8(skeleton_filtered)
 
 
 def node_extraction(cleaned_skeleton: np.ndarray, node_thick: int):
