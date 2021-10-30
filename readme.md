@@ -2,6 +2,11 @@
 Generation of training data for the graph extraction of endoscopic images.
 
 ## Workflow
+1. In `config.py`, update `VIDEO_FULL_FILEPATH_EXT` with the full filepath of the video.
+2. Run `before_filter.py`
+3. In MATLAB, run `filtering/Bladder_vessels.m`
+4. Run `after_filter.py`  
+  
 Functions | Description
 --- | ---
 ``` before_filter.py``` | Extracts and crops video frames
