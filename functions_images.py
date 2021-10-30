@@ -52,3 +52,16 @@ def apply_img_mask(filtered_img_folder: str, masked_img_folder: str):
 
         new_fp = os.path.join(masked_img_dir, os.path.basename(fp))
         cv2.imwrite(new_fp, masked)
+
+
+def thresholding(filtered_img: np.ndarray, blur_kernel: tuple,
+                 do_save: bool, filepath: str = '') \
+                -> np.ndarray:
+    blurred_img = cv2.GaussianBlur(filtered_img, blur_kernel, 0)
+    _, thresholded_img = cv2.threshold(blurred_img, 0, 255,
+                                       cv2.THRESH_BINARY + cv2.THRESH_OTSU)
+
+    if do_save:
+        cv2.imwrite(filepath, thresholded_img)
+
+    return thresholded_img
