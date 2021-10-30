@@ -2,8 +2,12 @@ import os
 import cv2
 
 
-def video2img(vid_filename: str, img_folder: str):
-    """ Saves video frames as .png images. """
+def video2img(vid_filename: str, img_folder: str, frequency: float = 25):
+    """
+    Saves video frames as .png images.
+
+    :param frequency: number of frames per second
+    """
 
     cap = cv2.VideoCapture(vid_filename)
 
@@ -19,7 +23,6 @@ def video2img(vid_filename: str, img_folder: str):
 
     count = 0
     sec = 0
-    frequency = 25  # frames per second
     frames_exist = True
 
     while frames_exist:
@@ -35,4 +38,4 @@ def video2img(vid_filename: str, img_folder: str):
         count = count + 1
         sec = sec + (1 / frequency)
 
-    print(f'{count} images are extacted into {img_folder}.')
+    print(f'{count} images were extracted into {img_folder}.')
