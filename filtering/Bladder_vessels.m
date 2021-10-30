@@ -23,31 +23,28 @@ if ~exist('./COSFIRE/dilate')
 end
 
 %% Read Image
-imageFolder = 'S:\06_Studienarbeit\02_BuildGraph\img2graph\Data\video3\01_Original\*';
-ImageFolder_filtered_images = 'S:\06_Studienarbeit\03_BuildGraph\img2graph\Data\video3\02_Filtered';
+VIDEO_NAME = 'GRK021_test';
+
+imageFolder = sprintf('../data/%s/cropped/*', VIDEO_NAME);
+ImageFolder_filtered_images = sprintf('../data/%s/filtered/', VIDEO_NAME);
+
 imds          = imageDatastore(imageFolder);
 path(path,'./sort_list/');
 imds.Files =  natsortfiles(imds.Files);
 plotImage = false; 
 
-% sigma test
-%sigma = 0.5;
-%for x=0.1:0.1:1
-    %sigma = x;
-    %currFrameIdx = 2;
-
 %% Symmetric filter params
 symmfilter = struct();
-symmfilter.sigma     = 7;
-symmfilter.len       = 5;
+symmfilter.sigma     = 10;
+symmfilter.len       = 10;
 symmfilter.sigma0    = 1;
 symmfilter.alpha     = 0;
 
 %% Asymmetric filter params
 asymmfilter = struct();
-asymmfilter.sigma     = 2;5;
+asymmfilter.sigma     = 10;
 asymmfilter.len       = 20;
-asymmfilter.sigma0    = 1;
+asymmfilter.sigma0    = 2;
 asymmfilter.alpha     = 0;
 
 preprocess_thresh = 0.1;
