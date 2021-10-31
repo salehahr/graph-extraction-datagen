@@ -30,6 +30,31 @@ class TestVideoLocal(unittest.TestCase):
         self.assertGreaterEqual(len(self.list_img_files), 1)
 
 
+class TestTrimmedVideo(unittest.TestCase):
+    @classmethod
+    def setUpClass(cls) -> None:
+        cls.video_filename = "trimmed_0000_02000__0000_03000.mp4"
+        cls.config = Config(cls.video_filename)
+        cls.raw_img_folder = cls.config.raw_img_folder
+
+    @property
+    def list_img_files(self):
+        return glob.glob(os.path.join(self.raw_img_folder, '*.png'))
+
+    def test_is_trimmed(self):
+        self.assertTrue(self.config.is_trimmed)
+
+    def test_video2img(self):
+        self.assertTrue(os.path.isfile(self.config.filepath))
+        make_folders(self.config)
+        delete_files(self.list_img_files)
+        self.assertEqual(len(self.list_img_files), 0)
+
+        video2img(self.config, frequency=2)
+
+        self.assertGreaterEqual(len(self.list_img_files), 1)
+
+
 # class TestVideoNetwork(TestVideoLocal):
 #     @classmethod
 #     def setUpClass(cls) -> None:
