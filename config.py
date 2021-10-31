@@ -14,6 +14,9 @@ crop_left, crop_right = 416, 1532
 crop_height = crop_bottom - crop_top
 crop_width = crop_right - crop_left
 
+# Time tag pattern
+pattern = '(.*)_(\d{4}_\d{5}__\d{4}_\d{5})\.'
+
 
 @dataclass
 class Config:
@@ -32,20 +35,29 @@ class Config:
         self._filepath = new_fp
         self.generate_folders()
 
-    @property
-    def data_filepath(self):
-        return os.path.splitext(self.filepath)[0]
+    def get_basename(self):
+        if self.is_trimmed:
+            match = re.search(pattern, self.filepath)
+            name_without_timetags = match.group(1)
+            timetags = match.group(2)
+
+            return os.path.join(name_without_timetags, timetags)
+
+        else:
+            return os.path.splitext(self.filepath)[0]
 
     def generate_folders(self):
-        self.raw_img_folder = f'{self.data_filepath}/raw'
-        self.cropped_img_folder = f'{self.data_filepath}/cropped'
-        self.filtered_img_folder = f'{self.data_filepath}/filtered'
-        self.masked_img_folder = f'{self.data_filepath}/masked'
-        self.threshed_img_folder = f'{self.data_filepath}/threshed'
-        self.preproc_img_folder = f'{self.data_filepath}/skeleton'
-        self.landmarks_img_folder = f'{self.data_filepath}/landmarks'
-        self.poly_graph_img_folder = f'{self.data_filepath}/poly_graph'
-        self.overlay_img_folder = f'{self.data_filepath}/overlay'
+        basename = self.get_basename()
+
+        self.raw_img_folder = f'{basename}/raw'
+        self.cropped_img_folder = f'{basename}/cropped'
+        self.filtered_img_folder = f'{basename}/filtered'
+        self.masked_img_folder = f'{basename}/masked'
+        self.threshed_img_folder = f'{basename}/threshed'
+        self.preproc_img_folder = f'{basename}/skeleton'
+        self.landmarks_img_folder = f'{basename}/landmarks'
+        self.poly_graph_img_folder = f'{basename}/poly_graph'
+        self.overlay_img_folder = f'{basename}/overlay'
 
         self.list_of_folders = [
             self.raw_img_folder,
@@ -61,5 +73,5 @@ class Config:
 
     @property
     def is_trimmed(self):
-        match = re.search('(\d){4}_(\d){5}__(\d){4}_(\d){5}\.', self.filepath)
+        match = re.search(pattern, self.filepath)
         return True if match is not None else False
