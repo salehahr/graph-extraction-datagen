@@ -1,9 +1,12 @@
 import os
 import re
-from dataclasses import dataclass
+from dataclasses import dataclass, field
+from typing import List
 
 # Video
 VIDEO_FULL_FILEPATH_EXT = 'data/GRK021_test.mp4'
+trim_times_in_s = None
+# trim_times_in_s = [[0, 1], [2, 3]]
 
 # Image Dimensions
 # vid_height = int(vidcap.get(cv2.CAP_PROP_FRAME_HEIGHT))
@@ -21,6 +24,7 @@ pattern = '(.*)_(\d{4}_\d{5}__\d{4}_\d{5})\.'
 @dataclass
 class Config:
     _filepath: str = VIDEO_FULL_FILEPATH_EXT
+    trim_times: List = field(default_factory=lambda: trim_times_in_s)
 
     def __post_init__(self):
         self.generate_folders()

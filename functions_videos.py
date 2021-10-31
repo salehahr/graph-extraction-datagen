@@ -55,7 +55,7 @@ def video2img(config, frequency: float = 25) -> None:
     print(f'{count} images were extracted into {config.raw_img_folder}.')
 
 
-def trim_video(orig: str, start: float, end: float, target: str = None) -> None:
+def trim_video_section(orig: str, start: float, end: float, target: str = None) -> None:
     """
     Trims video.
     :param orig: original video filepath
@@ -78,3 +78,14 @@ def trim_video(orig: str, start: float, end: float, target: str = None) -> None:
     # ffmpeg_extract_subclip(orig_filename,
     #                        start_time_in_s, end_time_in_s,
     #                        targetname=target_filename)
+
+
+def trim_video(config, targets: list = None):
+    if config.trim_times is None:
+        return
+
+    assert (len(config.trim_times) == len(targets))
+
+    for i, interval in enumerate(config.trim_times):
+        start, end = interval
+        trim_video_section(config.filepath, start, end, target=targets[i])

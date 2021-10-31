@@ -3,7 +3,7 @@ import os
 import unittest
 
 from functions_files import make_folders, delete_files
-from functions_videos import video2img, trim_video
+from functions_videos import video2img, trim_video, trim_video_section
 from functions_images import crop_imgs
 
 from config import Config
@@ -66,15 +66,42 @@ class TestTrimVideo(unittest.TestCase):
     @classmethod
     def setUpClass(cls) -> None:
         cls.orig_filename = "../data/GRK021_test.mp4"
+        trim_times = [[2, 3]]
+
+        cls.config = Config(cls.orig_filename, trim_times)
+
         cls.target_filename = "trimmed_0000_02000__0000_03000.mp4"
 
     def test_trim_video(self):
         self.assertTrue(os.path.isfile(self.orig_filename))
         os.remove(self.target_filename)
-        self.assertFalse(os.path.isfile(self.target_filename))
 
-        start_time_in_s = 2
-        end_time_in_s = 3
-        trim_video(self.orig_filename, start_time_in_s, end_time_in_s, self.target_filename)
+        trim_video(self.config, [self.target_filename])
 
         self.assertTrue(os.path.isfile(self.target_filename))
+
+class TestTrimVideoSections(unittest.TestCase):
+    @classmethod
+    def setUpClass(cls) -> None:
+        cls.orig_filename = "../data/GRK021_test.mp4"
+        trim_times = [[2, 3], [4, 5]]
+
+        cls.config = Config(cls.orig_filename, trim_times)
+
+        cls.target_filename_1 = "trimmed_0000_02000__0000_03000.mp4"
+        cls.target_filename_2 = "trimmed_0000_04000__0000_05000.mp4"
+        cls.target_filenames = [cls.target_filename_1, cls.target_filename_2]
+
+    def test_trim_video(self):
+        self.assertTrue(os.path.isfile(self.orig_filename))
+
+        for fn in self.target_filenames:
+            if os.path.isfile(fn):
+                os.remove(fn)
+
+        trim_video(self.config, self.target_filenames)
+
+        for fn in self.target_filenames:
+            self.assertTrue(os.path.isfile(fn))
+
+        os.remove(self.target_filename_2)
