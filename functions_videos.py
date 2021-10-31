@@ -53,3 +53,28 @@ def video2img(vid_filename: str, img_folder: str, frequency: float = 25) -> None
         seconds_total += (1 / frequency)
 
     print(f'{count} images were extracted into {img_folder}.')
+
+
+def trim_video(orig: str, start: float, end: float, target: str = None) -> None:
+    """
+    Trims video.
+    :param orig: original video filepath
+    :param start: start trim in s
+    :param end: end trim in s
+    :param target: target video filepath
+    :return:
+    """
+    start_tag = generate_time_tag(start)
+    end_tag = generate_time_tag(end)
+
+    temp_name, ext = os.path.splitext(orig)
+    target = temp_name + '_' + start_tag + '__' + end_tag + ext \
+        if target is None else target
+
+    video = VideoFileClip(orig).subclip(start, end)
+    video.write_videofile(target)
+
+    # # produces green artifacts
+    # ffmpeg_extract_subclip(orig_filename,
+    #                        start_time_in_s, end_time_in_s,
+    #                        targetname=target_filename)
