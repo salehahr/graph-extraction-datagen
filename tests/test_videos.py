@@ -31,12 +31,12 @@ class TestVideoLocal(unittest.TestCase):
         self.assertGreaterEqual(len(self.list_img_files), 1)
 
 
-class TestVideoNetwork(TestVideoLocal):
-    @classmethod
-    def setUpClass(cls) -> None:
-        cls.raw_img_folder = cn.raw_img_folder
-        cls.video_filename = cn.VIDEO_FULL_FILEPATH_EXT
-        cls.list_of_folders = cn.list_of_folders
+# class TestVideoNetwork(TestVideoLocal):
+#     @classmethod
+#     def setUpClass(cls) -> None:
+#         cls.raw_img_folder = cn.raw_img_folder
+#         cls.video_filename = cn.VIDEO_FULL_FILEPATH_EXT
+#         cls.list_of_folders = cn.list_of_folders
 
 
 class TestTrimVideo(unittest.TestCase):
