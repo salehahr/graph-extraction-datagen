@@ -12,16 +12,16 @@ from functions import plot_graph_on_img_straight, plot_graph_on_img_poly
 
 from functions_images import apply_img_mask
 
-from config import cropped_img_folder, filtered_img_folder, masked_img_folder, \
-    threshed_img_folder, preproc_img_folder, landmarks_img_folder, \
-    poly_graph_img_folder, overlay_img_folder
+from config import Config
 
 import warnings
 
 warnings.simplefilter('ignore', np.RankWarning)
 
+config = Config()
+
 # apply mask
-apply_img_mask(filtered_img_folder, masked_img_folder)
+apply_img_mask(config.filtered_img_folder, config.masked_img_folder)
 
 # do: plot, save
 thr_plot = False
@@ -37,17 +37,17 @@ poly_save = True
 overlay_save = True
 
 # load filtered images
-filtered_imgs = glob.glob(masked_img_folder + '/*')
+filtered_imgs = glob.glob(config.masked_img_folder + '/*')
 
 for filepath_filt in filtered_imgs:
     filename = os.path.basename(filepath_filt)
 
-    filepath_orig = os.path.join(cropped_img_folder, filename)
-    filepath_thr = os.path.join(threshed_img_folder, filename)
-    filepath_pr = os.path.join(preproc_img_folder, filename)
-    filepath_lm = os.path.join(landmarks_img_folder, filename)
-    filepath_poly = os.path.join(poly_graph_img_folder, filename)
-    filepath_overlay = os.path.join(overlay_img_folder, filename)
+    filepath_orig = os.path.join(config.cropped_img_folder, filename)
+    filepath_thr = os.path.join(config.threshed_img_folder, filename)
+    filepath_pr = os.path.join(config.preproc_img_folder, filename)
+    filepath_lm = os.path.join(config.landmarks_img_folder, filename)
+    filepath_poly = os.path.join(config.poly_graph_img_folder, filename)
+    filepath_overlay = os.path.join(config.overlay_img_folder, filename)
 
     original = cv2.imread(filepath_orig, cv2.IMREAD_COLOR)
     if original is None:

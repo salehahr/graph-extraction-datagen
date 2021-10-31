@@ -4,28 +4,29 @@ import unittest
 
 from functions_files import make_folders, delete_files
 from functions_videos import video2img, trim_video
-
-from tests import config as cl
-from tests import config_network as cn
+from config import Config
 
 
 class TestVideoLocal(unittest.TestCase):
     @classmethod
     def setUpClass(cls) -> None:
-        cls.raw_img_folder = cl.raw_img_folder
-        cls.video_filename = cl.VIDEO_FULL_FILEPATH_EXT
-        cls.list_of_folders = cl.list_of_folders
+        cls.config = Config('short_video.mp4')
+        cls.raw_img_folder = cls.config.raw_img_folder
+        cls.video_filename = cls.config.filepath
+        cls.list_of_folders = cls.config.list_of_folders
 
     @property
     def list_img_files(self):
         return glob.glob(os.path.join(self.raw_img_folder, '*.png'))
+
+    def test_is_not_trimmed(self):
+        self.assertFalse(self.config.is_trimmed)
 
     def test_video2img(self):
         make_folders(self.list_of_folders)
         delete_files(self.list_img_files)
         self.assertEqual(len(self.list_img_files), 0)
 
-        assert('short_video' in self.video_filename)
         video2img(self.video_filename, self.raw_img_folder, frequency=2)
 
         self.assertGreaterEqual(len(self.list_img_files), 1)
@@ -34,9 +35,10 @@ class TestVideoLocal(unittest.TestCase):
 # class TestVideoNetwork(TestVideoLocal):
 #     @classmethod
 #     def setUpClass(cls) -> None:
-#         cls.raw_img_folder = cn.raw_img_folder
-#         cls.video_filename = cn.VIDEO_FULL_FILEPATH_EXT
-#         cls.list_of_folders = cn.list_of_folders
+#         cls.config = Config('M:/ma/graph-training/data/short_video.mp4')
+#         cls.raw_img_folder = cls.config.raw_img_folder
+#         cls.video_filename = cls.config.filepath
+#         cls.list_of_folders = cls.config.list_of_folders
 
 
 class TestTrimVideo(unittest.TestCase):
