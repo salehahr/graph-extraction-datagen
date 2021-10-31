@@ -10,8 +10,8 @@ def make_folder(folder_name: str) -> None:
         pass
 
 
-def make_folders(list_of_folders: list):
-    for f in list_of_folders:
+def make_folders(config):
+    for f in config.list_of_folders:
         make_folder(f)
 
 

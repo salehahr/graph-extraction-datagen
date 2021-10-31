@@ -12,8 +12,6 @@ class TestVideoLocal(unittest.TestCase):
     def setUpClass(cls) -> None:
         cls.config = Config('short_video.mp4')
         cls.raw_img_folder = cls.config.raw_img_folder
-        cls.video_filename = cls.config.filepath
-        cls.list_of_folders = cls.config.list_of_folders
 
     @property
     def list_img_files(self):
@@ -23,11 +21,11 @@ class TestVideoLocal(unittest.TestCase):
         self.assertFalse(self.config.is_trimmed)
 
     def test_video2img(self):
-        make_folders(self.list_of_folders)
+        make_folders(self.config)
         delete_files(self.list_img_files)
         self.assertEqual(len(self.list_img_files), 0)
 
-        video2img(self.video_filename, self.raw_img_folder, frequency=2)
+        video2img(self.config, frequency=2)
 
         self.assertGreaterEqual(len(self.list_img_files), 1)
 

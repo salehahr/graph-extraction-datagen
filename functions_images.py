@@ -11,12 +11,8 @@ def is_cropped(img: np.ndarray):
     return (h == crop_height) and (w == crop_width)
 
 
-def crop_imgs(raw_img_folder: str, cropped_img_folder: str):
-    raw_img_dir = os.path.join(os.getcwd(), raw_img_folder)
-    cropped_img_dir = os.path.join(os.getcwd(), cropped_img_folder)
-
-    filepaths = glob.glob(raw_img_dir + '/*')
-
+def crop_imgs(config):
+    filepaths = glob.glob(config.raw_img_folder + '/*')
     for fp in filepaths:
         img = cv2.imread(fp, cv2.IMREAD_COLOR)
 
@@ -29,7 +25,7 @@ def crop_imgs(raw_img_folder: str, cropped_img_folder: str):
         # cv2.imshow('title', img_cropped)
         # cv2.waitKey()
 
-        new_fp = os.path.join(cropped_img_dir, os.path.basename(fp))
+        new_fp = os.path.join(config.cropped_img_folder, os.path.basename(fp))
         cv2.imwrite(new_fp, img_cropped)
 
 

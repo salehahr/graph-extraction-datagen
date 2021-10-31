@@ -10,6 +10,6 @@ from config import Config
 
 if __name__ == '__main__':
     config = Config()
-    make_folders(config.list_of_folders)
-    video2img(config.filepath, config.raw_img_folder)
-    crop_imgs(config.raw_img_folder, config.cropped_img_folder)
+    make_folders(config)
+    video2img(config)
+    crop_imgs(config)

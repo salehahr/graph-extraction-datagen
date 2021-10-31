@@ -15,14 +15,14 @@ def generate_time_tag(time_in_s: float) -> str:
     return str(int(minute)).zfill(4) + '_' + str(millisecs).zfill(5)
 
 
-def video2img(vid_filename: str, img_folder: str, frequency: float = 25) -> None:
+def video2img(config, frequency: float = 25) -> None:
     """
     Saves video frames as .png images.
 
     :param frequency: number of frames per second
     """
 
-    cap = cv2.VideoCapture(vid_filename)
+    cap = cv2.VideoCapture(config.filepath)
 
     def get_frame(seconds: float):
         cap.set(cv2.CAP_PROP_POS_MSEC, seconds * 1000)
@@ -44,7 +44,7 @@ def video2img(vid_filename: str, img_folder: str, frequency: float = 25) -> None
 
         if frames_exist:
             filename = generate_time_tag(seconds_total)
-            cv2.imwrite(os.path.join(img_folder, f'{filename}.png'), img)
+            cv2.imwrite(os.path.join(config.raw_img_folder, f'{filename}.png'), img)
 
         else:
             break
@@ -52,7 +52,7 @@ def video2img(vid_filename: str, img_folder: str, frequency: float = 25) -> None
         count = count + 1
         seconds_total += (1 / frequency)
 
-    print(f'{count} images were extracted into {img_folder}.')
+    print(f'{count} images were extracted into {config.raw_img_folder}.')
 
 
 def trim_video(orig: str, start: float, end: float, target: str = None) -> None:
