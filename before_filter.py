@@ -2,7 +2,7 @@
 # * Crops the video stills
 
 from functions_images import crop_imgs
-from video2img import video2img
+from functions_videos import video2img
 
 from config import make_folders
 from config import VIDEO_FULL_FILEPATH_EXT, raw_img_folder, cropped_img_folder
