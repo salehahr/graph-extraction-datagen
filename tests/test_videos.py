@@ -2,9 +2,9 @@ import glob
 import os
 import unittest
 
-from functions_files import make_folders, delete_files
-from functions_videos import video2img, trim_video, trim_video_section
-from functions_images import crop_imgs
+from functions.files import make_folders, delete_files
+from functions.videos import video2img, trim_video
+from functions.images import crop_imgs
 
 from config import Config
 
@@ -79,6 +79,7 @@ class TestTrimVideo(unittest.TestCase):
         trim_video(self.config, [self.target_filename])
 
         self.assertTrue(os.path.isfile(self.target_filename))
+
 
 class TestTrimVideoSections(unittest.TestCase):
     @classmethod

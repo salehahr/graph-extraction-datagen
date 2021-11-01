@@ -6,6 +6,12 @@ import numpy as np
 from config import *
 
 
+if 'tests' in os.getcwd():
+    mask_path = '../data/mask.png'
+else:
+    mask_path = 'data/mask.png'
+
+
 def is_cropped(img: np.ndarray):
     h, w, _ = img.shape
     return (h == crop_height) and (w == crop_width)
@@ -30,7 +36,6 @@ def crop_imgs(config):
 
 
 def apply_img_mask(filtered_img_folder: str, masked_img_folder: str):
-    mask_path = os.path.join(os.getcwd(), 'mask.png')
     mask = cv2.imread(mask_path, cv2.IMREAD_GRAYSCALE)
     mask[mask > 0] = 1  # convert non zero entries to 1
 

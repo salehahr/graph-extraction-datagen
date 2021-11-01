@@ -2,7 +2,7 @@ import os
 import unittest
 
 from config import Config
-from functions_files import remove_data_folders, make_folders
+from functions.files import remove_data_folders, make_folders
 
 
 class TestFileFunctionsLocal(unittest.TestCase):

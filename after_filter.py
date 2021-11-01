@@ -3,14 +3,15 @@ import networkx as nx
 import numpy as np
 import glob
 import os
+import sys
 
-from functions import thresholding, preprocess, node_extraction, edge_extraction, helpernodes_BasicGraph_for_polyfit, \
+from functions.im2graph import thresholding, preprocess, node_extraction, edge_extraction, helpernodes_BasicGraph_for_polyfit, \
     helpernodes_BasicGraph_for_structure
-from functions import polyfit_visualize, polyfit_training
-from functions import graph_extraction, get_position_vector, graph_straight, graph_poly
-from functions import plot_graph_on_img_straight, plot_graph_on_img_poly
+from functions.im2graph import polyfit_visualize, polyfit_training
+from functions.im2graph import graph_extraction, graph_poly
+from functions.im2graph import plot_graph_on_img_poly
 
-from functions_images import apply_img_mask
+from functions.images import apply_img_mask
 
 from config import Config
 
