@@ -18,12 +18,19 @@ class TestVideo(unittest.TestCase):
 
     @property
     def list_img_files(self):
-        return glob.glob(os.path.join(self.raw_img_folder, '*.png'))
+        if not self.config.has_trimmed:
+            return glob.glob(os.path.join(self.raw_img_folder, '*.png'))
+        else:
+            list_imgs = []
+            for section in self.config.sections:
+                list_imgs += glob.glob(os.path.join(section.raw_img_folder, '*.png'))
+            return list_imgs
 
     def before_filter(self):
-        make_folders(self.config)
-        video2img(self.config, frequency=2)
-        crop_imgs(self.config)
+        for section in self.config.sections:
+            make_folders(section)
+            video2img(section, frequency=2)
+            crop_imgs(section)
 
     def test_video2img(self):
         if self.config:
@@ -54,6 +61,24 @@ class TestTrimmedVideo(TestVideo):
 
     def test_is_trimmed(self):
         self.assertTrue(self.config.is_trimmed)
+
+
+class TestMultiSectionVideo(TestVideo):
+    @classmethod
+    def setUpClass(cls) -> None:
+        filename = "trimmed.mp4"
+        trim_times = [[2, 3], [4, 5]]
+
+        cls.config = Config(filename, trim_times)
+
+    def test_has_sections(self):
+        self.assertIsNotNone(self.config.sections)
+        self.assertTrue(self.config.has_trimmed)
+        self.assertFalse(self.config.is_trimmed)
+
+    def test_make_folders(self):
+        for section in self.config.sections:
+            make_folders(section)
 
 
 # class TestVideoNetwork(TestVideo):
@@ -105,5 +130,3 @@ class TestTrimVideoSections(unittest.TestCase):
 
         for fn in self.target_filenames:
             self.assertTrue(os.path.isfile(fn))
-
-        os.remove(self.target_filename_2)
