@@ -2,7 +2,7 @@ import glob
 import os
 import re
 
-from functions.videos import generate_time_tag_from_interval
+from functions.videos import trim_video, generate_time_tag_from_interval
 
 # Video
 VIDEO_FULL_FILEPATH_EXT = 'data/GRK021_test.mp4'
@@ -38,18 +38,20 @@ pattern = '(.*)_(\d{4}_\d{5}__\d{4}_\d{5})\.'
 class Config:
     def __init__(self,
                  filepath: str = VIDEO_FULL_FILEPATH_EXT,
-                 trim_times: list = trim_times_in_s):
+                 trim_times: list = trim_times_in_s,
+                 do_trim: bool = True):
 
         self._filepath = filepath
         self.ext = os.path.splitext(filepath)[1]
         self.trim_times = trim_times
         self.sections = [self]
 
+        # trim video if trim_times given, else
         if self.has_trimmed:
-            self.sections = []
-            for interval in self.trim_times:
-                section_filepath = self.basename + '_'+ generate_time_tag_from_interval(interval) + self.ext
-                self.sections.append(Config(section_filepath, trim_times=None))
+            section_filepaths = trim_video(self) if do_trim \
+                else [self.basename + '_' + generate_time_tag_from_interval(i) \
+                      + self.ext for i in trim_times]
+            self.sections = [Config(fp, trim_times=[]) for fp in section_filepaths]
         else:
             self._generate_folders()
 
@@ -110,7 +112,7 @@ class Config:
 
     @property
     def has_trimmed(self):
-        return True if self.trim_times is not None else False
+        return True if self.trim_times else False
 
     @property
     def raw_image_files(self):

@@ -36,10 +36,12 @@ class TestVideo(unittest.TestCase):
             self.assertGreaterEqual(len(self.config.raw_image_files), 1)
 
     def test_after_filter(self):
-        delete_files(self.config.masked_image_files)
-        self.assertEqual(len(self.config.masked_image_files), 0)
-        self.after_filter()
-        self.assertGreaterEqual(len(self.config.masked_image_files), 1)
+        if self.config:
+            delete_files(self.config.masked_image_files)
+            self.assertGreaterEqual(len(self.config.filtered_image_files), 1)
+            self.assertEqual(len(self.config.masked_image_files), 0)
+            self.after_filter()
+            self.assertGreaterEqual(len(self.config.masked_image_files), 1)
 
 
 
@@ -99,13 +101,28 @@ class TestTrimVideo(unittest.TestCase):
 
         cls.target_filename = "trimmed_0000_02000__0000_03000.mp4"
 
-    def test_trim_video(self):
+    def test_trim_video_with_target(self):
         self.assertTrue(os.path.isfile(self.orig_filename))
-        os.remove(self.target_filename)
+        try:
+            os.remove(self.target_filename)
+        except FileNotFoundError:
+            pass
 
         trim_video(self.config, [self.target_filename])
 
         self.assertTrue(os.path.isfile(self.target_filename))
+
+    def test_trim_video_without_target(self):
+        self.assertTrue(os.path.isfile(self.orig_filename))
+        trimmed_fp = '../data/GRK021_test_0000_02000__0000_03000.mp4'
+        try:
+            os.remove(trimmed_fp)
+        except FileNotFoundError:
+            pass
+
+        trim_video(self.config)
+
+        self.assertTrue(os.path.isfile(trimmed_fp))
 
 
 class TestTrimVideoSections(unittest.TestCase):
@@ -114,13 +131,13 @@ class TestTrimVideoSections(unittest.TestCase):
         cls.orig_filename = "../data/GRK021_test.mp4"
         trim_times = [[2, 3], [4, 5]]
 
-        cls.config = Config(cls.orig_filename, trim_times)
+        cls.config = Config(cls.orig_filename, trim_times, do_trim=False)
 
         cls.target_filename_1 = "trimmed_0000_02000__0000_03000.mp4"
         cls.target_filename_2 = "trimmed_0000_04000__0000_05000.mp4"
         cls.target_filenames = [cls.target_filename_1, cls.target_filename_2]
 
-    def test_trim_video(self):
+    def test_trim_video_with_target(self):
         self.assertTrue(os.path.isfile(self.orig_filename))
 
         for fn in self.target_filenames:
@@ -131,3 +148,12 @@ class TestTrimVideoSections(unittest.TestCase):
 
         for fn in self.target_filenames:
             self.assertTrue(os.path.isfile(fn))
+
+    def test_trim_video_without_target(self):
+        self.assertTrue(os.path.isfile(self.orig_filename))
+
+        sections = trim_video(self.config)
+
+        for fp in sections:
+            self.assertTrue(os.path.isfile(fp))
+            os.remove(fp)
