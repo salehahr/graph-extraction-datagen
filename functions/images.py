@@ -19,6 +19,11 @@ def is_cropped(img: np.ndarray):
 
 def crop_imgs(config):
     for fp in config.raw_image_files:
+        new_fp = fp.replace('raw', 'cropped')
+
+        if os.path.isfile(new_fp):
+            continue
+
         img = cv2.imread(fp, cv2.IMREAD_COLOR)
 
         if is_cropped(img):
@@ -30,7 +35,6 @@ def crop_imgs(config):
         # cv2.imshow('title', img_cropped)
         # cv2.waitKey()
 
-        new_fp = fp.replace('raw', 'cropped')
         cv2.imwrite(new_fp, img_cropped)
 
 

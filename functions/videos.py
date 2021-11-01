@@ -1,4 +1,6 @@
 import os
+import re
+import sys
 
 import cv2
 from moviepy.video.io.VideoFileClip import VideoFileClip
@@ -40,22 +42,32 @@ def video2img(config, frequency: float = 25) -> None:
         return success, image
 
     count = 0
-    frames_exist = True
+    success = True
 
-    seconds_total = 0
+    # adjust starting time
+    if not config.raw_image_files:
+        seconds_total = 0
+    else:
+        pattern = '(\d{4})_(\d{5})\.png'
+        most_recent_img = sorted(config.raw_image_files)[-1]
+        matches = re.search(pattern, most_recent_img)
+        ts_min, ts_millisec = int(matches.group(1)), int(matches.group(2))
 
-    while frames_exist:
+        seconds_total = ts_min * 60 + ts_millisec / 1000
+
+    while success:
         seconds_total = round(seconds_total, 2)
-        frames_exist, img = get_frame(seconds_total)
+        img_filename = generate_time_tag(seconds_total)
+        img_filepath = os.path.join(config.raw_img_folder, f'{img_filename}.png')
 
-        if frames_exist:
-            filename = generate_time_tag(seconds_total)
-            cv2.imwrite(os.path.join(config.raw_img_folder, f'{filename}.png'), img)
+        if not os.path.isfile(img_filepath):
+            success, img = get_frame(seconds_total)
+            if success:
+                cv2.imwrite(img_filepath, img)
+            else:
+                break
+            count += 1
 
-        else:
-            break
-
-        count = count + 1
         seconds_total += (1 / frequency)
 
     print(f'{count} images were extracted into {config.raw_img_folder}.')
@@ -78,6 +90,7 @@ def trim_video_section(orig: str, interval: list, target: str = None) -> str:
     if not os.path.isfile(target):
         video = VideoFileClip(orig).subclip(interval[0], interval[1])
         video.write_videofile(target)
+        video.close()
 
     # # produces green artifacts
     # ffmpeg_extract_subclip(orig_filename,
