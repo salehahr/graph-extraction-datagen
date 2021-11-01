@@ -15,6 +15,12 @@ def generate_time_tag(time_in_s: float) -> str:
     return str(int(minute)).zfill(4) + '_' + str(millisecs).zfill(5)
 
 
+def generate_time_tag_from_interval(interval: list) -> str:
+    start_tag = generate_time_tag(interval[0])
+    end_tag = generate_time_tag(interval[1])
+    return start_tag + '__' + end_tag
+
+
 def video2img(config, frequency: float = 25) -> None:
     """
     Saves video frames as .png images.
@@ -55,23 +61,21 @@ def video2img(config, frequency: float = 25) -> None:
     print(f'{count} images were extracted into {config.raw_img_folder}.')
 
 
-def trim_video_section(orig: str, start: float, end: float, target: str = None) -> None:
+def trim_video_section(orig: str, interval: list, target: str = None) -> None:
     """
     Trims video.
     :param orig: original video filepath
-    :param start: start trim in s
-    :param end: end trim in s
+    :param interval: list of start trim in s and end trim in s
     :param target: target video filepath
     :return:
     """
-    start_tag = generate_time_tag(start)
-    end_tag = generate_time_tag(end)
+    time_tag = generate_time_tag_from_interval(interval)
 
     temp_name, ext = os.path.splitext(orig)
-    target = temp_name + '_' + start_tag + '__' + end_tag + ext \
+    target = temp_name + '_' + time_tag + ext \
         if target is None else target
 
-    video = VideoFileClip(orig).subclip(start, end)
+    video = VideoFileClip(orig).subclip(interval[0], interval[1])
     video.write_videofile(target)
 
     # # produces green artifacts
@@ -87,5 +91,4 @@ def trim_video(config, targets: list = None):
     assert (len(config.trim_times) == len(targets))
 
     for i, interval in enumerate(config.trim_times):
-        start, end = interval
-        trim_video_section(config.filepath, start, end, target=targets[i])
+        trim_video_section(config.filepath, interval, target=targets[i])
