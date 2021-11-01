@@ -1,5 +1,6 @@
 import os
 import unittest
+import context
 
 from config import Config
 from functions.files import remove_data_folders, make_folders

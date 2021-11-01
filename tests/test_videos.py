@@ -1,6 +1,7 @@
 import glob
 import os
 import unittest
+import context
 
 from functions.files import make_folders, delete_files
 from functions.videos import video2img, trim_video
