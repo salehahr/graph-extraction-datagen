@@ -28,14 +28,23 @@ end
 
 %% Read Image
 
-VIDEO_FILEPATH = VIDEO_FILEPATH_EXT(1:end-4);
+VIDEO_FILEPATH = VIDEO_FILEPATH_EXT(1:end-4);   % read from config.py
+% VIDEO_FILEPATH = 'tests/short_video';           % manual entry
 
-imageFolder = sprintf('%s/cropped/*', VIDEO_FILEPATH);
-ImageFolder_filtered_images = sprintf('%s/filtered/', VIDEO_FILEPATH);
+imageFolder = sprintf('%s/', VIDEO_FILEPATH);
+% ImageFolder_filtered_images = sprintf('../%s/filtered/', VIDEO_FILEPATH);
 
-imds          = imageDatastore(imageFolder);
+imds          = imageDatastore(imageFolder, 'IncludeSubfolders', true, 'FileExtensions', '.png');
 path(path,'./sort_list/');
-imds.Files =  natsortfiles(imds.Files);
+
+cropped_matches = strfind(imds.Files, 'cropped');
+crop_filter = zeros(length(cropped_matches),1);
+for i = 1:length(cropped_matches)
+    crop_filter(i) = ~isempty(cropped_matches{i});
+end
+cropped_imgs = imds.Files(crop_filter>0);   
+
+imds.Files =  natsortfiles(cropped_imgs);
 plotImage = false; 
 
 %% Symmetric filter params
@@ -132,7 +141,11 @@ for currFrameIdx= 1:NOImages; %204 %1:50
     %      imshow(myImage2);
     %% Save image 2
     [~,name,ext] = fileparts(fileinfo.Filename);
-    fullFileName = fullfile(ImageFolder_filtered_images,strcat(name,ext));
+    
+    [old_folder, name, ext] = fileparts(fileinfo.Filename);
+    new_folder = replace(old_folder, 'cropped', 'filtered');
+    
+    fullFileName = fullfile(new_folder,strcat(name,ext));
     %savename = num2str(sigma);
     %fullFileName = fullfile(ImageFolder_filtered_images,strcat(savename,ext));
     imwrite(myImage, fullFileName);

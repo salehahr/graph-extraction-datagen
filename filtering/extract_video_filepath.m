@@ -11,8 +11,8 @@
 %% Initialize variables.
 filename = '../config.py';
 delimiter = {'= '};
-startRow = 3;
-endRow = 3;
+startRow = 6;
+endRow = 6;
 
 %% Format for each line of text:
 %   column1: text (%s)
