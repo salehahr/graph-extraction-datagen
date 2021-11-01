@@ -29,11 +29,13 @@ class TestVideo(unittest.TestCase):
     def test_before_filter(self):
         if self.config:
             delete_files(self.config.raw_image_files)
+            delete_files(self.config.cropped_image_files)
             self.assertEqual(len(self.config.raw_image_files), 0)
 
             self.before_filter()
 
             self.assertGreaterEqual(len(self.config.raw_image_files), 1)
+            self.assertGreaterEqual(len(self.config.cropped_image_files), 1)
 
     def test_after_filter(self):
         if self.config:
