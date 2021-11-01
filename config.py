@@ -39,21 +39,28 @@ class Config:
     def __init__(self,
                  filepath: str = VIDEO_FULL_FILEPATH_EXT,
                  trim_times: list = trim_times_in_s,
-                 do_trim: bool = True):
+                 do_trim: bool = True,
+                 start = None):
 
         self._filepath = filepath
         self.ext = os.path.splitext(filepath)[1]
         self.trim_times = trim_times
         self.sections = [self]
+        self._start = start
 
         # trim video if trim_times given, else
         if self.has_trimmed:
-            section_filepaths = trim_video(self) if do_trim \
-                else [self.basename + '_' + generate_time_tag_from_interval(i) \
-                      + self.ext for i in trim_times]
-            self.sections = [Config(fp, trim_times=[]) for fp in section_filepaths]
+            if do_trim:
+                section_filepaths = trim_video(self)
+            else:
+                section_filepaths = [self.basename + '_' + generate_time_tag_from_interval(i) \
+                                     + self.ext for i in trim_times]
+            self.sections = [Config(fp, trim_times=[], start=trim_times[i][0]) \
+                                 for i, fp in enumerate(section_filepaths)]
         else:
             self._generate_folders()
+
+        self.generate_start_time(start)
 
     def _generate_folders(self):
         self.raw_img_folder = f'{self.basename}/raw'
@@ -65,6 +72,22 @@ class Config:
         self.landmarks_img_folder = f'{self.basename}/landmarks'
         self.poly_graph_img_folder = f'{self.basename}/poly_graph'
         self.overlay_img_folder = f'{self.basename}/overlay'
+
+    def generate_start_time(self, start):
+        if self.is_trimmed:
+            if start is None:
+                start_pattern = '(\d{4})_(\d{5})__\d{4}_\d{5}\.'
+                match = re.search(start_pattern, self.filepath)
+
+                minutes = int(match.group(1))
+                milliseconds = int(match.group(2))
+
+                self._start = minutes * 60 + milliseconds / 1000
+            else:
+                self._start = start
+        else:
+            self._start = 0
+        assert (self._start is not None)
 
     @property
     def filepath(self):

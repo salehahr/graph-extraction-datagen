@@ -57,7 +57,13 @@ def video2img(config, frequency: float = 25) -> None:
 
     while success:
         seconds_total = round(seconds_total, 2)
-        img_filename = generate_time_tag(seconds_total)
+
+        # only adjust time in filename here if trimmed
+        if not config.is_trimmed:
+            img_filename = generate_time_tag(seconds_total)
+        else:
+            img_filename = generate_time_tag(seconds_total + config._start)
+
         img_filepath = os.path.join(config.raw_img_folder, f'{img_filename}.png')
 
         if not os.path.isfile(img_filepath):
