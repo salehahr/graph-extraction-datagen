@@ -13,42 +13,25 @@ from functions.im2graph import plot_graph_on_img_poly
 
 from functions.images import apply_img_mask
 
-from config import Config
+import config
 
 import warnings
 
 warnings.simplefilter('ignore', np.RankWarning)
 
-config = Config()
+conf = config.Config()
 
 # apply mask
-apply_img_mask(config.filtered_img_folder, config.masked_img_folder)
-
-# do: plot, save
-thr_plot = False
-pr_plot = False
-lm_plot = False
-poly_plot = False
-overlay_plot = False
-
-thr_save = True
-pr_save = True
-lm_save = True
-poly_save = True
-overlay_save = True
+apply_img_mask(conf)
 
 # load filtered images
-filtered_imgs = glob.glob(config.masked_img_folder + '/*')
-
-for filepath_filt in filtered_imgs:
-    filename = os.path.basename(filepath_filt)
-
-    filepath_orig = os.path.join(config.cropped_img_folder, filename)
-    filepath_thr = os.path.join(config.threshed_img_folder, filename)
-    filepath_pr = os.path.join(config.preproc_img_folder, filename)
-    filepath_lm = os.path.join(config.landmarks_img_folder, filename)
-    filepath_poly = os.path.join(config.poly_graph_img_folder, filename)
-    filepath_overlay = os.path.join(config.overlay_img_folder, filename)
+for filepath_filt in conf.masked_image_files:
+    filepath_orig = filepath_filt.replace('masked', 'cropped')
+    filepath_thr = filepath_filt.replace('masked', 'threshed')
+    filepath_pr = filepath_filt.replace('masked', 'skeleton')
+    filepath_lm = filepath_filt.replace('masked', 'landmarks')
+    filepath_poly = filepath_filt.replace('masked', 'poly_graph')
+    filepath_overlay = filepath_filt.replace('masked', 'overlay')
 
     original = cv2.imread(filepath_orig, cv2.IMREAD_COLOR)
     if original is None:
@@ -60,12 +43,12 @@ for filepath_filt in filtered_imgs:
     # thresholding
     gausskernel = (5, 5)
     thresholded = thresholding(filtered_img, gausskernel,
-                               thr_plot, thr_save, filepath_thr)
+                               config.thr_plot, config.thr_save, filepath_thr)
 
     # skeletonise
     edgelength = 10
     preprocessed_image = preprocess(thresholded, original, edgelength,
-                                    pr_plot, pr_save, filepath_pr)
+                                    config.pr_plot, config.pr_save, filepath_pr)
 
     # landmarks
     node_thick = 6
@@ -78,7 +61,7 @@ for filepath_filt in filtered_imgs:
             allnodescoor)
 
     helperedges_structure, ese_helperedges_structure, helpernodescoor_structure = helpernodes_BasicGraph_for_structure(
-            coordinates_global, esecoor,allnodescoor, marked_img,  lm_plot, lm_save, node_thick, filepath_lm)
+            coordinates_global, esecoor,allnodescoor, marked_img,  config.lm_plot, config.lm_save, node_thick, filepath_lm)
 
     # polynomial
     visual_degree = 5
@@ -115,7 +98,7 @@ for filepath_filt in filtered_imgs:
     node_thick = 10
     #node_thick = 6
     edge_thick = 2
-    fig2 = graph_poly(original, helpernodescoor, polyfit_coordinates, poly_plot, poly_save, node_thick, edge_thick,
+    fig2 = graph_poly(original, helpernodescoor, polyfit_coordinates, config.poly_plot, config.poly_save, node_thick, edge_thick,
                       filepath_poly)
 
     # #plot graph on image, only connections
@@ -137,7 +120,7 @@ for filepath_filt in filtered_imgs:
     node_thick = 7
     edge_thick = 2
     fig4 = plot_graph_on_img_poly(original, helpernodescoor, polyfit_coordinates,
-                                  overlay_plot, overlay_save,
+                                  config.overlay_plot, config.overlay_save,
                                   node_thick, edge_thick, filepath_overlay)
 
 

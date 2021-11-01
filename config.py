@@ -1,3 +1,4 @@
+import glob
 import os
 import re
 
@@ -7,6 +8,19 @@ from functions.videos import generate_time_tag_from_interval
 VIDEO_FULL_FILEPATH_EXT = 'data/GRK021_test.mp4'
 trim_times_in_s = None
 # trim_times_in_s = [[0, 1], [2, 3]]
+
+# Plot/Save options
+thr_plot = False
+pr_plot = False
+lm_plot = False
+poly_plot = False
+overlay_plot = False
+
+thr_save = True
+pr_save = True
+lm_save = True
+poly_save = True
+overlay_save = True
 
 # Image Dimensions
 # vid_height = int(vidcap.get(cv2.CAP_PROP_FRAME_HEIGHT))
@@ -97,3 +111,19 @@ class Config:
     @property
     def has_trimmed(self):
         return True if self.trim_times is not None else False
+
+    @property
+    def raw_image_files(self):
+        return glob.glob(os.path.join(self.basename, '**/raw/*.png'), recursive=True)
+
+    @property
+    def cropped_image_files(self):
+        return glob.glob(os.path.join(self.basename, '**/cropped/*.png'), recursive=True)
+
+    @property
+    def filtered_image_files(self):
+        return glob.glob(os.path.join(self.basename, '**/filtered/*.png'), recursive=True)
+
+    @property
+    def masked_image_files(self):
+        return glob.glob(os.path.join(self.basename, '**/masked/*.png'), recursive=True)

@@ -14,4 +14,5 @@ if __name__ == '__main__':
     for section in config.sections:
         make_folders(section)
         video2img(section)
-        crop_imgs(section)
+
+    crop_imgs(config)

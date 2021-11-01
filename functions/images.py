@@ -18,8 +18,7 @@ def is_cropped(img: np.ndarray):
 
 
 def crop_imgs(config):
-    filepaths = glob.glob(config.raw_img_folder + '/*')
-    for fp in filepaths:
+    for fp in config.raw_image_files:
         img = cv2.imread(fp, cv2.IMREAD_COLOR)
 
         if is_cropped(img):
@@ -31,27 +30,22 @@ def crop_imgs(config):
         # cv2.imshow('title', img_cropped)
         # cv2.waitKey()
 
-        new_fp = os.path.join(config.cropped_img_folder, os.path.basename(fp))
+        new_fp = fp.replace('raw', 'cropped')
         cv2.imwrite(new_fp, img_cropped)
 
 
-def apply_img_mask(filtered_img_folder: str, masked_img_folder: str):
+def apply_img_mask(config):
     mask = cv2.imread(mask_path, cv2.IMREAD_GRAYSCALE)
     mask[mask > 0] = 1  # convert non zero entries to 1
 
-    filtered_img_dir = os.path.join(os.getcwd(), filtered_img_folder)
-    masked_img_dir = os.path.join(os.getcwd(), masked_img_folder)
-
-    filepaths = glob.glob(filtered_img_dir + '/*')
-    for fp in filepaths:
+    for fp in config.filtered_image_files:
         img = cv2.imread(fp, cv2.IMREAD_GRAYSCALE)
         masked = np.multiply(mask, img)
 
         # cv2.imshow('title', masked_img)
         # cv2.waitKey()
-        # sys.exit()
 
-        new_fp = os.path.join(masked_img_dir, os.path.basename(fp))
+        new_fp = fp.replace('filtered', 'masked')
         cv2.imwrite(new_fp, masked)
 
 

@@ -5,7 +5,7 @@ import context
 
 from functions.files import make_folders, delete_files
 from functions.videos import video2img, trim_video
-from functions.images import crop_imgs
+from functions.images import crop_imgs, apply_img_mask
 
 from config import Config
 
@@ -16,30 +16,31 @@ class TestVideo(unittest.TestCase):
         cls.config = None
         cls.raw_img_folder = None
 
-    @property
-    def list_img_files(self):
-        if not self.config.has_trimmed:
-            return glob.glob(os.path.join(self.raw_img_folder, '*.png'))
-        else:
-            list_imgs = []
-            for section in self.config.sections:
-                list_imgs += glob.glob(os.path.join(section.raw_img_folder, '*.png'))
-            return list_imgs
-
     def before_filter(self):
         for section in self.config.sections:
             make_folders(section)
             video2img(section, frequency=2)
-            crop_imgs(section)
 
-    def test_video2img(self):
+        crop_imgs(self.config)
+
+    def after_filter(self):
+        apply_img_mask(self.config)
+
+    def test_before_filter(self):
         if self.config:
-            delete_files(self.list_img_files)
-            self.assertEqual(len(self.list_img_files), 0)
+            delete_files(self.config.raw_image_files)
+            self.assertEqual(len(self.config.raw_image_files), 0)
 
             self.before_filter()
 
-            self.assertGreaterEqual(len(self.list_img_files), 1)
+            self.assertGreaterEqual(len(self.config.raw_image_files), 1)
+
+    def test_after_filter(self):
+        delete_files(self.config.masked_image_files)
+        self.assertEqual(len(self.config.masked_image_files), 0)
+        self.after_filter()
+        self.assertGreaterEqual(len(self.config.masked_image_files), 1)
+
 
 
 class TestVideoLocal(TestVideo):
