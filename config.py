@@ -1,7 +1,5 @@
 import os
 import re
-from dataclasses import dataclass, field
-from typing import List
 
 # Video
 VIDEO_FULL_FILEPATH_EXT = 'data/GRK021_test.mp4'
@@ -21,12 +19,14 @@ crop_width = crop_right - crop_left
 pattern = '(.*)_(\d{4}_\d{5}__\d{4}_\d{5})\.'
 
 
-@dataclass
 class Config:
-    _filepath: str = VIDEO_FULL_FILEPATH_EXT
-    trim_times: List = field(default_factory=lambda: trim_times_in_s)
+    def __init__(self,
+                 filepath: str = VIDEO_FULL_FILEPATH_EXT,
+                 trim_times: list = trim_times_in_s):
 
-    def __post_init__(self):
+        self._filepath = filepath
+        self.trim_times = trim_times
+
         self.generate_folders()
 
     @property
