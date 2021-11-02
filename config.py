@@ -4,32 +4,7 @@ import re
 
 from functions.videos import trim_video, generate_time_tag_from_interval
 
-# Video
-VIDEO_FULL_FILEPATH_EXT = 'data/GRK021_test.mp4'
-trim_times_in_s = None
-# trim_times_in_s = [[0, 1], [2, 3]]
-
-# Plot/Save options
-thr_plot = False
-pr_plot = False
-lm_plot = False
-poly_plot = False
-overlay_plot = False
-
-thr_save = True
-pr_save = True
-lm_save = True
-poly_save = True
-overlay_save = True
-
-# Image Dimensions
-# vid_height = int(vidcap.get(cv2.CAP_PROP_FRAME_HEIGHT))
-
-crop_top, crop_bottom = 4, 1080
-crop_left, crop_right = 416, 1532
-
-crop_height = crop_bottom - crop_top
-crop_width = crop_right - crop_left
+import video_data
 
 # Time tag pattern
 pattern = '(.*)_(\d{4}_\d{5}__\d{4}_\d{5})\.'
@@ -37,8 +12,8 @@ pattern = '(.*)_(\d{4}_\d{5}__\d{4}_\d{5})\.'
 
 class Config:
     def __init__(self,
-                 filepath: str = VIDEO_FULL_FILEPATH_EXT,
-                 trim_times: list = trim_times_in_s,
+                 filepath: str = video_data.VIDEO_FULL_FILEPATH_EXT,
+                 trim_times: list = video_data.trim_times_in_s,
                  do_trim: bool = True,
                  start = None):
 
@@ -152,3 +127,22 @@ class Config:
     @property
     def masked_image_files(self):
         return glob.glob(os.path.join(self.basename, '**/masked/*.png'), recursive=True)
+
+
+# Plot/Save options
+thr_plot = video_data.thr_plot
+pr_plot = video_data.pr_plot
+lm_plot = video_data.lm_plot
+poly_plot = video_data.poly_plot
+overlay_plot = video_data.overlay_plot
+
+thr_save = video_data.thr_save
+pr_save = video_data.pr_save
+lm_save = video_data.lm_save
+poly_save = video_data.poly_save
+overlay_save = video_data.overlay_save
+
+
+# Image Dimensions
+img_length = video_data.img_length
+crop_adjust_y = video_data.crop_adjust_y
