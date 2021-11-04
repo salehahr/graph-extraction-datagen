@@ -20,7 +20,7 @@ class TestResize(unittest.TestCase):
     @classmethod
     def setUpClass(cls) -> None:
         # filename = 'M:/master-thesis/02_Video_Data_to-be_filled/Videos/GRK008'
-        filename = 'short_video'
+        filename = 'M:/graph-training/data/test/short_video.mp4'
         cls.config = Config(filename)
 
         first_img_fp = cls.config.raw_image_files[0]

@@ -1,29 +1,35 @@
 import os
 import unittest
-import context
 
 from config import Config
-from functions.files import remove_data_folders, make_folders
+from functions.files import remove_data_folders, make_folders, clone_data_folders
 
 
-class TestFileFunctionsLocal(unittest.TestCase):
+class TestFileFunctions(unittest.TestCase):
     @classmethod
     def setUpClass(cls) -> None:
-        remove_data_folders('short_video')
-        cls.config = Config('short_video.mp4')
+        video_fp = 'M:/graph-training/data/test/short_video.mp4'
+        cls.temp_folder = 'M:/graph-training/data/test/temp/'
+
+        cls.config = Config(video_fp)
+
+        if os.path.isdir(cls.config.basename):
+            clone_data_folders(cls.config.basename, cls.temp_folder)
+            remove_data_folders(cls.config.basename)
 
     def test_make_folders(self):
-        cl = self.config
+        self.assertFalse(os.path.isdir(self.config.basename))
+        self.assertTrue(os.path.isdir(self.temp_folder))
 
-        self.assertFalse(os.path.isdir(cl.raw_img_folder))
-        self.assertFalse(os.path.isdir(cl.overlay_img_folder))
-        make_folders(cl)
-        self.assertTrue(os.path.isdir(cl.raw_img_folder))
-        self.assertTrue(os.path.isdir(cl.overlay_img_folder))
+        self.assertFalse(os.path.isdir(self.config.raw_img_folder))
+        self.assertFalse(os.path.isdir(self.config.overlay_img_folder))
+        make_folders(self.config)
+        self.assertTrue(os.path.isdir(self.config.raw_img_folder))
+        self.assertTrue(os.path.isdir(self.config.overlay_img_folder))
 
-
-# class TestFileFunctionsNetwork(TestFileFunctionsLocal):
-#     @classmethod
-#     def setUpClass(cls) -> None:
-#         remove_data_folders('M:/ma/graph-training/data/short_video')
-#         cls.config = Config('M:/ma/graph-training/data/short_video.mp4')
+    @classmethod
+    def tearDownClass(cls) -> None:
+        """ Restore data. """
+        remove_data_folders(cls.config.basename)
+        clone_data_folders(cls.temp_folder, cls.config.basename)
+        remove_data_folders(cls.temp_folder)

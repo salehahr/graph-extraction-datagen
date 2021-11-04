@@ -15,6 +15,10 @@ def make_folders(config):
         make_folder(f)
 
 
+def clone_data_folders(path, dest):
+    shutil.copytree(path, dest)
+
+
 def remove_data_folders(path):
     try:
         shutil.rmtree(path)
