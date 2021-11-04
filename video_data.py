@@ -1,7 +1,8 @@
 
 
 # Video
-VIDEO_FULL_FILEPATH_EXT = 'M:/master-thesis/02_Video_Data_to-be_filled/Videos/GRK008.mp4'
+# VIDEO_FULL_FILEPATH_EXT = 'M:/graph-training/data/GRK008.mp4'
+VIDEO_FULL_FILEPATH_EXT = '/graphics/scratch/schuelej/sar/data/GRK008.mp4'
 frequency = 25 # Hz
 trim_times_in_s = None
 # trim_times_in_s = [[0, 1], [2, 3]]
