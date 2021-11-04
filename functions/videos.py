@@ -23,7 +23,7 @@ def generate_time_tag_from_interval(interval: list) -> str:
     return start_tag + '__' + end_tag
 
 
-def video2img(config, frequency: float = 25) -> None:
+def video2img(config) -> None:
     """
     Saves video frames as .png images.
 
@@ -74,7 +74,7 @@ def video2img(config, frequency: float = 25) -> None:
                 break
             count += 1
 
-        seconds_total += (1 / frequency)
+        seconds_total += (1 / config.frequency)
 
     print(f'{count} images were extracted into {config.raw_img_folder}.')
 

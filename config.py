@@ -15,13 +15,15 @@ class Config:
                  filepath: str = video_data.VIDEO_FULL_FILEPATH_EXT,
                  trim_times: list = video_data.trim_times_in_s,
                  do_trim: bool = True,
-                 start = None):
+                 start = None,
+                 frequency: float = video_data.frequency):
 
         self._filepath = filepath
         self.ext = os.path.splitext(filepath)[1]
         self.trim_times = trim_times
         self.sections = [self]
         self._start = start
+        self.frequency = frequency
 
         # trim video if trim_times given, else
         if self.has_trimmed:
@@ -30,7 +32,8 @@ class Config:
             else:
                 section_filepaths = [self.basename + '_' + generate_time_tag_from_interval(i) \
                                      + self.ext for i in trim_times]
-            self.sections = [Config(fp, trim_times=[], start=trim_times[i][0]) \
+            self.sections = [Config(fp, trim_times=[], start=trim_times[i][0],
+                                    frequency=self.frequency) \
                              for i, fp in enumerate(section_filepaths)]
         else:
             self._generate_folders()

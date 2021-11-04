@@ -48,7 +48,8 @@ class TestVideo(unittest.TestCase):
 class TestShortVideo(TestVideo):
     @classmethod
     def setUpClass(cls) -> None:
-        cls.config = Config('M:/graph-training/data/test/short_video.mp4')
+        cls.config = Config('M:/graph-training/data/test/short_video.mp4',
+                            frequency=2)
         cls.raw_img_folder = cls.config.raw_img_folder
 
     def test_is_not_trimmed(self):
@@ -59,7 +60,7 @@ class TestTrimmedVideo(TestVideo):
     @classmethod
     def setUpClass(cls) -> None:
         video_filename = "M:/graph-training/data/test/trimmed_0000_02000__0000_03000.mp4"
-        cls.config = Config(video_filename)
+        cls.config = Config(video_filename, frequency=2)
         cls.raw_img_folder = cls.config.raw_img_folder
 
     def test_is_trimmed(self):
@@ -72,7 +73,7 @@ class TestMultiSectionVideo(TestVideo):
         filename = "M:/graph-training/data/test/trimmed.mp4"
         trim_times = [[2, 3], [4, 5]]
 
-        cls.config = Config(filename, trim_times)
+        cls.config = Config(filename, trim_times, frequency=2)
 
     def test_has_sections(self):
         self.assertIsNotNone(self.config.sections)
@@ -90,7 +91,7 @@ class TestTrimVideo(unittest.TestCase):
         cls.orig_filename = "M:/graph-training/data/test/GRK021_test.mp4"
         trim_times = [[2, 3]]
 
-        cls.config = Config(cls.orig_filename, trim_times)
+        cls.config = Config(cls.orig_filename, trim_times, frequency=2)
 
         cls.target_filename = "M:/graph-training/data/test/trimmed_0000_02000__0000_03000.mp4"
 
