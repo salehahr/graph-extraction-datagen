@@ -124,11 +124,11 @@ def apply_img_mask(conf):
         cv2.imwrite(new_fp, masked)
 
 
-def threshold_imgs(conf):
+def threshold_imgs(conf, do_save):
     for fp in conf.masked_image_files:
         new_fp = fp.replace('masked', 'threshed')
         img = cv2.imread(fp, 0)
-        thresholding(img, conf.thr_save, new_fp)
+        thresholding(img, do_save, new_fp)
 
 
 

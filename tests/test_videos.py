@@ -2,8 +2,7 @@ import os
 import unittest
 
 from functions.files import make_folders, delete_files
-from functions.videos import video2img, trim_video
-from functions.images import crop_imgs, apply_img_mask
+from functions.videos import trim_video
 
 from before_filter import before_filter
 from after_filter import after_filter
@@ -77,6 +76,7 @@ class TestMultiSectionVideo(TestVideo):
     def test_make_folders(self):
         for section in self.config.sections:
             make_folders(section)
+
 
 @unittest.skip('Skip trimming video')
 class TestTrimVideo(unittest.TestCase):
