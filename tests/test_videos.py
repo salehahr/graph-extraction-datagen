@@ -16,13 +16,6 @@ class TestVideo(unittest.TestCase):
         cls.config = None
         cls.raw_img_folder = None
 
-    def before_filter(self):
-        for section in self.config.sections:
-            make_folders(section)
-            video2img(section, frequency=2)
-
-        crop_imgs(self.config)
-
     def test_before_filter(self):
         if self.config:
             delete_files(self.config.raw_image_files)
