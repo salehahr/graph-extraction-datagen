@@ -67,10 +67,18 @@ def crop_imgs(conf):
         cv2.imwrite(new_fp, img_cropped)
 
 
+def crop_and_resize(img: np.ndarray):
+    return scale_down(centre_crop(img))
+
+
+def scale_down(img: np.ndarray):
+    return cv2.resize(img, (config.img_length, config.img_length))
+
+
 def centre_crop(img: np.ndarray):
     """
     Extracts a square from the original image,
-    centred at the original image's centroid.
+    from around the original image's centroid.
     """
     min_y, min_x = 0, 0
     max_y, max_x, _ = img.shape
@@ -101,14 +109,6 @@ def centre_crop(img: np.ndarray):
                               cv2.BORDER_CONSTANT, value=[0, 0, 0])
 
 
-def scale_down(img: np.ndarray):
-    return cv2.resize(img, (config.img_length, config.img_length))
-
-
-def crop_and_resize(img: np.ndarray):
-    return scale_down(centre_crop(img))
-
-
 def apply_img_mask(conf):
     mask = cv2.imread(mask_path, cv2.IMREAD_GRAYSCALE)
     mask[mask > 0] = 1  # convert non zero entries to 1
@@ -122,6 +122,14 @@ def apply_img_mask(conf):
 
         new_fp = fp.replace('filtered', 'masked')
         cv2.imwrite(new_fp, masked)
+
+
+def threshold_imgs(conf):
+    for fp in conf.masked_image_files:
+        new_fp = fp.replace('masked', 'threshed')
+        img = cv2.imread(fp, 0)
+        thresholding(img, conf.thr_save, new_fp)
+
 
 
 def thresholding(filtered_img: np.ndarray,

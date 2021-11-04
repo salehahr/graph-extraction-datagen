@@ -1,9 +1,11 @@
+import os.path
+
 import cv2
 # import networkx as nx
 import numpy as np
 import sys
 
-from functions.images import thresholding
+from functions.images import threshold_imgs
 from functions.im2graph import preprocess, node_extraction, edge_extraction, helpernodes_BasicGraph_for_polyfit, \
     helpernodes_BasicGraph_for_structure
 from functions.im2graph import polyfit_visualize, polyfit_training
@@ -23,6 +25,9 @@ def after_filter(conf):
     # apply mask
     apply_img_mask(conf)
 
+    # thresholding
+    threshold_imgs(conf, config.thr_save)
+
     # load filtered images
     for filepath_filt in conf.masked_image_files:
         filepath_orig = filepath_filt.replace('masked', 'cropped')
@@ -37,15 +42,16 @@ def after_filter(conf):
             print(f'No original found.')
             sys.exit(1)
 
-        filtered_img = cv2.imread(filepath_filt, 0)
+        # skip already processed frames
+        if os.path.isfile(filepath_overlay):
+            continue
 
-        # thresholding
-        thresholded = thresholding(filtered_img, config.thr_save, filepath_thr)
+        thresholded = cv2.imread(filepath_thr, 0)
 
         # skeletonise
         edgelength = 10
         preprocessed_image = preprocess(thresholded, original, edgelength,
-                                        config.pr_plot, config.pr_save, filepath_pr)
+                                        conf.pr_plot, conf.pr_save, filepath_pr)
 
         # landmarks
         node_thick = 6
@@ -59,7 +65,7 @@ def after_filter(conf):
                                                                                            allnodescoor)
 
         helperedges_structure, ese_helperedges_structure, helpernodescoor_structure = helpernodes_BasicGraph_for_structure(
-            coordinates_global, esecoor, allnodescoor, marked_img, config.lm_plot, config.lm_save, node_thick,
+            coordinates_global, esecoor, allnodescoor, marked_img, conf.lm_plot, conf.lm_save, node_thick,
             filepath_lm)
 
         # polynomial
@@ -100,7 +106,7 @@ def after_filter(conf):
         node_thick = 10
         # node_thick = 6
         edge_thick = 2
-        graph_poly(original, helpernodescoor, polyfit_coordinates, config.poly_plot, config.poly_save,
+        graph_poly(original, helpernodescoor, polyfit_coordinates, conf.poly_plot, conf.poly_save,
                    node_thick, edge_thick,
                    filepath_poly)
 
@@ -124,7 +130,7 @@ def after_filter(conf):
         node_thick = 7
         edge_thick = 2
         plot_graph_on_img_poly(original, helpernodescoor, polyfit_coordinates,
-                               config.overlay_plot, config.overlay_save,
+                               conf.overlay_plot, conf.overlay_save,
                                node_thick, edge_thick, filepath_overlay)
 
 
