@@ -29,7 +29,8 @@ end
 %% Read Image
 
 VIDEO_FILEPATH = VIDEO_FILEPATH_EXT(1:end-4);   % read from config.py
-% VIDEO_FILEPATH = 'tests/short_video';           % manual entry
+% VIDEO_FILEPATH = 'M:/graph-training/data/test/trimmed/0000_04000__0000_05000';           % manual entry
+% VIDEO_FILEPATH = 'N:/master-thesis/02_Video_Data_to-be_filled/Videos/GRK008';           % manual entry
 
 imageFolder = sprintf('%s/', VIDEO_FILEPATH);
 % ImageFolder_filtered_images = sprintf('../%s/filtered/', VIDEO_FILEPATH);
@@ -73,6 +74,17 @@ for currFrameIdx= 1:NOImages; %204 %1:50
 %currFrameIdx = 1;
 
     [image,fileinfo] = readimage(imds, currFrameIdx);
+    %% new file name
+    [old_folder, name, ext] = fileparts(fileinfo.Filename);
+    new_folder = replace(old_folder, 'cropped', 'filtered');
+    
+    fullFileName = fullfile(new_folder,strcat(name,ext));
+    
+    if isfile(fullFileName)
+        continue
+    end
+    
+    %% image
     image = double(image) ./ 255;
     output = struct();
     tic
@@ -140,12 +152,6 @@ for currFrameIdx= 1:NOImages; %204 %1:50
     %      figure(202)
     %      imshow(myImage2);
     %% Save image 2
-    [~,name,ext] = fileparts(fileinfo.Filename);
-    
-    [old_folder, name, ext] = fileparts(fileinfo.Filename);
-    new_folder = replace(old_folder, 'cropped', 'filtered');
-    
-    fullFileName = fullfile(new_folder,strcat(name,ext));
     %savename = num2str(sigma);
     %fullFileName = fullfile(ImageFolder_filtered_images,strcat(savename,ext));
     imwrite(myImage, fullFileName);
