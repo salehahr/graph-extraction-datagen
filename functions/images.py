@@ -1,5 +1,4 @@
 import os
-import glob
 import cv2
 import numpy as np
 
@@ -8,20 +7,48 @@ import config
 blur_kernel = (5, 5)
 crop_radius = 575
 
-
-if 'tests' in os.getcwd():
-    mask_path = '../data/mask.png'
-else:
-    mask_path = 'data/mask.png'
+mask_path = '../data/mask.png' if 'tests' in os.getcwd() \
+        else 'data/mask.png'
 
 
-def is_cropped(img: np.ndarray):
+def get_rgb(img):
+    """ Gets RGB image for matplotlib plots. """
+    return cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
+
+
+def is_square(img: np.ndarray):
     h, w, _ = img.shape
-    return (h == crop_height) and (w == crop_width)
+    return h == w
 
 
-def crop_imgs(config):
-    for fp in config.raw_image_files:
+def get_centre(img):
+    img_grey = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
+
+    def get_thresholded():
+        # create background image
+        bg = cv2.dilate(img_grey, np.ones(blur_kernel, dtype=np.uint8))
+        bg = cv2.GaussianBlur(bg, blur_kernel, 1)
+
+        # subtract out background from source
+        src_no_bg = 255 - cv2.absdiff(img_grey, bg)
+
+        # threshold
+        _, thresh = cv2.threshold(src_no_bg, 0, 255, cv2.THRESH_BINARY_INV + cv2.THRESH_OTSU)
+
+        return thresh
+
+    # calculate moments of binary image
+    moments = cv2.moments(get_thresholded())
+
+    # calculate x,y coordinate of center
+    cx = int(moments["m10"] / moments["m00"])
+    cy = int(moments["m01"] / moments["m00"])
+
+    return cx, cy
+
+
+def crop_imgs(conf):
+    for fp in conf.raw_image_files:
         new_fp = fp.replace('raw', 'cropped')
 
         if os.path.isfile(new_fp):
@@ -29,11 +56,10 @@ def crop_imgs(config):
 
         img = cv2.imread(fp, cv2.IMREAD_COLOR)
 
-        if is_cropped(img):
+        if is_square(img):
             continue
 
-        img_cropped = img[crop_top:crop_bottom, crop_left:crop_right]
-        assert (is_cropped(img_cropped))
+        img_cropped = crop_and_resize(img)
 
         # cv2.imshow('title', img_cropped)
         # cv2.waitKey()
@@ -41,11 +67,53 @@ def crop_imgs(config):
         cv2.imwrite(new_fp, img_cropped)
 
 
-def apply_img_mask(config):
+def centre_crop(img: np.ndarray):
+    """
+    Extracts a square from the original image,
+    centred at the original image's centroid.
+    """
+    min_y, min_x = 0, 0
+    max_y, max_x, _ = img.shape
+
+    cx, cy = get_centre(img)
+
+    # get crop dimensions
+    crop_left = cx - crop_radius
+    crop_right = cx + crop_radius
+    crop_top = cy - crop_radius
+    crop_bottom = cy + crop_radius
+
+    # calculate padding
+    top_pad = 0 if crop_top >= 0 else -crop_top
+    bottom_pad = 0 if crop_bottom <= max_y else crop_bottom - max_y
+    left_pad = 0 if crop_left >= 0 else -crop_left
+    right_pad = 0 if crop_right <= max_x else crop_right - max_x
+
+    # set crop dimensions to max edges if necessary
+    crop_left = crop_left if crop_left >= 0 else min_x
+    crop_right = crop_right if crop_right <= max_x else max_x
+    crop_top = crop_top if crop_top >= 0 else min_y
+    crop_bottom = crop_bottom if crop_bottom <= max_y else max_y
+
+    img = img[crop_top:crop_bottom, crop_left:crop_right]
+
+    return cv2.copyMakeBorder(img, top_pad, bottom_pad, left_pad, right_pad,
+                              cv2.BORDER_CONSTANT, value=[0, 0, 0])
+
+
+def scale_down(img: np.ndarray):
+    return cv2.resize(img, (config.img_length, config.img_length))
+
+
+def crop_and_resize(img: np.ndarray):
+    return scale_down(centre_crop(img))
+
+
+def apply_img_mask(conf):
     mask = cv2.imread(mask_path, cv2.IMREAD_GRAYSCALE)
     mask[mask > 0] = 1  # convert non zero entries to 1
 
-    for fp in config.filtered_image_files:
+    for fp in conf.filtered_image_files:
         img = cv2.imread(fp, cv2.IMREAD_GRAYSCALE)
         masked = np.multiply(mask, img)
 

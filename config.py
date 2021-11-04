@@ -31,7 +31,7 @@ class Config:
                 section_filepaths = [self.basename + '_' + generate_time_tag_from_interval(i) \
                                      + self.ext for i in trim_times]
             self.sections = [Config(fp, trim_times=[], start=trim_times[i][0]) \
-                                 for i, fp in enumerate(section_filepaths)]
+                             for i, fp in enumerate(section_filepaths)]
         else:
             self._generate_folders()
 
@@ -145,4 +145,3 @@ overlay_save = video_data.overlay_save
 
 # Image Dimensions
 img_length = video_data.img_length
-crop_adjust_y = video_data.crop_adjust_y

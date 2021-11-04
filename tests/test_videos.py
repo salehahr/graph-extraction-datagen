@@ -31,6 +31,7 @@ class TestVideo(unittest.TestCase):
             delete_files(self.config.raw_image_files)
             delete_files(self.config.cropped_image_files)
             self.assertEqual(len(self.config.raw_image_files), 0)
+            self.assertEqual(len(self.config.cropped_image_files), 0)
 
             self.before_filter()
 

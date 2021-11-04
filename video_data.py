@@ -9,8 +9,7 @@ trim_times_in_s = None
 # Image Dimensions
 # vid_height = int(vidcap.get(cv2.CAP_PROP_FRAME_HEIGHT))
 
-img_length = 256
-crop_adjust_y = 39
+img_length = 512
 
 
 # Plot/Save options
