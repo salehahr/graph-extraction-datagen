@@ -5,6 +5,8 @@ from functions.files import make_folders, delete_files
 from functions.videos import video2img, trim_video
 from functions.images import crop_imgs, apply_img_mask
 
+from before_filter import before_filter
+from after_filter import after_filter
 from config import Config
 
 
@@ -21,9 +23,6 @@ class TestVideo(unittest.TestCase):
 
         crop_imgs(self.config)
 
-    def after_filter(self):
-        apply_img_mask(self.config)
-
     def test_before_filter(self):
         if self.config:
             delete_files(self.config.raw_image_files)
@@ -31,7 +30,7 @@ class TestVideo(unittest.TestCase):
             self.assertEqual(len(self.config.raw_image_files), 0)
             self.assertEqual(len(self.config.cropped_image_files), 0)
 
-            self.before_filter()
+            before_filter(self.config)
 
             self.assertGreaterEqual(len(self.config.raw_image_files), 1)
             self.assertGreaterEqual(len(self.config.cropped_image_files), 1)
@@ -41,7 +40,9 @@ class TestVideo(unittest.TestCase):
             delete_files(self.config.masked_image_files)
             self.assertGreaterEqual(len(self.config.filtered_image_files), 1)
             self.assertEqual(len(self.config.masked_image_files), 0)
-            self.after_filter()
+
+            after_filter(self.config)
+
             self.assertGreaterEqual(len(self.config.masked_image_files), 1)
 
 

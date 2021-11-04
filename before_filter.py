@@ -8,11 +8,16 @@ from functions.videos import video2img
 from config import Config
 
 
-if __name__ == '__main__':
-    config = Config()
-
-    for section in config.sections:
+def before_filter(conf=None):
+    for section in conf.sections:
         make_folders(section)
         video2img(section)
 
-    crop_imgs(config)
+    crop_imgs(conf)
+
+    assert(len(conf.raw_image_files) == len(conf.cropped_image_files))
+
+
+if __name__ == '__main__':
+    conf = Config()
+    before_filter(conf)
