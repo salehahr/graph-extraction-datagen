@@ -5,7 +5,8 @@ import glob
 import os
 import sys
 
-from functions.im2graph import thresholding, preprocess, node_extraction, edge_extraction, helpernodes_BasicGraph_for_polyfit, \
+from functions.images import thresholding
+from functions.im2graph import preprocess, node_extraction, edge_extraction, helpernodes_BasicGraph_for_polyfit, \
     helpernodes_BasicGraph_for_structure
 from functions.im2graph import polyfit_visualize, polyfit_training
 from functions.im2graph import graph_extraction, graph_poly
@@ -18,6 +19,8 @@ import config
 import warnings
 
 warnings.simplefilter('ignore', np.RankWarning)
+
+gausskernel = (5, 5)
 
 conf = config.Config()
 
@@ -41,9 +44,7 @@ for filepath_filt in conf.masked_image_files:
     filtered_img = cv2.imread(filepath_filt, 0)
 
     # thresholding
-    gausskernel = (5, 5)
-    thresholded = thresholding(filtered_img, gausskernel,
-                               config.thr_plot, config.thr_save, filepath_thr)
+    thresholded = thresholding(filtered_img, config.thr_save, filepath_thr)
 
     # skeletonise
     edgelength = 10

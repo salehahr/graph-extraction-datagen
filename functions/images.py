@@ -3,7 +3,10 @@ import glob
 import cv2
 import numpy as np
 
-from config import *
+import config
+
+blur_kernel = (5, 5)
+crop_radius = 575
 
 
 if 'tests' in os.getcwd():
@@ -53,9 +56,9 @@ def apply_img_mask(config):
         cv2.imwrite(new_fp, masked)
 
 
-def thresholding(filtered_img: np.ndarray, blur_kernel: tuple,
+def thresholding(filtered_img: np.ndarray,
                  do_save: bool, filepath: str = '') \
-                -> np.ndarray:
+                 -> np.ndarray:
     blurred_img = cv2.GaussianBlur(filtered_img, blur_kernel, 0)
     _, thresholded_img = cv2.threshold(blurred_img, 0, 255,
                                        cv2.THRESH_BINARY + cv2.THRESH_OTSU)

@@ -68,19 +68,6 @@ def distance(a: list, b: list):
     return d
 
 
-def thresholding(filt_img, blur_kernel: tuple,
-                 do_plot, do_save, filepath=''):
-    blurred_im = cv2.GaussianBlur(filt_img, blur_kernel, 0)
-
-    _, thresholded = cv2.threshold(blurred_im, 0, 255,
-                                   cv2.THRESH_BINARY + cv2.THRESH_OTSU)
-
-    if do_save:
-        cv2.imwrite(filepath, thresholded)
-
-    return thresholded
-
-
 def preprocess(thr_image: np.ndarray, orig_img,
                edgelength: int, plot: bool, save: bool, directory: str):
     # skeletonize
