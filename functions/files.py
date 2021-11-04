@@ -1,13 +1,17 @@
 import os
 import shutil
+import sys
 
 
 def make_folder(folder_name: str) -> None:
     path = os.path.abspath(folder_name)
-    try:
-        os.makedirs(path)
-    except FileExistsError:
-        pass
+
+    if not os.path.isdir(path):
+        try:
+            os.makedirs(path)
+        except Exception as e:
+            print(e)
+            sys.exit(1)
 
 
 def make_folders(config):
