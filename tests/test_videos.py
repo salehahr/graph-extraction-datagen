@@ -92,7 +92,7 @@ class TestMultiSectionVideo(TestVideo):
 #         cls.config = Config('M:/ma/graph-training/data/short_video.mp4')
 #         cls.raw_img_folder = cls.config.raw_img_folder
 
-
+@unittest.skip('Skip trimming video')
 class TestTrimVideo(unittest.TestCase):
     @classmethod
     def setUpClass(cls) -> None:
@@ -127,6 +127,7 @@ class TestTrimVideo(unittest.TestCase):
         self.assertTrue(os.path.isfile(trimmed_fp))
 
 
+@unittest.skip('Skip trimming video')
 class TestTrimVideoSections(unittest.TestCase):
     @classmethod
     def setUpClass(cls) -> None:
