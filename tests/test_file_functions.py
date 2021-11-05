@@ -4,14 +4,16 @@ import unittest
 from config import Config
 from functions.files import remove_data_folders, make_folders, clone_data_folders
 
+base_path = '/graphics/scratch/schuelej/sar/graph-training/data'
+
 
 class TestFileFunctions(unittest.TestCase):
     @classmethod
     def setUpClass(cls) -> None:
-        video_fp = 'M:/graph-training/data/test/short_video.mp4'
-        cls.temp_folder = 'M:/graph-training/data/test/temp/'
+        video_fp = os.path.join(base_path, 'test/short_video.mp4')
+        cls.temp_folder = os.path.join(base_path, 'test/temp')
 
-        cls.config = Config(video_fp)
+        cls.config = Config(video_fp, trim_times=None)
 
         if os.path.isdir(cls.config.basename):
             clone_data_folders(cls.config.basename, cls.temp_folder)

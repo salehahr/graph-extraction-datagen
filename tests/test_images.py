@@ -1,3 +1,4 @@
+import os
 import unittest
 
 import cv2
@@ -7,6 +8,8 @@ from functions.images import crop_and_resize, is_square, crop_radius
 from functions.images import get_rgb, get_centre
 
 import matplotlib.pyplot as plt
+
+base_path = '/graphics/scratch/schuelej/sar/graph-training/data'
 
 
 def plot_img(img):
@@ -19,9 +22,8 @@ def plot_img(img):
 class TestResize(unittest.TestCase):
     @classmethod
     def setUpClass(cls) -> None:
-        # filename = 'M:/master-thesis/02_Video_Data_to-be_filled/Videos/GRK008'
-        filename = 'M:/graph-training/data/test/short_video.mp4'
-        cls.config = Config(filename)
+        filename = os.path.join(base_path, 'test/short_video.mp4')
+        cls.config = Config(filename, frequency=2, trim_times=None)
 
         first_img_fp = cls.config.raw_image_files[0]
         cls.img = cv2.imread(first_img_fp, cv2.IMREAD_COLOR)

@@ -8,6 +8,8 @@ from before_filter import before_filter
 from after_filter import after_filter
 from config import Config
 
+base_path = '/graphics/scratch/schuelej/sar/graph-training/data'
+
 
 class TestVideo(unittest.TestCase):
     @classmethod
@@ -41,8 +43,8 @@ class TestVideo(unittest.TestCase):
 class TestShortVideo(TestVideo):
     @classmethod
     def setUpClass(cls) -> None:
-        cls.config = Config('M:/graph-training/data/test/short_video.mp4',
-                            frequency=2)
+        video_fp = os.path.join(base_path, 'test/short_video.mp4')
+        cls.config = Config(video_fp, frequency=2, trim_times=None)
         cls.raw_img_folder = cls.config.raw_img_folder
 
     def test_is_not_trimmed(self):
@@ -52,8 +54,8 @@ class TestShortVideo(TestVideo):
 class TestTrimmedVideo(TestVideo):
     @classmethod
     def setUpClass(cls) -> None:
-        video_filename = "M:/graph-training/data/test/trimmed_0000_02000__0000_03000.mp4"
-        cls.config = Config(video_filename, frequency=2)
+        video_fp = os.path.join(base_path, 'test/trimmed_0000_02000__0000_03000.mp4')
+        cls.config = Config(video_fp, frequency=2)
         cls.raw_img_folder = cls.config.raw_img_folder
 
     def test_is_trimmed(self):
@@ -63,10 +65,9 @@ class TestTrimmedVideo(TestVideo):
 class TestMultiSectionVideo(TestVideo):
     @classmethod
     def setUpClass(cls) -> None:
-        filename = "M:/graph-training/data/test/trimmed.mp4"
+        video_fp = os.path.join(base_path, 'test/trimmed.mp4')
         trim_times = [[2, 3], [4, 5]]
-
-        cls.config = Config(filename, trim_times, frequency=2)
+        cls.config = Config(video_fp, frequency=2, trim_times=trim_times)
 
     def test_has_sections(self):
         self.assertIsNotNone(self.config.sections)
@@ -82,12 +83,10 @@ class TestMultiSectionVideo(TestVideo):
 class TestTrimVideo(unittest.TestCase):
     @classmethod
     def setUpClass(cls) -> None:
-        cls.orig_filename = "M:/graph-training/data/test/GRK021_test.mp4"
+        cls.orig_filename = os.path.join(base_path, 'test/GRK021_test.mp4')
         trim_times = [[2, 3]]
-
-        cls.config = Config(cls.orig_filename, trim_times, frequency=2)
-
-        cls.target_filename = "M:/graph-training/data/test/trimmed_0000_02000__0000_03000.mp4"
+        cls.config = Config(cls.orig_filename, frequency=2, trim_times=trim_times)
+        cls.target_filename = os.path.join(base_path, 'test/trimmed_0000_02000__0000_03000.mp4')
 
     def test_trim_video_with_target(self):
         self.assertTrue(os.path.isfile(self.orig_filename))
@@ -102,7 +101,7 @@ class TestTrimVideo(unittest.TestCase):
 
     def test_trim_video_without_target(self):
         self.assertTrue(os.path.isfile(self.orig_filename))
-        trimmed_fp = 'M:/graph-training/data/test//GRK021_test_0000_02000__0000_03000.mp4'
+        trimmed_fp = os.path.join(base_path, 'test/GRK021_test_0000_02000__0000_03000.mp4')
         try:
             os.remove(trimmed_fp)
         except FileNotFoundError:
@@ -118,13 +117,12 @@ class TestTrimVideo(unittest.TestCase):
 class TestTrimVideoSections(unittest.TestCase):
     @classmethod
     def setUpClass(cls) -> None:
-        cls.orig_filename = "../data/GRK021_test.mp4"
+        cls.orig_filename = os.path.join(base_path, 'test/GRK021_test.mp4')
         trim_times = [[2, 3], [4, 5]]
+        cls.config = Config(cls.orig_filename, frequency=2, trim_times=trim_times, do_trim=False)
 
-        cls.config = Config(cls.orig_filename, trim_times, do_trim=False)
-
-        cls.target_filename_1 = "trimmed_0000_02000__0000_03000.mp4"
-        cls.target_filename_2 = "trimmed_0000_04000__0000_05000.mp4"
+        cls.target_filename_1 = os.path.join(base_path, 'test/trimmed_0000_02000__0000_03000.mp4')
+        cls.target_filename_2 = os.path.join(base_path, 'test/trimmed_0000_04000__0000_05000.mp4')
         cls.target_filenames = [cls.target_filename_1, cls.target_filename_2]
 
     def test_trim_video_with_target(self):
