@@ -110,8 +110,7 @@ def centre_crop(img: np.ndarray):
 
 
 def apply_img_mask(conf):
-    mask = cv2.imread(mask_path, cv2.IMREAD_GRAYSCALE)
-    mask[mask > 0] = 1  # convert non zero entries to 1
+    mask = cv2.imread(mask_path, cv2.IMREAD_GRAYSCALE) / 255
 
     for fp in conf.filtered_image_files:
         img = cv2.imread(fp, cv2.IMREAD_GRAYSCALE)
