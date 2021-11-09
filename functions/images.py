@@ -2,6 +2,8 @@ import os
 import cv2
 import numpy as np
 
+from functions.im2graph import preprocess
+
 import config
 
 blur_kernel = (5, 5)
@@ -123,17 +125,39 @@ def apply_img_mask(conf):
         cv2.imwrite(new_fp, masked)
 
 
-def threshold_imgs(conf, do_save):
+def thresh_and_skeletonise(conf, edge_length):
+    for fp in conf.masked_image_files:
+        cropped_fp = fp.replace('masked', 'cropped')
+        thresh_fp = fp.replace('masked', 'threshed')
+        preproc_fp = fp.replace('masked', 'skeleton')
+        overlay_fp = fp.replace('masked', 'overlay')
+
+        img_cropped = cv2.imread(cropped_fp, cv2.IMREAD_COLOR)
+
+        # exit if no raw image found
+        if img_cropped is None:
+            print(f'No original found.')
+            sys.exit(1)
+
+        # skip already processed frames
+        if os.path.isfile(overlay_fp):
+            continue
+
+        img_masked = cv2.imread(fp, 0)
+        img_threshed = thresholding(img_masked, conf.thr_save, thresh_fp)
+        img_preproc = preprocess(img_threshed, img_cropped, edge_length,
+                                 conf.pr_plot, conf.pr_save, preproc_fp)
+
+
+def threshold_imgs(conf):
     for fp in conf.masked_image_files:
         new_fp = fp.replace('masked', 'threshed')
         img = cv2.imread(fp, 0)
-        thresholding(img, do_save, new_fp)
+        thresholding(img, conf.thr_save, new_fp)
 
 
-
-def thresholding(filtered_img: np.ndarray,
-                 do_save: bool, filepath: str = '') \
-                 -> np.ndarray:
+def thresholding(filtered_img: np.ndarray, do_save: bool, filepath: str = '') \
+        -> np.ndarray:
     blurred_img = cv2.GaussianBlur(filtered_img, blur_kernel, 0)
     _, thresholded_img = cv2.threshold(blurred_img, 0, 255,
                                        cv2.THRESH_BINARY + cv2.THRESH_OTSU)

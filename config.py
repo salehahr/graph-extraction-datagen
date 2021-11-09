@@ -4,20 +4,34 @@ import re
 
 from functions.videos import trim_video, generate_time_tag_from_interval
 
-import video_data
-
 # Time tag pattern
-pattern = '(.*)_(\d{4}_\d{5}__\d{4}_\d{5})\.'
+pattern = '(.*)_(\d{4}_\d{5}__\d{4}_\d{5})'
+
+# Image Dimensions
+img_length = 512
+
+# Plot/Save options
+thr_plot = False
+pr_plot = False
+lm_plot = False
+poly_plot = False
+overlay_plot = False
+
+thr_save = True
+pr_save = True
+lm_save = True
+poly_save = True
+overlay_save = True
 
 
 class Config:
     def __init__(self,
-                 filepath: str = video_data.VIDEO_FULL_FILEPATH_EXT,
-                 trim_times: list = video_data.trim_times_in_s,
+                 filepath: str,
+                 frequency: int,
+                 trim_times=None,
                  do_trim: bool = True,
-                 start = None,
-                 end = None,
-                 frequency: float = video_data.frequency):
+                 start=None,
+                 end=None):
 
         self._filepath = filepath
         self.ext = os.path.splitext(filepath)[1]
@@ -27,16 +41,29 @@ class Config:
         self._end = end
         self.frequency = frequency
 
+        # plot/save options
+        self.thr_plot = thr_plot
+        self.pr_plot = pr_plot
+        self.lm_plot = lm_plot
+        self.poly_plot = poly_plot
+        self.overlay_plot = overlay_plot
+
+        self.thr_save = thr_save
+        self.pr_save = pr_save
+        self.lm_save = lm_save
+        self.poly_save = poly_save
+        self.overlay_save = overlay_save
+
         # trim video if trim_times given, else
         if self.has_trimmed:
             if do_trim:
                 section_filepaths = trim_video(self)
             else:
-                section_filepaths = [self.basename + '_' + generate_time_tag_from_interval(i) \
+                section_filepaths = [self.basename + '_' + generate_time_tag_from_interval(i)
                                      + self.ext for i in trim_times]
             self.sections = [Config(fp, trim_times=[], start=trim_times[i][0],
                                     end=trim_times[i][1],
-                                    frequency=self.frequency) \
+                                    frequency=self.frequency)
                              for i, fp in enumerate(section_filepaths)]
         else:
             self._generate_folders()
@@ -44,6 +71,7 @@ class Config:
         self.generate_start_time(start)
 
     def _generate_folders(self):
+        # TODO: raw images on outside of directory
         self.raw_img_folder = f'{self.basename}/raw'
         self.cropped_img_folder = f'{self.basename}/cropped'
         self.filtered_img_folder = f'{self.basename}/filtered'
@@ -134,20 +162,6 @@ class Config:
     def masked_image_files(self):
         return glob.glob(os.path.join(self.basename, '**/masked/*.png'), recursive=True)
 
-
-# Plot/Save options
-thr_plot = video_data.thr_plot
-pr_plot = video_data.pr_plot
-lm_plot = video_data.lm_plot
-poly_plot = video_data.poly_plot
-overlay_plot = video_data.overlay_plot
-
-thr_save = video_data.thr_save
-pr_save = video_data.pr_save
-lm_save = video_data.lm_save
-poly_save = video_data.poly_save
-overlay_save = video_data.overlay_save
-
-
-# Image Dimensions
-img_length = video_data.img_length
+    @property
+    def threshed_image_files(self):
+        return glob.glob(os.path.join(self.basename, '**/threshed/*.png'), recursive=True)

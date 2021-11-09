@@ -14,7 +14,8 @@ from functions.im2graph import plot_graph_on_img_poly
 
 from functions.images import apply_img_mask
 
-import config
+from config import Config
+from video_data import video_filepath, frequency, trim_times
 
 import warnings
 
@@ -26,7 +27,7 @@ def after_filter(conf):
     apply_img_mask(conf)
 
     # thresholding
-    threshold_imgs(conf, config.thr_save)
+    threshold_imgs(conf)
 
     # load filtered images
     for filepath_filt in conf.masked_image_files:
@@ -135,5 +136,5 @@ def after_filter(conf):
 
 
 if __name__ == '__main__':
-    conf = config.Config()
+    conf = Config(video_filepath, frequency, trim_times)
     after_filter(conf)
