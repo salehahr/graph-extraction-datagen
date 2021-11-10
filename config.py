@@ -87,6 +87,7 @@ class Config:
         self.landmarks_img_folder = f'{self.basename}/landmarks'
         self.poly_graph_img_folder = f'{self.basename}/poly_graph'
         self.overlay_img_folder = f'{self.basename}/overlay'
+        self.node_positions_folder = f'{self.basename}/node_positions'
 
     def generate_start_time(self, start):
         if self.is_trimmed:
@@ -145,6 +146,7 @@ class Config:
                 self.landmarks_img_folder,
                 self.poly_graph_img_folder,
                 self.overlay_img_folder,
+                self.node_positions_folder,
             ]
 
     @property
@@ -179,3 +181,11 @@ class Config:
     @property
     def skeletonised_image_files(self):
         return glob.glob(os.path.join(self.basename, '**/skeleton/*.png'), recursive=True)
+
+    @property
+    def node_position_files(self):
+        return glob.glob(os.path.join(self.basename, '**/node_positions/*.npy'), recursive=True)
+
+    @property
+    def node_position_img_files(self):
+        return glob.glob(os.path.join(self.basename, '**/node_positions/*.png'), recursive=True)

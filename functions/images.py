@@ -2,7 +2,7 @@ import os
 import cv2
 import numpy as np
 
-from functions.graphs import extract_nodes_edges
+from functions.graphs import extract_nodes_edges, get_positions_vector, get_positions_list
 
 from functions.im2graph import preprocess
 from functions.im2graph import helpernodes_BasicGraph_for_polyfit
@@ -165,7 +165,6 @@ def extract_graphs(conf, skip_existing):
     for fp in conf.skeletonised_image_files:
         cropped_fp = fp.replace('skeleton', 'cropped')
         overlay_fp = fp.replace('skeleton', 'overlay')
-        landmarks_fp = fp.replace('skeleton', 'landmarks')
         poly_fp = fp.replace('skeleton', 'poly_graph')
 
         img_cropped = cv2.imread(cropped_fp, cv2.IMREAD_COLOR)
@@ -183,7 +182,7 @@ def extract_graphs(conf, skip_existing):
         # landmarks
         _, ese_helperedges, helperedges, helpernodescoor = extract_graph_and_helpers(conf,
                                                                                      img_preproc,
-                                                                                     landmarks_fp)
+                                                                                     fp)
 
         # plot polynomials
         edge_width = 2
@@ -199,7 +198,11 @@ def extract_graphs(conf, skip_existing):
                                node_size, edge_width, overlay_fp)
 
 
-def extract_graph_and_helpers(conf, img_preproc, landmarks_fp):
+def extract_graph_and_helpers(conf, img_preproc, skel_fp):
+    landmarks_fp = skel_fp.replace('skeleton', 'landmarks')
+    node_pos_img_fp = skel_fp.replace('skeleton', 'node_positions')
+    node_pos_vec_fp = os.path.splitext(skel_fp.replace('skeleton', 'node_positions'))[0] + '.npy'
+
     node_size = 6
     allnodescoor, coordinates_global, esecoor, marked_img = extract_nodes_edges(img_preproc,
                                                                                 node_size)
@@ -216,16 +219,23 @@ def extract_graph_and_helpers(conf, img_preproc, landmarks_fp):
                              landmarks_fp,
                              helperedges,
                              ese_helperedges)
+
+    get_positions_vector(graph, do_save=True, filepath=node_pos_vec_fp)
+    generate_node_pos_img(graph, conf.img_length, do_save=True, filepath=node_pos_img_fp)
+
     return graph, ese_helperedges, helperedges, helpernodescoor
 
 
-def generate_node_pos_img(conf, node_positions: list):
-    dim = conf.img_length
+def generate_node_pos_img(graph, dim, do_save: bool = True, filepath: str = ''):
     img = np.zeros((dim, dim)).astype(np.uint8)
 
+    node_positions = get_positions_list(graph)
     for coords in node_positions:
         x, y = coords
         row, col = y, x
         img[row][col] = 255
+
+    if do_save and filepath:
+        cv2.imwrite(filepath, img)
 
     return img

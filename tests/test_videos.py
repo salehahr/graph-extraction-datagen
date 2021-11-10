@@ -38,6 +38,10 @@ class TestVideo(unittest.TestCase):
             after_filter(self.config, skip_existing=False)
 
             self.assertGreaterEqual(len(self.config.masked_image_files), 1)
+            self.assertEqual(len(self.config.masked_image_files),
+                             len(self.config.node_position_files))
+            self.assertEqual(len(self.config.node_position_img_files),
+                             len(self.config.node_position_files))
 
 
 class TestShortVideo(TestVideo):

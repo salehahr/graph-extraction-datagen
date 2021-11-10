@@ -10,12 +10,16 @@ def get_positions_list(graph) -> list:
     return [xy for xy in pos_dict.values()]
 
 
-def get_positions_vector(graph) -> np.ndarray:
+def get_positions_vector(graph, do_save: bool = True, filepath: str = '') -> np.ndarray:
     pos_list = get_positions_list(graph)
 
     positions_vector = np.zeros((len(graph), 2))
     for i, xy in enumerate(pos_list):
         positions_vector[i, :] = xy
+
+    if do_save and filepath:
+        np.save(filepath, positions_vector)
+
     return positions_vector
 
 
