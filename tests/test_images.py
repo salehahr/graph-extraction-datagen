@@ -4,7 +4,7 @@ import unittest
 import cv2
 
 from config import Config, img_length
-from functions.images import crop_and_resize, is_square, crop_radius
+from functions.images import crop_resize_square, is_square, crop_radius
 from functions.images import get_rgb, get_centre
 
 import matplotlib.pyplot as plt
@@ -46,7 +46,7 @@ class TestResize(unittest.TestCase):
         self.assertEqual(height, 1080)
         self.assertEqual(width, 1920)
 
-        square_img = crop_and_resize(self.img)
+        square_img = crop_resize_square(self.img)
         cr_height, cr_width, _ = square_img.shape
 
         # plt.figure()

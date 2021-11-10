@@ -4,8 +4,6 @@ import numpy as np
 
 from functions.im2graph import preprocess
 
-import config
-
 blur_kernel = (5, 5)
 crop_radius = 575
 
@@ -61,7 +59,7 @@ def crop_imgs(conf):
         if is_square(img):
             continue
 
-        img_cropped = crop_and_resize(img)
+        img_cropped = crop_resize_square(img, conf.img_length)
 
         # cv2.imshow('title', img_cropped)
         # cv2.waitKey()
@@ -69,12 +67,12 @@ def crop_imgs(conf):
         cv2.imwrite(new_fp, img_cropped)
 
 
-def crop_and_resize(img: np.ndarray):
-    return scale_down(centre_crop(img))
+def crop_resize_square(img: np.ndarray, length: int):
+    return resize_square(centre_crop(img), length)
 
 
-def scale_down(img: np.ndarray):
-    return cv2.resize(img, (config.img_length, config.img_length))
+def resize_square(img: np.ndarray, length: int):
+    return cv2.resize(img, (length, length))
 
 
 def centre_crop(img: np.ndarray):
