@@ -2,7 +2,13 @@ import os
 import cv2
 import numpy as np
 
+from functions.graphs import extract_nodes_edges
+
 from functions.im2graph import preprocess
+from functions.im2graph import helpernodes_BasicGraph_for_polyfit, \
+    helpernodes_BasicGraph_for_structure
+from functions.im2graph import polyfit_visualize, polyfit_training, graph_extraction, graph_poly, \
+    plot_graph_on_img_poly
 
 blur_kernel = (5, 5)
 crop_radius = 575
@@ -123,28 +129,74 @@ def apply_img_mask(conf):
         cv2.imwrite(new_fp, masked)
 
 
-def thresh_and_skeletonise(conf, edge_length):
-    for fp in conf.masked_image_files:
-        cropped_fp = fp.replace('masked', 'cropped')
-        thresh_fp = fp.replace('masked', 'threshed')
-        preproc_fp = fp.replace('masked', 'skeleton')
-        overlay_fp = fp.replace('masked', 'overlay')
+def extract_graphs(conf, skip_existing):
+    """ Starting with the thresholded images, performs the operations
+    skeletonise, node extraction, edge extraction"""
+    for fp in conf.threshed_image_files:
+        cropped_fp = fp.replace('threshed', 'cropped')
+        preproc_fp = fp.replace('threshed', 'skeleton')
+        overlay_fp = fp.replace('threshed', 'overlay')
+        landmarks_fp = fp.replace('threshed', 'landmarks')
+        poly_fp = fp.replace('threshed', 'poly_graph')
 
         img_cropped = cv2.imread(cropped_fp, cv2.IMREAD_COLOR)
+        img_threshed = cv2.imread(fp, cv2.IMREAD_GRAYSCALE)
 
         # exit if no raw image found
-        if img_cropped is None:
-            print(f'No original found.')
+        if img_threshed is None:
+            print(f'No thresholded image found.')
             sys.exit(1)
 
         # skip already processed frames
-        if os.path.isfile(overlay_fp):
+        if os.path.isfile(overlay_fp) and skip_existing:
             continue
 
-        img_masked = cv2.imread(fp, 0)
-        img_threshed = thresholding(img_masked, conf.thr_save, thresh_fp)
+        edge_length = 10
         img_preproc = preprocess(img_threshed, img_cropped, edge_length,
                                  conf.pr_plot, conf.pr_save, preproc_fp)
+
+        # landmarks
+        node_size = 6
+        allnodescoor, coordinates_global, esecoor, marked_img = extract_nodes_edges(img_preproc, node_size)
+
+        helperedges, ese_helperedges, helpernodescoor = helpernodes_BasicGraph_for_polyfit(coordinates_global, esecoor,
+                                                                                           allnodescoor)
+
+        helperedges_structure, ese_helperedges_structure, helpernodescoor_structure = helpernodes_BasicGraph_for_structure(
+            coordinates_global, esecoor, allnodescoor, marked_img, conf.lm_plot, conf.lm_save, node_size,
+            landmarks_fp)
+
+        # polynomial
+        visual_degree = 5
+        point_density = 2
+        cubic_thresh = 10  # deg3 > 10, otherwise only deg2 coefficients for training
+        polyfit_coeff_visual, polyfit_coordinates, edge_coordinates, polyfit_points = polyfit_visualize(helperedges,
+                                                                                                        ese_helperedges,
+                                                                                                        visual_degree,
+                                                                                                        point_density)
+
+        training_parameters = polyfit_training(helperedges, ese_helperedges, cubic_thresh)
+
+        deg3 = [item[0][0] for item in training_parameters]
+        deg2 = [item[0][1] for item in training_parameters]
+        edgelength = [item[1] for item in training_parameters]
+        edgelength_bool = True
+        deg3_bool = True
+        deg2_bool = True
+        label_selection = [edgelength_bool, deg3_bool, deg2_bool]
+        graph = graph_extraction(helpernodescoor_structure, ese_helperedges_structure,
+                                 deg3, deg2, edgelength, label_selection)
+
+        # plot polynomials
+        node_size = 10
+        edge_width = 2
+        graph_poly(img_cropped, helpernodescoor, polyfit_coordinates, conf.poly_plot, conf.poly_save,
+                   node_size, edge_width, poly_fp)
+
+        node_size = 7
+        plot_graph_on_img_poly(img_cropped, helpernodescoor, polyfit_coordinates,
+                               conf.overlay_plot, conf.overlay_save,
+                               node_size, edge_width, overlay_fp)
 
 
 def threshold_imgs(conf):
