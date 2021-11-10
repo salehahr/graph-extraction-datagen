@@ -12,12 +12,13 @@ class TestFileFunctions(unittest.TestCase):
     def setUpClass(cls) -> None:
         video_fp = os.path.join(base_path, 'test/short_video.mp4')
         cls.temp_folder = os.path.join(base_path, 'test/temp')
+        if os.path.isdir(cls.temp_folder):
+            remove_data_folders(cls.temp_folder)
 
         cls.config = Config(video_fp, frequency=2, img_length=512, trim_times=None)
-        cls.no_originals = True
+        cls.no_originals = False if os.path.isdir(cls.config.basename) else True
 
         if os.path.isdir(cls.config.basename):
-            cls.no_originals = False
             clone_data_folders(cls.config.basename, cls.temp_folder)
             remove_data_folders(cls.config.basename)
 
