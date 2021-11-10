@@ -8,7 +8,7 @@ from functions.videos import trim_video, generate_time_tag_from_interval
 pattern = '(.*)_(\d{4}_\d{5}__\d{4}_\d{5})'
 
 # Image Dimensions
-img_length = 512
+img_length = 256
 
 # Plot/Save options
 thr_plot = False
@@ -64,9 +64,12 @@ class Config:
             else:
                 section_filepaths = [self.basename + '_' + generate_time_tag_from_interval(i)
                                      + self.ext for i in trim_times]
-            self.sections = [Config(fp, trim_times=[], start=trim_times[i][0],
-                                    end=trim_times[i][1],
-                                    frequency=self.frequency)
+            self.sections = [Config(fp,
+                                    frequency=self.frequency,
+                                    img_length=self.img_length,
+                                    trim_times=[],
+                                    start=trim_times[i][0],
+                                    end=trim_times[i][1])
                              for i, fp in enumerate(section_filepaths)]
         else:
             self._generate_folders()

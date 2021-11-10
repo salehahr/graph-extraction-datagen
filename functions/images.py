@@ -13,9 +13,6 @@ from functions.im2graph import polyfit_visualize, polyfit_training, graph_extrac
 blur_kernel = (5, 5)
 crop_radius = 575
 
-mask_path = '../data/mask.png' if 'tests' in os.getcwd() \
-        else 'data/mask.png'
-
 
 def get_rgb(img):
     """ Gets RGB image for matplotlib plots. """
@@ -116,6 +113,8 @@ def centre_crop(img: np.ndarray):
 
 
 def apply_img_mask(conf):
+    mask_path = f'../data/mask{conf.img_length:d}.png' if 'tests' in os.getcwd() \
+        else f'data/mask{conf.img_length:d}.png'
     mask = cv2.imread(mask_path, cv2.IMREAD_GRAYSCALE) / 255
 
     for fp in conf.filtered_image_files:

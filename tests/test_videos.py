@@ -35,7 +35,7 @@ class TestVideo(unittest.TestCase):
             self.assertGreaterEqual(len(self.config.filtered_image_files), 1)
             self.assertEqual(len(self.config.masked_image_files), 0)
 
-            after_filter(self.config)
+            after_filter(self.config, skip_existing=False)
 
             self.assertGreaterEqual(len(self.config.masked_image_files), 1)
 
@@ -44,7 +44,7 @@ class TestShortVideo(TestVideo):
     @classmethod
     def setUpClass(cls) -> None:
         video_fp = os.path.join(base_path, 'test/short_video.mp4')
-        cls.config = Config(video_fp, frequency=2, trim_times=None)
+        cls.config = Config(video_fp, frequency=2, img_length=512, trim_times=None)
         cls.raw_img_folder = cls.config.raw_img_folder
 
     def test_is_not_trimmed(self):
@@ -55,7 +55,7 @@ class TestTrimmedVideo(TestVideo):
     @classmethod
     def setUpClass(cls) -> None:
         video_fp = os.path.join(base_path, 'test/trimmed_0000_02000__0000_03000.mp4')
-        cls.config = Config(video_fp, frequency=2)
+        cls.config = Config(video_fp, frequency=2, img_length=512)
         cls.raw_img_folder = cls.config.raw_img_folder
 
     def test_is_trimmed(self):
@@ -67,7 +67,7 @@ class TestMultiSectionVideo(TestVideo):
     def setUpClass(cls) -> None:
         video_fp = os.path.join(base_path, 'test/trimmed.mp4')
         trim_times = [[2, 3], [4, 5]]
-        cls.config = Config(video_fp, frequency=2, trim_times=trim_times)
+        cls.config = Config(video_fp, frequency=2, img_length=512, trim_times=trim_times)
 
     def test_has_sections(self):
         self.assertIsNotNone(self.config.sections)

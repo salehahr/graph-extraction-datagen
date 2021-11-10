@@ -3,7 +3,7 @@ import unittest
 
 import cv2
 
-from config import Config, img_length
+from config import Config
 from functions.images import crop_resize_square, is_square, crop_radius
 from functions.images import get_rgb, get_centre
 
@@ -23,7 +23,7 @@ class TestResize(unittest.TestCase):
     @classmethod
     def setUpClass(cls) -> None:
         filename = os.path.join(base_path, 'test/short_video.mp4')
-        cls.config = Config(filename, frequency=2, trim_times=None)
+        cls.config = Config(filename, frequency=2, img_length=512, trim_times=None)
 
         first_img_fp = cls.config.raw_image_files[0]
         cls.img = cv2.imread(first_img_fp, cv2.IMREAD_COLOR)
@@ -46,7 +46,7 @@ class TestResize(unittest.TestCase):
         self.assertEqual(height, 1080)
         self.assertEqual(width, 1920)
 
-        square_img = crop_resize_square(self.img)
+        square_img = crop_resize_square(self.img, self.config.img_length)
         cr_height, cr_width, _ = square_img.shape
 
         # plt.figure()
@@ -54,5 +54,5 @@ class TestResize(unittest.TestCase):
         # plt.show()
 
         self.assertTrue(is_square(square_img))
-        self.assertEqual(img_length, cr_height)
-        self.assertEqual(img_length, cr_width)
+        self.assertEqual(self.config.img_length, cr_height)
+        self.assertEqual(self.config.img_length, cr_width)

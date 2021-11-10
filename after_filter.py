@@ -2,7 +2,7 @@ import numpy as np
 
 from functions.images import threshold_imgs, extract_graphs, apply_img_mask
 
-from config import Config
+from config import Config, img_length
 from video_data import video_filepath, frequency, trim_times
 
 import warnings
@@ -17,5 +17,6 @@ def after_filter(conf, skip_existing=True):
 
 
 if __name__ == '__main__':
-    conf = Config(video_filepath, frequency, trim_times)
-    after_filter(conf)
+    conf = Config(video_filepath, frequency,
+                  img_length=img_length, trim_times=trim_times)
+    after_filter(conf, skip_existing=False)

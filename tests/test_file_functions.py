@@ -13,7 +13,7 @@ class TestFileFunctions(unittest.TestCase):
         video_fp = os.path.join(base_path, 'test/short_video.mp4')
         cls.temp_folder = os.path.join(base_path, 'test/temp')
 
-        cls.config = Config(video_fp, frequency=2, trim_times=None)
+        cls.config = Config(video_fp, frequency=2, img_length=512, trim_times=None)
         cls.no_originals = True
 
         if os.path.isdir(cls.config.basename):
