@@ -1,5 +1,6 @@
 .idea/*
 Thumbs.db
+*.swp
 
 ### VirtualEnv template
 # Virtualenv
