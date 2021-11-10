@@ -127,31 +127,58 @@ def apply_img_mask(conf):
         cv2.imwrite(new_fp, masked)
 
 
-def extract_graphs(conf, skip_existing):
-    """ Starting with the thresholded images, performs the operations
-    skeletonise, node extraction, edge extraction"""
+def threshold_imgs(conf):
+    for fp in conf.masked_image_files:
+        new_fp = fp.replace('masked', 'threshed')
+        img = cv2.imread(fp, 0)
+        thresholding(img, conf.thr_save, new_fp)
 
+
+def thresholding(filtered_img: np.ndarray, do_save: bool, filepath: str = '') \
+        -> np.ndarray:
+    blurred_img = cv2.GaussianBlur(filtered_img, blur_kernel, 0)
+    _, thresholded_img = cv2.threshold(blurred_img, 0, 255,
+                                       cv2.THRESH_BINARY + cv2.THRESH_OTSU)
+
+    if do_save:
+        cv2.imwrite(filepath, thresholded_img)
+
+    return thresholded_img
+
+
+def skeletonise_imgs(conf):
     for fp in conf.threshed_image_files:
         cropped_fp = fp.replace('threshed', 'cropped')
-        preproc_fp = fp.replace('threshed', 'skeleton')
-        overlay_fp = fp.replace('threshed', 'overlay')
-        landmarks_fp = fp.replace('threshed', 'landmarks')
-        poly_fp = fp.replace('threshed', 'poly_graph')
+        skel_fp = fp.replace('threshed', 'skeleton')
 
         img_cropped = cv2.imread(cropped_fp, cv2.IMREAD_COLOR)
         img_threshed = cv2.imread(fp, cv2.IMREAD_GRAYSCALE)
 
+        preprocess(img_threshed, img_cropped,
+                   conf.pr_plot, conf.pr_save, skel_fp)
+
+
+def extract_graphs(conf, skip_existing):
+    """ Starting with the thresholded images, performs the operations
+    skeletonise, node extraction, edge extraction"""
+
+    for fp in conf.skeletonised_image_files:
+        cropped_fp = fp.replace('skeleton', 'cropped')
+        overlay_fp = fp.replace('skeleton', 'overlay')
+        landmarks_fp = fp.replace('skeleton', 'landmarks')
+        poly_fp = fp.replace('skeleton', 'poly_graph')
+
+        img_cropped = cv2.imread(cropped_fp, cv2.IMREAD_COLOR)
+        img_preproc = cv2.imread(fp, cv2.IMREAD_GRAYSCALE)
+
         # exit if no raw image found
-        if img_threshed is None:
-            print(f'No thresholded image found.')
+        if img_preproc is None:
+            print(f'No skeletonised image found.')
             sys.exit(1)
 
         # skip already processed frames
         if os.path.isfile(overlay_fp) and skip_existing:
             continue
-
-        img_preproc = preprocess(img_threshed, img_cropped,
-                                 conf.pr_plot, conf.pr_save, preproc_fp)
 
         # landmarks
         _, ese_helperedges, helperedges, helpernodescoor = extract_graph_and_helpers(conf,
@@ -190,25 +217,6 @@ def extract_graph_and_helpers(conf, img_preproc, landmarks_fp):
                              helperedges,
                              ese_helperedges)
     return graph, ese_helperedges, helperedges, helpernodescoor
-
-
-def threshold_imgs(conf):
-    for fp in conf.masked_image_files:
-        new_fp = fp.replace('masked', 'threshed')
-        img = cv2.imread(fp, 0)
-        thresholding(img, conf.thr_save, new_fp)
-
-
-def thresholding(filtered_img: np.ndarray, do_save: bool, filepath: str = '') \
-        -> np.ndarray:
-    blurred_img = cv2.GaussianBlur(filtered_img, blur_kernel, 0)
-    _, thresholded_img = cv2.threshold(blurred_img, 0, 255,
-                                       cv2.THRESH_BINARY + cv2.THRESH_OTSU)
-
-    if do_save:
-        cv2.imwrite(filepath, thresholded_img)
-
-    return thresholded_img
 
 
 def generate_node_pos_img(conf, node_positions: list):
