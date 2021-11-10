@@ -175,3 +175,7 @@ class Config:
     @property
     def threshed_image_files(self):
         return glob.glob(os.path.join(self.basename, '**/threshed/*.png'), recursive=True)
+
+    @property
+    def skeletonised_image_files(self):
+        return glob.glob(os.path.join(self.basename, '**/skeleton/*.png'), recursive=True)
