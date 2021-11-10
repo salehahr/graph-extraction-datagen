@@ -209,3 +209,15 @@ def thresholding(filtered_img: np.ndarray, do_save: bool, filepath: str = '') \
         cv2.imwrite(filepath, thresholded_img)
 
     return thresholded_img
+
+
+def generate_node_pos_img(conf, node_positions: list):
+    dim = conf.img_length
+    img = np.zeros((dim, dim)).astype(np.uint8)
+
+    for coords in node_positions:
+        x, y = coords
+        row, col = y, x
+        img[row][col] = 255
+
+    return img

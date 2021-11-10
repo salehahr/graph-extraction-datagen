@@ -2,14 +2,16 @@ import os
 import unittest
 
 import cv2
-
-from config import Config
-from functions.images import crop_resize_square, is_square, crop_radius
-from functions.images import get_rgb, get_centre
-
 import matplotlib.pyplot as plt
 
-base_path = '/graphics/scratch/schuelej/sar/graph-training/data'
+from config import Config
+from functions.graphs import get_position
+from functions.images import crop_resize_square, is_square, crop_radius, generate_node_pos_img
+from functions.images import get_rgb, get_centre
+from functions.images import extract_graph_and_helpers
+
+
+base_path = '/graphics/scratch/schuelej/sar/graph-training/data/test'
 
 
 def plot_img(img):
@@ -19,10 +21,10 @@ def plot_img(img):
     plt.yticks([])
 
 
-class TestResize(unittest.TestCase):
+class TestShortVideoImage(unittest.TestCase):
     @classmethod
     def setUpClass(cls) -> None:
-        filename = os.path.join(base_path, 'test/short_video.mp4')
+        filename = os.path.join(base_path, 'short_video.mp4')
         cls.config = Config(filename, frequency=2, img_length=512, trim_times=None)
 
         first_img_fp = cls.config.raw_image_files[0]
@@ -56,3 +58,20 @@ class TestResize(unittest.TestCase):
         self.assertTrue(is_square(square_img))
         self.assertEqual(self.config.img_length, cr_height)
         self.assertEqual(self.config.img_length, cr_width)
+
+    def test_extract_graph(self):
+        img_skel_fp = self.config.skeletonised_image_files[0]
+        img_skel = cv2.imread(img_skel_fp, cv2.IMREAD_GRAYSCALE)
+        self.config.lm_save = False
+
+        graph, _, _, _ = extract_graph_and_helpers(self.config, img_skel, '')
+        pos = get_position(graph)
+        node_pos_img = generate_node_pos_img(self.config, pos)
+
+        temp_fp_skeleton = os.path.join(base_path, 'temp_skel.png')
+        temp_fp_nodepos = os.path.join(base_path, 'temp_nodepos.png')
+        cv2.imwrite(temp_fp_skeleton, img_skel)
+        cv2.imwrite(temp_fp_nodepos, node_pos_img)
+
+        self.assertIsNotNone(graph)
+        self.assertIsNotNone(pos)
