@@ -28,6 +28,7 @@ class Config:
     def __init__(self,
                  filepath: str,
                  frequency: int,
+                 img_length: int = img_length,
                  trim_times=None,
                  do_trim: bool = True,
                  start=None,
@@ -37,9 +38,11 @@ class Config:
         self.ext = os.path.splitext(filepath)[1]
         self.trim_times = trim_times
         self.sections = [self]
+        self.frequency = frequency
+        self.img_length = img_length
+
         self._start = start
         self._end = end
-        self.frequency = frequency
 
         # plot/save options
         self.thr_plot = thr_plot
@@ -110,15 +113,19 @@ class Config:
 
     @property
     def basename(self):
+        directory = os.path.dirname(self.filepath)
+        img_length = str(self.img_length)
+        base_name = os.path.splitext(os.path.basename(self.filepath))[0]
+
         if self.is_trimmed:
-            match = re.search(pattern, self.filepath)
+            match = re.search(pattern, base_name)
             name_without_timetags = match.group(1)
             timetags = match.group(2)
 
-            return os.path.join(name_without_timetags, timetags)
+            return os.path.join(directory, img_length, name_without_timetags, timetags)
 
         else:
-            return os.path.splitext(self.filepath)[0]
+            return os.path.join(directory, img_length, base_name)
 
     @property
     def list_of_folders(self):
