@@ -88,6 +88,7 @@ class Config:
         self.poly_graph_img_folder = f'{self.basename}/poly_graph'
         self.overlay_img_folder = f'{self.basename}/overlay'
         self.node_positions_folder = f'{self.basename}/node_positions'
+        self.adj_matr_folder = f'{self.basename}/adj_matr'
 
     def generate_start_time(self, start):
         if self.is_trimmed:
@@ -147,6 +148,7 @@ class Config:
                 self.poly_graph_img_folder,
                 self.overlay_img_folder,
                 self.node_positions_folder,
+                self.adj_matr_folder,
             ]
 
     @property
@@ -189,3 +191,7 @@ class Config:
     @property
     def node_position_img_files(self):
         return glob.glob(os.path.join(self.basename, '**/node_positions/*.png'), recursive=True)
+
+    @property
+    def adj_matrix_files(self):
+        return glob.glob(os.path.join(self.basename, '**/adj_matr/*.npy'), recursive=True)

@@ -782,11 +782,9 @@ def graph_extraction(coordinates_global,
                      do_save,
                      node_size,
                      landmarks_fp,
-                     helperedges,
-                     ese_helperedges):
+                     training_parameters):
     graph = nx.Graph()
 
-    training_parameters = polyfit_training(helperedges, ese_helperedges)
     deg3 = [item[0][0] for item in training_parameters]
     deg2 = [item[0][1] for item in training_parameters]
     edgelength = [item[1] for item in training_parameters]

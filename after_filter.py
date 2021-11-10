@@ -1,6 +1,7 @@
 import numpy as np
 
-from functions.images import apply_img_mask, threshold_imgs, skeletonise_imgs, extract_graphs
+from functions.images import apply_img_mask, threshold_imgs, skeletonise_imgs
+from functions.images import extract_graphs
 
 from config import Config, img_length
 from video_data import video_filepath, frequency, trim_times

@@ -78,7 +78,8 @@ class TestShortVideoImage(unittest.TestCase):
         pos = get_positions_list(self.graph)
         self.assertIsNotNone(pos)
 
-        node_pos_img = generate_node_pos_img(self.config, pos)
+        node_pos_img = generate_node_pos_img(self.graph,
+                                             self.config.img_length)
 
         temp_fp_skeleton = os.path.join(base_path, 'temp_skel.png')
         temp_fp_nodepos = os.path.join(base_path, 'temp_nodepos.png')
@@ -87,19 +88,18 @@ class TestShortVideoImage(unittest.TestCase):
 
     def test_get_adjacency_matrix(self):
         fp_adj_matrix = os.path.join(base_path, 'adj_matr.npy')
-        extended_adj_matrix = get_adjacency_matrix(self.graph,
-                                                   do_save=True,
-                                                   filepath=fp_adj_matrix)
+        self.assertFalse(os.path.isfile(fp_adj_matrix))
 
+        get_adjacency_matrix(self.graph, do_save=True, filepath=fp_adj_matrix)
         self.assertTrue(os.path.isfile(fp_adj_matrix))
 
         with open(fp_adj_matrix, 'rb') as f:
             a = np.load(f)
-            self.assertEqual(a.shape[0], len(self.graph))
-            self.assertEqual(a.shape[1], 2 + len(self.graph))
+            print(a.shape)
+            self.assertEqual(a.shape[1], len(self.graph))
+            self.assertEqual(a.shape[2], 2 + len(self.graph))
 
         os.remove(fp_adj_matrix)
-        self.assertFalse(os.path.isfile(fp_adj_matrix))
 
     def test_adjacency_matrix(self):
         """ Test adjacency matrix with and without nodelist. """
