@@ -16,6 +16,7 @@ class Config:
                  trim_times: list = video_data.trim_times_in_s,
                  do_trim: bool = True,
                  start = None,
+                 end = None,
                  frequency: float = video_data.frequency):
 
         self._filepath = filepath
@@ -23,6 +24,7 @@ class Config:
         self.trim_times = trim_times
         self.sections = [self]
         self._start = start
+        self._end = end
         self.frequency = frequency
 
         # trim video if trim_times given, else
@@ -33,6 +35,7 @@ class Config:
                 section_filepaths = [self.basename + '_' + generate_time_tag_from_interval(i) \
                                      + self.ext for i in trim_times]
             self.sections = [Config(fp, trim_times=[], start=trim_times[i][0],
+                                    end=trim_times[i][1],
                                     frequency=self.frequency) \
                              for i, fp in enumerate(section_filepaths)]
         else:
