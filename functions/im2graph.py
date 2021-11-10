@@ -28,7 +28,6 @@ def num_in_4connectivity(a: int, b: int, image: np.ndarray):
     conn = four_connectivity(a, b)
     values = []
     for i in range(0, len(conn)):
-        v = 0
         v = image[conn[i][0], conn[i][1]]
         if v == 255:
             values.append(1)
@@ -39,8 +38,8 @@ def num_in_4connectivity(a: int, b: int, image: np.ndarray):
     return surrounding
 
 
-def positive_neighbours(a: int, b:int, image: np.ndarray):
-    #list of pixels with value 1 in in neighbourhood of [a,b]
+def positive_neighbours(a: int, b: int, image: np.ndarray):
+    # list of pixels with value 1 in in neighbourhood of [a,b]
     nb = []
     for xx in range(a - 1, a + 2):
         for yy in range(b - 1, b + 2):
@@ -69,7 +68,9 @@ def distance(a: list, b: list):
 
 
 def preprocess(thr_image: np.ndarray, orig_img,
-               edgelength: int, plot: bool, save: bool, directory: str):
+               plot: bool, save: bool, directory: str):
+    edgelength = 10
+
     # skeletonize
     img = thr_image.copy() / 255
     img = img.astype(int)
@@ -450,6 +451,7 @@ def edge_extraction(skeleton: np.ndarray, endpoints: list, bcnodes: list):
 
     return edge_start_end, esecoor, edge_course, coursecoor
 
+
 def helpernodes_BasicGraph_for_polyfit(coordinates_global: list, esecoor: list, allnodescoor: list):
     helperedges = copy.deepcopy(coordinates_global)
     ese_helperedges = copy.deepcopy(esecoor)
@@ -520,6 +522,7 @@ def helpernodes_BasicGraph_for_polyfit(coordinates_global: list, esecoor: list, 
         len_begin = len_end
 
     return helperedges, ese_helperedges, helpernodescoor
+
 
 def helpernodes_BasicGraph_for_structure(coordinates_global: list, esecoor: list, allnodescoor: list, pltimage: np.ndarray,
                            plot: bool, save: bool, node_thick: int, dir: str):
@@ -604,7 +607,9 @@ def helpernodes_BasicGraph_for_structure(coordinates_global: list, esecoor: list
     return helperedges, ese_helperedges, helpernodescoor
 
 
-def polyfit_visualize(helperedges: list, ese_helperedges: list, deg: int, point_density: int):
+def polyfit_visualize(helperedges: list, ese_helperedges: list):
+    visual_degree = 5
+    point_density = 2
     edges = helperedges.copy()
     ese = ese_helperedges.copy()
     polyfit_coor_rotated = []
@@ -657,7 +662,7 @@ def polyfit_visualize(helperedges: list, ese_helperedges: list, deg: int, point_
             coursecoor_rotated.append([a, b])
         coordinates_local.append(coursecoor_local)
         coordinates_rotated.append(coursecoor_rotated)
-        p = np.polyfit(x_rotated, y_rotated, deg)
+        p = np.polyfit(x_rotated, y_rotated, visual_degree)
         polyfit_temp.append(p)
         #print('i = ', i)
 
@@ -673,9 +678,9 @@ def polyfit_visualize(helperedges: list, ese_helperedges: list, deg: int, point_
             px = x_poly_rotated[j]
             py = 0
             # polynom for visualization
-            for d in range(0, deg):
-                py = py + p[d] * px ** (deg - d)
-            py = py + p[deg]
+            for d in range(0, visual_degree):
+                py = py + p[d] * px ** (visual_degree - d)
+            py = py + p[visual_degree]
             py = round(py, 2)
             y_poly_rotated.append(py)
             polycoor_rotated.append([px, py])
@@ -707,7 +712,9 @@ def polyfit_visualize(helperedges: list, ese_helperedges: list, deg: int, point_
     return polyfit_coeff_visual, polyfit_coordinates, edge_coordinates, polyfit_points
 
 
-def polyfit_training(helperedges: list, ese_helperedges: list, thresh: int):
+def polyfit_training(helperedges: list, ese_helperedges: list):
+    cubic_thresh = 10  # deg3 > 10, otherwise only deg2 coefficients for training
+
     edges = helperedges.copy()
     ese = ese_helperedges.copy()
     training_parameters = []
@@ -749,7 +756,7 @@ def polyfit_training(helperedges: list, ese_helperedges: list, thresh: int):
 
         p_norm_deg3 = np.polyfit(x_rotated_norm, y_rotated, 3)
         polyfit_norm_deg3.append(p_norm_deg3)
-        if abs(p_norm_deg3[0]) > thresh:
+        if abs(p_norm_deg3[0]) > cubic_thresh:
             deg_norm = 3
             p_norm = np.polyfit(x_rotated_norm, y_rotated, deg_norm)
             polyfit_temp_norm.append([p_norm[0], p_norm[1]])
@@ -767,16 +774,34 @@ def polyfit_training(helperedges: list, ese_helperedges: list, thresh: int):
     return training_parameters
 
 
-def graph_extraction(helpernodescoor: list, ese_helperedges: list, deg3: list, deg2:list, edgelength: list,
-                     label_selection: list):
-    C = nx.Graph()
+def graph_extraction(coordinates_global,
+                     esecoor,
+                     allnodescoor,
+                     marked_img,
+                     do_plot,
+                     do_save,
+                     node_size,
+                     landmarks_fp,
+                     helperedges,
+                     ese_helperedges):
+    graph = nx.Graph()
+
+    training_parameters = polyfit_training(helperedges, ese_helperedges)
+    deg3 = [item[0][0] for item in training_parameters]
+    deg2 = [item[0][1] for item in training_parameters]
+    edgelength = [item[1] for item in training_parameters]
+
+    _, ese_helperedges, helpernodescoor = helpernodes_BasicGraph_for_structure(
+        coordinates_global, esecoor, allnodescoor, marked_img,
+        do_plot, do_save,
+        node_size, landmarks_fp)
+
 
     #define nodes with attribute position
     for i in range(0, len(helpernodescoor)):
         x = helpernodescoor[i][0]
-        #y = -(helpernodescoor[i][1])
         y = helpernodescoor[i][1]
-        C.add_node(i, pos=(x, y))
+        graph.add_node(i, pos=(x, y))
 
     #define edges with attributes: weight
     for p in range(0, len(ese_helperedges)):
@@ -785,15 +810,13 @@ def graph_extraction(helpernodescoor: list, ese_helperedges: list, deg3: list, d
         if start in helpernodescoor and end in helpernodescoor:
             startidx = helpernodescoor.index(start)
             endidx = helpernodescoor.index(end)
-            C.add_edge(startidx, endidx, label=p)
-            if label_selection[0]:
-                C.add_edge(startidx, endidx, label=p, length=edgelength[p])
-            if label_selection[1]:
-                C.add_edge(startidx, endidx, label=p, deg3=deg3[p])
-            if label_selection[2]:
-                C.add_edge(startidx, endidx, label=p, deg2=deg2[p])
+            graph.add_edge(startidx, endidx, label=p)
+            graph.add_edge(startidx, endidx, label=p, length=edgelength[p])
+            graph.add_edge(startidx, endidx, label=p, deg3=deg3[p])
+            graph.add_edge(startidx, endidx, label=p, deg2=deg2[p])
 
-    return C
+    return graph
+
 
 def graph_straight(Graph: dict, node_size: int, edge_width: int, plot:bool, save:bool, dir:str):
     pos = nx.get_node_attributes(Graph, "pos")
