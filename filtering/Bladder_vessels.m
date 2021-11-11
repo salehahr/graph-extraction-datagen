@@ -26,10 +26,14 @@ if ~exist('./COSFIRE/dilate')
     BeforeUsing();
 end
 
+%% Settings
+plotImage = false;
+skip_existing_files = false; 
+
 %% Read Image
 
-VIDEO_FILEPATH = VIDEO_FILEPATH_EXT(1:end-4);   % read from config.py
-% VIDEO_FILEPATH = 'M:/graph-training/data/test/trimmed/0000_04000__0000_05000';           % manual entry
+% VIDEO_FILEPATH = VIDEO_FILEPATH_EXT(1:end-4);   % read from config.py
+VIDEO_FILEPATH = 'M:/data/256/GRK011';           % manual entry
 % VIDEO_FILEPATH = 'N:/master-thesis/02_Video_Data_to-be_filled/Videos/GRK008';           % manual entry
 
 imageFolder = sprintf('%s/', VIDEO_FILEPATH);
@@ -46,21 +50,24 @@ end
 cropped_imgs = imds.Files(crop_filter>0);   
 
 imds.Files =  natsortfiles(cropped_imgs);
-plotImage = false; 
 
 %% Symmetric filter params
+new_params = [10, 10, 1, 0, 10, 20, 2, 0];
+old_params = [7, 5, 1, 0, 2.5, 20, 1, 0];
+params = old_params;
+
 symmfilter = struct();
-symmfilter.sigma     = 10;
-symmfilter.len       = 10;
-symmfilter.sigma0    = 1;
-symmfilter.alpha     = 0;
+symmfilter.sigma     = params(1);
+symmfilter.len       = params(2);
+symmfilter.sigma0    = params(3);
+symmfilter.alpha     = params(4);
 
 %% Asymmetric filter params
 asymmfilter = struct();
-asymmfilter.sigma     = 10;
-asymmfilter.len       = 20;
-asymmfilter.sigma0    = 2;
-asymmfilter.alpha     = 0;
+asymmfilter.sigma     = params(5);
+asymmfilter.len       = params(6);
+asymmfilter.sigma0    = params(7);
+asymmfilter.alpha     = params(8);
 
 preprocess_thresh = 0.1;
 %% Filters responses
@@ -78,9 +85,14 @@ for currFrameIdx= 1:NOImages; %204 %1:50
     [old_folder, name, ext] = fileparts(fileinfo.Filename);
     new_folder = replace(old_folder, 'cropped', 'filtered');
     
+    %% make filtered folder if it doesn't already exist
+    if ~exist(new_folder, 'dir')
+       mkdir(new_folder)
+    end
+    
     fullFileName = fullfile(new_folder,strcat(name,ext));
     
-    if isfile(fullFileName)
+    if isfile(fullFileName) && skip_existing_files
         continue
     end
     
