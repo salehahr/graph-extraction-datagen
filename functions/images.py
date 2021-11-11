@@ -210,15 +210,15 @@ def extract_graph_and_helpers(conf, img_preproc, skel_fp):
     landmarks_fp = skel_fp.replace('skeleton', 'landmarks')
 
     node_size = 6
-    allnodescoor, coordinates_global, esecoor, marked_img = extract_nodes_edges(img_preproc,
+    allnodescoor, edge_course_xy, ese_xy, marked_img = extract_nodes_edges(img_preproc,
                                                                                 node_size)
-    helperedges, ese_helperedges, helpernodescoor = helpernodes_BasicGraph_for_polyfit(coordinates_global,
-                                                                                       esecoor,
+    helperedges, ese_helperedges, helpernodescoor = helpernodes_BasicGraph_for_polyfit(edge_course_xy,
+                                                                                       ese_xy,
                                                                                        allnodescoor)
 
     training_parameters = polyfit_training(helperedges, ese_helperedges)
-    graph = graph_extraction(coordinates_global,
-                             esecoor,
+    graph = graph_extraction(edge_course_xy,
+                             ese_xy,
                              allnodescoor,
                              marked_img,
                              conf.lm_plot,

@@ -343,8 +343,11 @@ def edge_extraction(skeleton: np.ndarray, endpoints: list, bcnodes: list):
         edge_start_end.append(se)
         edge_course.append(addpoints)
 
-    #point1 = [1072, 997]
     bcnodes_temp = bcnodes.copy()
+
+    ese_xy = []
+    edge_course_xy = []
+
     while len(bcnodes_temp) > 0:
         i = 0
         point1 = bcnodes_temp[i]
@@ -437,19 +440,24 @@ def edge_extraction(skeleton: np.ndarray, endpoints: list, bcnodes: list):
                     se.append(addpoints[l - 1])
                     edge_start_end.append(se)
                     edge_course.append(addpoints)
-        coursecoor = []
-        esecoor = []
-        for i in range(len(edge_course)):
-            coursecoor_temp = []
-            esecoor_temp = []
-            for j in range(len(edge_course[i])):
-                coursecoor_temp.append([edge_course[i][j][1], edge_course[i][j][0]])
-            for p in range(len(edge_start_end[i])):
-                esecoor_temp.append([edge_start_end[i][p][1], edge_start_end[i][p][0]])
-            coursecoor.append(coursecoor_temp)
-            esecoor.append(esecoor_temp)
 
-    return edge_start_end, esecoor, edge_course, coursecoor
+        # flip yx coordinates to xy
+        ese_xy = flip_coordinates(edge_start_end)
+        edge_course_xy = flip_coordinates(edge_course)
+
+    return ese_xy, edge_course_xy
+
+
+def flip_coordinates(unflipped):
+    flipped = []
+    for list_yx in unflipped:
+        list_xy = []
+        for yx in list_yx:
+            y, x = yx
+            xy = [x, y]
+            list_xy.append(xy)
+        flipped.append(list_xy)
+    return flipped
 
 
 def helpernodes_BasicGraph_for_polyfit(coordinates_global: list, esecoor: list, allnodescoor: list):

@@ -25,8 +25,9 @@ def get_positions_vector(graph, do_save: bool = True, filepath: str = '') -> np.
 
 def extract_nodes_edges(img_preproc, node_size):
     bcnodes, _, endpoints, _, _, allnodescoor, marked_img = node_extraction(img_preproc, node_size)
-    _, esecoor, _, coordinates_global = edge_extraction(img_preproc, endpoints, bcnodes)
-    return allnodescoor, coordinates_global, esecoor, marked_img
+    ese_xy, edge_course_xy = edge_extraction(img_preproc, endpoints, bcnodes)
+
+    return allnodescoor, edge_course_xy, ese_xy, marked_img
 
 
 def get_adjacency_matrix(graph, nodelist=None,
