@@ -8,6 +8,7 @@ def make_folder(folder_name: str) -> None:
 
     if not os.path.isdir(path):
         try:
+            print(f'\t ...{path}')
             os.makedirs(path)
         except Exception as e:
             print(e)
@@ -15,6 +16,7 @@ def make_folder(folder_name: str) -> None:
 
 
 def make_folders(config):
+    print('Creating folders ...')
     for f in config.list_of_folders:
         make_folder(f)
 
