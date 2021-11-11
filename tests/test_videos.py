@@ -50,7 +50,9 @@ class TestShortVideo(TestVideo):
     @classmethod
     def setUpClass(cls) -> None:
         video_fp = os.path.join(base_path, 'test/short_video.mp4')
-        cls.config = Config(video_fp, frequency=2, img_length=512, trim_times=None)
+        cls.config = Config(video_fp, frequency=2,
+                            img_length=512,
+                            trim_times=[])
         cls.raw_img_folder = cls.config.raw_img_folder
 
     def test_is_not_trimmed(self):
@@ -61,7 +63,7 @@ class TestTrimmedVideo(TestVideo):
     @classmethod
     def setUpClass(cls) -> None:
         video_fp = os.path.join(base_path, 'test/trimmed_0000_02000__0000_03000.mp4')
-        cls.config = Config(video_fp, frequency=2, img_length=512)
+        cls.config = Config(video_fp, frequency=2, img_length=512, trim_times=[])
         cls.raw_img_folder = cls.config.raw_img_folder
 
     def test_is_trimmed(self):
@@ -91,7 +93,9 @@ class TestTrimVideo(unittest.TestCase):
     def setUpClass(cls) -> None:
         cls.orig_filename = os.path.join(base_path, 'test/GRK021_test.mp4')
         trim_times = [[2, 3]]
-        cls.config = Config(cls.orig_filename, frequency=2, trim_times=trim_times)
+        cls.config = Config(cls.orig_filename, frequency=2,
+                            img_length=512,
+                            trim_times=trim_times)
         cls.target_filename = os.path.join(base_path, 'test/trimmed_0000_02000__0000_03000.mp4')
 
     def test_trim_video_with_target(self):
@@ -125,7 +129,9 @@ class TestTrimVideoSections(unittest.TestCase):
     def setUpClass(cls) -> None:
         cls.orig_filename = os.path.join(base_path, 'test/GRK021_test.mp4')
         trim_times = [[2, 3], [4, 5]]
-        cls.config = Config(cls.orig_filename, frequency=2, trim_times=trim_times, do_trim=False)
+        cls.config = Config(cls.orig_filename, frequency=2,
+                            img_length=512,
+                            trim_times=trim_times, do_trim=False)
 
         cls.target_filename_1 = os.path.join(base_path, 'test/trimmed_0000_02000__0000_03000.mp4')
         cls.target_filename_2 = os.path.join(base_path, 'test/trimmed_0000_04000__0000_05000.mp4')

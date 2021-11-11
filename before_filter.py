@@ -5,7 +5,7 @@ from functions.files import make_folders
 from functions.images import crop_imgs
 from functions.videos import video2img
 
-from config import Config
+from config import Config, img_length
 from video_data import video_filepath, frequency, trim_times
 
 
@@ -20,5 +20,6 @@ def before_filter(conf=None):
 
 
 if __name__ == '__main__':
-    conf = Config(video_filepath, frequency, trim_times)
+    conf = Config(video_filepath, frequency,
+                  img_length=img_length, trim_times=trim_times)
     before_filter(conf)

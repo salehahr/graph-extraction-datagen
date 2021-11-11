@@ -28,8 +28,8 @@ class Config:
     def __init__(self,
                  filepath: str,
                  frequency: int,
-                 img_length: int = img_length,
-                 trim_times=None,
+                 img_length: int,
+                 trim_times: list,
                  do_trim: bool = True,
                  start=None,
                  end=None):
