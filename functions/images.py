@@ -184,9 +184,10 @@ def extract_graphs(conf, skip_existing):
             continue
 
         # landmarks
-        graph, ese_h_edges, h_edges, h_edges_cds = extract_graph_and_helpers(conf,
-                                                                             img_preproc,
-                                                                             fp)
+        graph, ese_h_edges, h_edges, h_edges_cds = extract_graph_and_helpers(img_preproc,
+                                                                             fp,
+                                                                             conf.lm_plot,
+                                                                             conf.lm_save)
 
         get_positions_vector(graph, do_save=True, filepath=node_pos_vec_fp)
         generate_node_pos_img(graph, conf.img_length, do_save=True, filepath=node_pos_img_fp)
@@ -206,12 +207,12 @@ def extract_graphs(conf, skip_existing):
                                node_size, edge_width, overlay_fp)
 
 
-def extract_graph_and_helpers(conf, img_preproc, skel_fp):
+def extract_graph_and_helpers(img_preproc, skel_fp, lm_plot=False, lm_save=False):
     landmarks_fp = skel_fp.replace('skeleton', 'landmarks')
 
     node_size = 6
     allnodescoor, edge_course_xy, ese_xy, marked_img = extract_nodes_edges(img_preproc,
-                                                                                node_size)
+                                                                           node_size)
     helperedges, ese_helperedges, helpernodescoor = helpernodes_BasicGraph_for_polyfit(edge_course_xy,
                                                                                        ese_xy,
                                                                                        allnodescoor)
@@ -221,8 +222,8 @@ def extract_graph_and_helpers(conf, img_preproc, skel_fp):
                              ese_xy,
                              allnodescoor,
                              marked_img,
-                             conf.lm_plot,
-                             conf.lm_save,
+                             lm_plot,
+                             lm_save,
                              node_size,
                              landmarks_fp,
                              training_parameters)
