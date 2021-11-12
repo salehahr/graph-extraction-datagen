@@ -532,14 +532,22 @@ def helpernodes_BasicGraph_for_polyfit(coordinates_global: list, esecoor: list, 
     return helperedges, ese_helperedges, helpernodescoor
 
 
-def helpernodes_BasicGraph_for_structure(coordinates_global: list, esecoor: list, allnodescoor: list, pltimage: np.ndarray,
-                           plot: bool, save: bool, node_thick: int, dir: str):
+def helpernodes_BasicGraph_for_structure(coordinates_global: list,
+                                         esecoor: list,
+                                         allnodescoor: list,
+                                         pltimage: np.ndarray,
+                                         plot: bool,
+                                         save: bool,
+                                         node_thick: int,
+                                         dir: str):
     helperedges = copy.deepcopy(coordinates_global)
     ese_helperedges = copy.deepcopy(esecoor)
     helpernodescoor = allnodescoor.copy()
+
     # order coordinates_global -> is there a circle or any other critical structure
     check_again = [True] * len(helperedges)
     len_begin = 0
+
     while len(check_again) > 0:
         len_check = len(check_again)
         len_end = len_begin+len_check
@@ -791,33 +799,31 @@ def graph_extraction(coordinates_global,
                      node_size,
                      landmarks_fp,
                      training_parameters):
-    graph = nx.Graph()
-
     deg3 = [item[0][0] for item in training_parameters]
     deg2 = [item[0][1] for item in training_parameters]
-    edgelength = [item[1] for item in training_parameters]
+    edge_length = [item[1] for item in training_parameters]
 
-    _, ese_helperedges, helpernodescoor = helpernodes_BasicGraph_for_structure(
+    _, ese_helper_edges, helper_xy = helpernodes_BasicGraph_for_structure(
         coordinates_global, esecoor, allnodescoor, marked_img,
         do_plot, do_save,
         node_size, landmarks_fp)
 
+    graph = nx.Graph()
 
-    #define nodes with attribute position
-    for i in range(0, len(helpernodescoor)):
-        x = helpernodescoor[i][0]
-        y = helpernodescoor[i][1]
-        graph.add_node(i, pos=(x, y))
+    # define nodes with attribute position
+    for i, xy in enumerate(helper_xy):
+        graph.add_node(i, pos=tuple(xy))
 
-    #define edges with attributes: weight
-    for p in range(0, len(ese_helperedges)):
-        start = ese_helperedges[p][0]
-        end = ese_helperedges[p][1]
-        if start in helpernodescoor and end in helpernodescoor:
-            startidx = helpernodescoor.index(start)
-            endidx = helpernodescoor.index(end)
+    # define edges with attributes: weight
+    for p, edge in enumerate(ese_helper_edges):
+        start_xy, end_xy = edge
+
+        if start_xy in helper_xy and end_xy in helper_xy:
+            startidx = helper_xy.index(start_xy)
+            endidx = helper_xy.index(end_xy)
+
             graph.add_edge(startidx, endidx, label=p)
-            graph.add_edge(startidx, endidx, label=p, length=edgelength[p])
+            graph.add_edge(startidx, endidx, label=p, length=edge_length[p])
             graph.add_edge(startidx, endidx, label=p, deg3=deg3[p])
             graph.add_edge(startidx, endidx, label=p, deg2=deg2[p])
 
