@@ -8,14 +8,18 @@ import numpy as np
 import cv2
 import matplotlib.pyplot as plt
 
-from functions.graphs import get_positions_list, get_adjacency_matrix
+from functions.graphs import get_positions_list, get_ext_adjacency_matrix
 from functions.images import extract_graph_and_helpers, generate_node_pos_img
+from functions.plots import plot_graph_on_img_straight
 
 
 class TestGraph(TestVideoFrame):
     @classmethod
     def setUpClass(cls) -> None:
         super(TestGraph, cls).setUpClass()
+
+        cls.fp_adj_matrix = os.path.join(test_data_path, 'adj_matr.npy')
+        assert not os.path.isfile(cls.fp_adj_matrix)
 
         cls.img_skel = cv2.imread(cls.img_skeletonised_fp, cv2.IMREAD_GRAYSCALE)
         plot_img(cls.img_skel)
@@ -40,19 +44,14 @@ class TestGraph(TestVideoFrame):
         plt.show()
 
     def test_adjacency_matrix_skeletonised_match(self):
-        fp_adj_matrix = os.path.join(test_data_path, 'adj_matr.npy')
-        self.assertFalse(os.path.isfile(fp_adj_matrix))
+        pos = get_positions_list(self.graph)
+        ext_adj_matr = get_ext_adjacency_matrix(self.graph,
+                                                do_save=True,
+                                                filepath=self.fp_adj_matrix)
+        self.assertTrue(os.path.isfile(self.fp_adj_matrix))
 
-        get_adjacency_matrix(self.graph, do_save=True, filepath=fp_adj_matrix)
-        self.assertTrue(os.path.isfile(fp_adj_matrix))
-
-        with open(fp_adj_matrix, 'rb') as f:
-            a = np.load(f)
-            print(a.shape)
-            self.assertEqual(a.shape[1], len(self.graph))
-            self.assertEqual(a.shape[2], 2 + len(self.graph))
-
-        os.remove(fp_adj_matrix)
+        adj_matr = ext_adj_matr[0, :, 2:]
+        plot_graph_on_img_straight(self.img_skel, pos, adj_matr)
 
     def test_adjacency_matrix(self):
         """ Test adjacency matrix with and without nodelist. """
@@ -64,3 +63,7 @@ class TestGraph(TestVideoFrame):
 
         np.testing.assert_equal(adj_matrix, adj_matrix_nl)
         self.assertEqual(adj_matrix.shape[1], adj_matrix.shape[0])
+
+    @classmethod
+    def tearDownClass(cls) -> None:
+        os.remove(cls.fp_adj_matrix)

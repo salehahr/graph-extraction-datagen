@@ -6,35 +6,35 @@ import matplotlib.pyplot as plt
 from functions.im2graph import flip_node_coordinates
 
 
-def plot_graph_on_img(image: np.ndarray,
-                      pos: np.ndarray,
-                      adjacency: np.ndarray):
-    img = image.copy()
-    adjacency_matrix = np.uint8(adjacency.copy())
-    positions = pos.copy()
+def plot_graph_on_img_straight(img_skel: np.ndarray,
+                               pos: list,
+                               adjacency: np.ndarray) -> None:
+    """
+    Function for checking if the adjacency matrix matches the image
+    by overlaying the graph over the skeletonised image.
+    :param img_skel: skeletonised image
+    :param pos: list of position coordinates of the graph nodes
+    :param adjacency: adjacency matrix of the graph
+    """
+    img = img_skel.copy()
 
     if len(img.shape) == 2:
         img = cv2.cvtColor(img, cv2.COLOR_GRAY2BGR)
 
-    pos_list = []
+    img_height = img.shape[0]
+    pos_dict = {i: [x, img_height - y] for i, [x, y] in enumerate(pos)}
 
-    # for pos in positions:
-    #     x, y =
-    #     pos_list.append([pos[0], img.shape[0] - pos[1]])
-
-    for i in range(len(positions)):
-        pos_list.append([positions[i][0], img.shape[0] - positions[i][1]])
-    p = dict(enumerate(pos_list, 0))
-
-    graph = nx.from_numpy_matrix(adjacency_matrix)
-    nx.set_node_attributes(graph, p, 'pos')
+    graph = nx.from_numpy_array(adjacency)
+    nx.set_node_attributes(graph, pos_dict, 'pos')
 
     y_lim, x_lim = img.shape[:-1]
     extent = 0, x_lim, 0, y_lim
 
     plt.figure(frameon=False, figsize=(20, 20))
     plt.imshow(img, extent=extent, interpolation='nearest')
-    nx.draw(graph, pos=p, node_size=50, edge_color='g', width=3, node_color='r')
+    nx.draw(graph, pos=pos_dict,
+            node_size=50, node_color='r',
+            edge_color='g', width=7)
 
     plt.show()
 

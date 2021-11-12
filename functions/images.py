@@ -2,7 +2,7 @@ import os
 import cv2
 import numpy as np
 
-from functions.graphs import extract_nodes_edges, get_positions_vector, get_positions_list, get_adjacency_matrix
+from functions.graphs import extract_nodes_edges, get_positions_vector, get_positions_list, get_ext_adjacency_matrix
 
 from functions.im2graph import preprocess, polyfit_training
 from functions.im2graph import helpernodes_BasicGraph_for_polyfit
@@ -191,7 +191,7 @@ def extract_graphs(conf, skip_existing):
 
         get_positions_vector(graph, do_save=True, filepath=node_pos_vec_fp)
         generate_node_pos_img(graph, conf.img_length, do_save=True, filepath=node_pos_img_fp)
-        get_adjacency_matrix(graph, do_save=True, filepath=adj_matr_fp)
+        get_ext_adjacency_matrix(graph, do_save=True, filepath=adj_matr_fp)
 
         # plot polynomials
         edge_width = 2
