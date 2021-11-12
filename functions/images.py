@@ -211,7 +211,7 @@ def extract_graph_and_helpers(img_preproc, skel_fp, lm_plot=False, lm_save=False
     landmarks_fp = skel_fp.replace('skeleton', 'landmarks')
 
     node_size = 6
-    allnodescoor, edge_course_xy, ese_xy, marked_img = extract_nodes_edges(img_preproc,
+    allnodescoor, edge_course_xy, ese_xy, img_lm = extract_nodes_edges(img_preproc,
                                                                            node_size)
     helperedges, ese_helperedges, helpernodescoor = helpernodes_BasicGraph_for_polyfit(edge_course_xy,
                                                                                        ese_xy,
@@ -221,7 +221,7 @@ def extract_graph_and_helpers(img_preproc, skel_fp, lm_plot=False, lm_save=False
     graph = graph_extraction(edge_course_xy,
                              ese_xy,
                              allnodescoor,
-                             marked_img,
+                             img_lm,
                              lm_plot,
                              lm_save,
                              node_size,

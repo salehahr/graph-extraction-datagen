@@ -131,35 +131,36 @@ def preprocess(thr_image: np.ndarray, orig_img,
     return np.uint8(skeleton_filtered)
 
 
-def node_extraction(cleaned_skeleton: np.ndarray, node_thick: int):
-    skeleton = cleaned_skeleton.copy()
-    skeleton_img = skeleton.copy()
-    kernel = 3
-    bc = []
-    endpoints = []
-    binary = skeleton_img.copy()
+def node_extraction(img_skeleton: np.ndarray, node_size: int):
+    cleaned_skeleton = img_skeleton.copy()
+    binary = img_skeleton.copy()
     binary[binary == 255] = 1
-    result = skeleton_img.copy()
+
+    kernel = 3
+
+    bcnodes_yx = []
+    endpoints_yx = []
     n = int(np.floor(kernel / 2))
-    for it_x in range(n, binary.shape[0] - n):
-        for it_y in range(n, binary.shape[1] - n):
+
+    for row in range(n, binary.shape[0] - n):
+        for col in range(n, binary.shape[1] - n):
             neighbours_nodeall = []
             neighbours_nn = []
             bo = []
             cross = []
             aux = 0
-            if binary[it_x, it_y] == 1:
-                aux += np.sum(binary[it_x - n:it_x + n + 1,
-                              it_y - n:it_y + n + 1])  # Anzahl der Pixel mit 1 in der neighbourhood werden gezählt (inkl. Mittelpunkt)
+            if binary[row, col] == 1:
+                aux += np.sum(binary[row - n:row + n + 1,
+                              col - n:col + n + 1])  # Anzahl der Pixel mit 1 in der neighbourhood werden gezählt (inkl. Mittelpunkt)
                 if aux == 2:  # endpoint
-                    endpoints.append([it_x, it_y])
+                    endpoints_yx.append([row, col])
                 if aux == 3: # endpoint bei 90° Winkel
-                    neighbours_nodeall = positive_neighbours(it_x, it_y, binary)
+                    neighbours_nodeall = positive_neighbours(row, col, binary)
                     conn = four_connectivity(neighbours_nodeall[0][0], neighbours_nodeall[0][1])
                     if neighbours_nodeall[1] in conn:
-                        endpoints.append([it_x, it_y])
+                        endpoints_yx.append([row, col])
                 if aux == 4:  # Vergabelung = 4 Pixel mit 1 -> Punkt wird gelöscht, Koordinaten werden gespeichert
-                    neighbours_nodeall = positive_neighbours(it_x, it_y, binary)
+                    neighbours_nodeall = positive_neighbours(row, col, binary)
                     for q in range(0, len(neighbours_nodeall)):
                         neighbours_nn.append(four_connectivity(neighbours_nodeall[q][0], neighbours_nodeall[q][1]))
                     for p in range(0, len(neighbours_nodeall)):
@@ -169,10 +170,10 @@ def node_extraction(cleaned_skeleton: np.ndarray, node_thick: int):
                             else:
                                 bo.append(False)
                     if not any(bo):
-                        result[it_x, it_y] = 0
-                        bc.append([it_x, it_y])
+                        cleaned_skeleton[row, col] = 0
+                        bcnodes_yx.append([row, col])
                 elif aux >= 5:  # Vergabelung oder Kreuzung
-                    neighbours_nodeall = positive_neighbours(it_x, it_y, binary)
+                    neighbours_nodeall = positive_neighbours(row, col, binary)
                     distone_nodes = []
                     for q in range(0, len(neighbours_nodeall)):
                         distone = []
@@ -191,69 +192,55 @@ def node_extraction(cleaned_skeleton: np.ndarray, node_thick: int):
                     if 0 not in numneighbours: #Es muss mind einen Nachbarn des Nodes geben, der nicht direkt neben einem anderen Nachbarn des Nodes liegt
                         bo.append(True)
                     if not any(bo):
-                        result[it_x, it_y] = 0
-                        bc.append([it_x, it_y])
-                if it_x < binary.shape[0] and it_y < binary.shape[1]:
-                    if binary[it_x - 1, it_y - 1] == 1: cross.append(True)
-                    if binary[it_x + 1, it_y - 2] == 1: cross.append(True)
-                    if binary[it_x, it_y - 1] == 1: cross.append(True)
-                    if binary[it_x - 1, it_y] == 1: cross.append(True)
-                    if binary[it_x - 2, it_y - 2] == 1: cross.append(True)
-                    if binary[it_x - 2, it_y + 1] == 1: cross.append(True)
-                    if binary[it_x + 1, it_y + 1] == 1: cross.append(True)
+                        cleaned_skeleton[row, col] = 0
+                        bcnodes_yx.append([row, col])
+                if row < binary.shape[0] and col < binary.shape[1]:
+                    if binary[row - 1, col - 1] == 1: cross.append(True)
+                    if binary[row + 1, col - 2] == 1: cross.append(True)
+                    if binary[row, col - 1] == 1: cross.append(True)
+                    if binary[row - 1, col] == 1: cross.append(True)
+                    if binary[row - 2, col - 2] == 1: cross.append(True)
+                    if binary[row - 2, col + 1] == 1: cross.append(True)
+                    if binary[row + 1, col + 1] == 1: cross.append(True)
                     if len(cross) == 7:
                         #print('crossing at ', [it_x, it_y])
-                        bc.append([it_x, it_y])
-                        bc.append([it_x - 1, it_y - 1])
-                        bc.append([it_x, it_y - 1])
-                        bc.append([it_x - 1, it_y])
-                        result[it_x, it_y] = 0
-                        result[it_x - 1, it_y - 1] = 0
-                        result[it_x, it_y - 1] = 0
-                        result[it_x - 1, it_y] = 0
+                        bcnodes_yx.append([row, col])
+                        bcnodes_yx.append([row - 1, col - 1])
+                        bcnodes_yx.append([row, col - 1])
+                        bcnodes_yx.append([row - 1, col])
+                        cleaned_skeleton[row, col] = 0
+                        cleaned_skeleton[row - 1, col - 1] = 0
+                        cleaned_skeleton[row, col - 1] = 0
+                        cleaned_skeleton[row - 1, col] = 0
 
-    # plot landmarks
-    bcnodes = bc.copy()
-    bcnodescoor = []
-    allnodes = []
-    allnodescoor = []
-    endpoints_coor = []
-    pltimage = result.copy()
-    pltimage = cv2.cvtColor(pltimage, cv2.COLOR_GRAY2RGB)
-    for i in range(len(bc)):
-        allnodescoor.append([bc[i][1], bc[i][0]])
-        allnodes.append([bc[i][0], bc[i][1]])
-        bcnodescoor.append([bc[i][1], bc[i][0]])
-        cv2.circle(pltimage, (bc[i][1], bc[i][0]), 0, (255, 0, 0), node_thick)
-    for i in range(len(endpoints)):
-        endpoints_coor.append([endpoints[i][1], endpoints[i][0]])
-        cv2.circle(pltimage, (endpoints[i][1], endpoints[i][0]), 0, (0, 0, 255), node_thick)
-        allnodes.append([endpoints[i][0], endpoints[i][1]])
-        allnodescoor.append([endpoints[i][1], endpoints[i][0]])
+    # get all nodes
+    allnodes_yx = bcnodes_yx + endpoints_yx
+    allnodes_xy = flip_node_coordinates(allnodes_yx)
 
-    return bcnodes, bcnodescoor, endpoints, endpoints_coor, allnodes, allnodescoor, pltimage
+    return bcnodes_yx, endpoints_yx, allnodes_xy, cleaned_skeleton
 
 
 def edge_extraction(skeleton: np.ndarray, endpoints: list, bcnodes: list):
     binary = skeleton.copy()
     binary[binary == 255] = 1
+
     endpoints_temp = endpoints.copy()
 
-    edge_start_end = []
-    edge_course = []
+    ese_yx = []
+    edge_course_yx = []
     i = 0
+
     while len(endpoints_temp) > 0:
         addpoints = []
         se = []
         point = endpoints_temp[i]
-        #print('endpoint: ', point)
         addpoints.append(point)
         n = positive_neighbours(point[0], point[1], binary)
-        #print('positive_neighbours: ', n)
         binary[point[0], point[1]] = 0
         endpoints_temp.remove(point)
         reached = False
-        #Nachbarn abhängig von Distanz sortieren
+
+        # Nachbarn abhängig von Distanz sortieren
         if len(n) > 1:
             dist = []
             for p in range(len(n)):
@@ -340,8 +327,8 @@ def edge_extraction(skeleton: np.ndarray, endpoints: list, bcnodes: list):
         #print('added points: ', addpoints)
         se.append(addpoints[0])
         se.append(addpoints[l - 1])
-        edge_start_end.append(se)
-        edge_course.append(addpoints)
+        ese_yx.append(se)
+        edge_course_yx.append(addpoints)
 
     bcnodes_temp = bcnodes.copy()
 
@@ -351,7 +338,7 @@ def edge_extraction(skeleton: np.ndarray, endpoints: list, bcnodes: list):
     while len(bcnodes_temp) > 0:
         i = 0
         point1 = bcnodes_temp[i]
-        #print('node', point1)
+
         n1 = positive_neighbours(point1[0], point1[1], binary)
         n1_original = n1.copy()
         n1_4conn = four_connectivity(point1[0], point1[1])
@@ -438,26 +425,22 @@ def edge_extraction(skeleton: np.ndarray, endpoints: list, bcnodes: list):
                         addpoints.reverse()
                     se.append(addpoints[0])
                     se.append(addpoints[l - 1])
-                    edge_start_end.append(se)
-                    edge_course.append(addpoints)
+                    ese_yx.append(se)
+                    edge_course_yx.append(addpoints)
 
         # flip yx coordinates to xy
-        ese_xy = flip_coordinates(edge_start_end)
-        edge_course_xy = flip_coordinates(edge_course)
+        ese_xy = flip_edge_coordinates(ese_yx)
+        edge_course_xy = flip_edge_coordinates(edge_course_yx)
 
     return ese_xy, edge_course_xy
 
 
-def flip_coordinates(unflipped):
-    flipped = []
-    for list_yx in unflipped:
-        list_xy = []
-        for yx in list_yx:
-            y, x = yx
-            xy = [x, y]
-            list_xy.append(xy)
-        flipped.append(list_xy)
-    return flipped
+def flip_node_coordinates(list_of_nodes_yx):
+    return [[yx[1], yx[0]] for yx in list_of_nodes_yx]
+
+
+def flip_edge_coordinates(list_of_edges):
+    return [flip_node_coordinates(edge_yx) for edge_yx in list_of_edges]
 
 
 def helpernodes_BasicGraph_for_polyfit(coordinates_global: list, esecoor: list, allnodescoor: list):
