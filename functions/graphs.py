@@ -34,7 +34,7 @@ def extract_nodes_edges(img_preproc, node_size):
 
 def get_adjacency_matrix(graph, nodelist=None,
                          do_save: bool = False, filepath:str = ''):
-    adj_matrix = nx.convert_matrix.to_numpy_matrix(graph, nodelist=nodelist)
+    adj_matrix = nx.convert_matrix.to_numpy_array(graph, nodelist=nodelist)
     positions_vector = get_positions_vector(graph)
 
     num_nodes = len(graph)
