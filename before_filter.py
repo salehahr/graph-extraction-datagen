@@ -1,9 +1,9 @@
 # * Extracts raw images from video
 # * Crops the video stills
 
-from functions.files import make_folders
-from functions.images import crop_imgs
-from functions.videos import video2img
+from tools.files import make_folders
+from tools.images import crop_imgs
+from tools.videos import video2img
 
 from config import Config, img_length
 from video_data import video_filepath, frequency, trim_times

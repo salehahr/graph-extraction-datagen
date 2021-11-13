@@ -2,7 +2,7 @@ import glob
 import os
 import re
 
-from functions.videos import trim_video, generate_time_tag_from_interval
+from tools.videos import trim_video, generate_time_tag_from_interval
 
 # Time tag pattern
 pattern = '(.*)_(\d{4}_\d{5}__\d{4}_\d{5})'

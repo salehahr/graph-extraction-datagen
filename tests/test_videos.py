@@ -1,8 +1,8 @@
 import os
 import unittest
 
-from functions.files import make_folders, delete_files
-from functions.videos import trim_video
+from tools.files import make_folders, delete_files
+from tools.videos import trim_video
 
 from before_filter import before_filter
 from after_filter import after_filter

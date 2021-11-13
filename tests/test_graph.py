@@ -8,9 +8,9 @@ import numpy as np
 import cv2
 import matplotlib.pyplot as plt
 
-from functions.graphs import get_positions_list, get_ext_adjacency_matrix
-from functions.images import extract_graph_and_helpers, generate_node_pos_img
-from functions.plots import plot_graph_on_img_straight
+from tools.graphs import get_positions_list, get_ext_adjacency_matrix
+from tools.images import extract_graph_and_helpers, generate_node_pos_img
+from tools.plots import plot_graph_on_img_straight
 
 
 class TestGraph(TestVideoFrame):

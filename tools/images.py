@@ -2,11 +2,11 @@ import os
 import cv2
 import numpy as np
 
-from functions.graphs import extract_nodes_edges, get_positions_vector, get_positions_list, get_ext_adjacency_matrix
+from tools.graphs import extract_nodes_edges, get_positions_vector, get_positions_list, get_ext_adjacency_matrix
 
-from functions.im2graph import preprocess, polyfit_training
-from functions.im2graph import helpernodes_BasicGraph_for_polyfit
-from functions.im2graph import polyfit_visualize, graph_extraction, graph_poly, \
+from tools.im2graph import preprocess, polyfit_training
+from tools.im2graph import helpernodes_BasicGraph_for_polyfit
+from tools.im2graph import polyfit_visualize, graph_extraction, graph_poly, \
     plot_graph_on_img_poly
 
 blur_kernel = (5, 5)

@@ -1,8 +1,8 @@
 import networkx as nx
 import numpy as np
 
-from functions.im2graph import node_extraction, edge_extraction
-from functions.plots import plot_landmarks
+from tools.im2graph import node_extraction, edge_extraction
+from tools.plots import plot_landmarks
 
 
 def get_positions_list(graph) -> list:

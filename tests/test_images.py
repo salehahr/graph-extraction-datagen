@@ -3,8 +3,8 @@ import unittest
 
 import cv2
 import matplotlib.pyplot as plt
-from functions.images import crop_resize_square, is_square, crop_radius
-from functions.images import get_rgb, get_centre
+from tools.images import crop_resize_square, is_square, crop_radius
+from tools.images import get_rgb, get_centre
 
 
 img_length = 256

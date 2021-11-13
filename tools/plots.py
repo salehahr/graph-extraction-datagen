@@ -3,7 +3,7 @@ import networkx as nx
 import numpy as np
 import matplotlib.pyplot as plt
 
-from functions.im2graph import flip_node_coordinates
+from tools.im2graph import flip_node_coordinates
 
 
 def plot_graph_on_img_straight(img_skel: np.ndarray,

@@ -2,7 +2,7 @@ import os
 import unittest
 
 from config import Config
-from functions.files import remove_data_folders, make_folders, clone_data_folders
+from tools.files import remove_data_folders, make_folders, clone_data_folders
 
 base_path = '/graphics/scratch/schuelej/sar/graph-training/data'
 
