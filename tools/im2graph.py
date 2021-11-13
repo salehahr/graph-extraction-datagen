@@ -70,40 +70,17 @@ def preprocess(thr_image: np.ndarray, plot: bool, save: bool, directory: str):
     # skeletonize
     img = thr_image.copy() / 255
     img = img.astype(int)
-    skeleton = skeletonize(img)
-    skeleton = skeleton.astype(int) * 255
+    skeleton_noisy = skeletonize(img).astype(int) * 255
 
     # remove too small edges
-    img = skeleton.copy()
-    img = img / 255
-    img = img.astype(bool)
-    labeled = morphology.label(img)
-    cleaned = morphology.remove_small_objects(labeled, edgelength + 1)
+    bool_img = (skeleton_noisy.copy() / 255).astype(bool)
+    labeled = morphology.label(bool_img)
+    skeleton = morphology.remove_small_objects(labeled, edgelength + 1)
+    skeleton[skeleton > 0] = 255
+    skeleton = np.uint8(skeleton)
 
-    skeleton_cleaned = np.zeros(cleaned.shape)
-    skeleton_cleaned[cleaned > 0] = 255
-    skeleton_cleaned = np.uint8(skeleton_cleaned)
-
-    # bug pixel elimination based on "Preprocessing and postprocessing for skeleton-based fingerprint minutiae extraction"
-    bug_pixel = []
-    for x in range(1, skeleton_cleaned.shape[0] - 1):
-        for y in range(1, skeleton_cleaned.shape[1] - 1):
-            if skeleton_cleaned[x, y] == 255:
-                s = num_in_4connectivity(x, y, skeleton_cleaned)
-                if s > 2:
-                    bug_pixel.append([x, y])
-
-    for i in range(0, len(bug_pixel)):
-        s = num_in_4connectivity(bug_pixel[i][0], bug_pixel[i][1], skeleton_cleaned)
-        if s > 2:
-            skeleton_cleaned[bug_pixel[i][0], bug_pixel[i][1]] = 0
-
-    mask = np.ones(skeleton_cleaned.shape, dtype=np.int8)
-    mask[:, 0] = 0
-    mask[:, mask.shape[1] - 1] = 0
-    mask[0, :] = 0
-    mask[mask.shape[0] - 1, :] = 0
-    skeleton_filtered = np.uint8(np.multiply(mask, skeleton_cleaned))
+    remove_bug_pixels(skeleton)
+    set_black_border(skeleton)
 
     if plot:
         fig, axes = plt.subplots(1, 2)
@@ -120,9 +97,39 @@ def preprocess(thr_image: np.ndarray, plot: bool, save: bool, directory: str):
         plt.show()
 
     if save:
-        cv2.imwrite(directory, skeleton_filtered)
+        cv2.imwrite(directory, skeleton)
 
-    return np.uint8(skeleton_filtered)
+    return np.uint8(skeleton)
+
+
+def remove_bug_pixels(skeleton):
+    # bug pixel elimination based on
+    # "Preprocessing and postprocessing for skeleton-based fingerprint minutiae extraction"
+    bug_pixels = []
+    for x in range(1, skeleton.shape[0] - 1):
+        for y in range(1, skeleton.shape[1] - 1):
+            if skeleton[x, y] == 255:
+                s = num_in_4connectivity(x, y, skeleton)
+
+                if s > 2:
+                    bug_pixels.append([x, y])
+
+    for bpx, bpy in bug_pixels:
+        s = num_in_4connectivity(bpx, bpy, skeleton)
+
+        if s > 2:
+            skeleton[bpx, bpy] = 0
+
+
+def set_black_border(img):
+    mask = np.ones(img.shape, dtype=np.int8)
+
+    mask[:, 0] = 0
+    mask[:, -1] = 0
+    mask[0, :] = 0
+    mask[-1, :] = 0
+
+    img = np.uint8(np.multiply(mask, img))
 
 
 def node_extraction(img_skeleton: np.ndarray):
