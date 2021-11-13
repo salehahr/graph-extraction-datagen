@@ -25,9 +25,10 @@ def get_positions_vector(graph, do_save: bool = True, filepath: str = '') -> np.
 
 
 def extract_nodes_edges(img_preproc, node_size):
-    bcnodes_yx, endpoints_yx, allnodes_xy, cleaned_skeleton = node_extraction(img_preproc, node_size)
-    img_lm = plot_landmarks(bcnodes_yx, endpoints_yx, node_size, cleaned_skeleton)
+    bcnodes_yx, endpoints_yx, allnodes_xy, cleaned_skeleton = node_extraction(img_preproc)
     ese_xy, edge_course_xy = edge_extraction(img_preproc, endpoints_yx, bcnodes_yx)
+
+    img_lm = plot_landmarks(bcnodes_yx, endpoints_yx, node_size, cleaned_skeleton)
 
     return allnodes_xy, edge_course_xy, ese_xy, img_lm
 

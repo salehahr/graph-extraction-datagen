@@ -148,13 +148,11 @@ def thresholding(filtered_img: np.ndarray, do_save: bool, filepath: str = '') \
 
 def skeletonise_imgs(conf):
     for fp in conf.threshed_image_files:
-        cropped_fp = fp.replace('threshed', 'cropped')
         skel_fp = fp.replace('threshed', 'skeleton')
 
-        img_cropped = cv2.imread(cropped_fp, cv2.IMREAD_COLOR)
         img_threshed = cv2.imread(fp, cv2.IMREAD_GRAYSCALE)
 
-        preprocess(img_threshed, img_cropped,
+        preprocess(img_threshed,
                    conf.pr_plot, conf.pr_save, skel_fp)
 
 
@@ -177,7 +175,7 @@ def extract_graphs(conf, skip_existing):
         # exit if no raw image found
         if img_preproc is None:
             print(f'No skeletonised image found.')
-            sys.exit(1)
+            raise Exception
 
         # skip already processed frames
         if os.path.isfile(overlay_fp) and skip_existing:
@@ -211,16 +209,16 @@ def extract_graph_and_helpers(img_preproc, skel_fp, lm_plot=False, lm_save=False
     landmarks_fp = skel_fp.replace('skeleton', 'landmarks')
 
     node_size = 6
-    allnodescoor, edge_course_xy, ese_xy, img_lm = extract_nodes_edges(img_preproc,
-                                                                           node_size)
+    allnodes_xy, edge_course_xy, ese_xy, img_lm = extract_nodes_edges(img_preproc,
+                                                                      node_size)
     helperedges, ese_helperedges, helpernodescoor = helpernodes_BasicGraph_for_polyfit(edge_course_xy,
                                                                                        ese_xy,
-                                                                                       allnodescoor)
+                                                                                       allnodes_xy)
 
     training_parameters = polyfit_training(helperedges, ese_helperedges)
     graph = graph_extraction(edge_course_xy,
                              ese_xy,
-                             allnodescoor,
+                             allnodes_xy,
                              img_lm,
                              lm_plot,
                              lm_save,
