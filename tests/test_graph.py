@@ -1,12 +1,12 @@
 import os
 
-from test_images import TestVideoFrame, plot_img
-from test_images import test_data_path, img_length
-
+import cv2
 import networkx as nx
 import numpy as np
-import cv2
 import matplotlib.pyplot as plt
+
+from test_images import TestVideoFrame, plot_img
+from test_images import test_data_path, img_length
 
 from tools.graphs import get_positions_list, get_ext_adjacency_matrix
 from tools.images import extract_graph_and_helpers, generate_node_pos_img
@@ -19,11 +19,11 @@ class TestGraph(TestVideoFrame):
         super(TestGraph, cls).setUpClass()
 
         cls.fp_adj_matrix = os.path.join(test_data_path, 'adj_matr.npy')
-        assert not os.path.isfile(cls.fp_adj_matrix)
+        if os.path.isfile(cls.fp_adj_matrix):
+            os.remove(cls.fp_adj_matrix)
 
         cls.img_skel = cv2.imread(cls.img_skeletonised_fp, cv2.IMREAD_GRAYSCALE)
-        plot_img(cls.img_skel)
-        plt.show()
+        cls.plot_skeletonised()
 
         cls.graph = cls.get_graph()
 
@@ -31,6 +31,12 @@ class TestGraph(TestVideoFrame):
     def get_graph(cls):
         graph, _, _, _ = extract_graph_and_helpers(cls.img_skel, '')
         return graph
+
+    @classmethod
+    def plot_skeletonised(cls):
+        plot_img(cls.img_skel)
+        plt.title(os.path.relpath(cls.img_skeletonised_fp, start=cls.base_path))
+        plt.show()
 
     def test_generate_node_pos_img(self):
         self.assertIsNotNone(self.graph)

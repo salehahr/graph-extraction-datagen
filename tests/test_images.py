@@ -3,13 +3,10 @@ import unittest
 
 import cv2
 import matplotlib.pyplot as plt
+
+from tools.files import get_random_video_path, get_random_raw_image
 from tools.images import crop_resize_square, is_square, crop_radius
 from tools.images import get_rgb, get_centre
-
-
-img_length = 256
-data_path = f'/graphics/scratch/schuelej/sar/data/{img_length}/GRK008/raw'
-test_data_path = '/graphics/scratch/schuelej/sar/graph-training/data/test'
 
 
 def plot_img(img):
@@ -19,16 +16,39 @@ def plot_img(img):
     plt.yticks([])
 
 
+img_length = 256
+test_data_path = '/graphics/scratch/schuelej/sar/graph-training/data/test'
+base_path = f'/graphics/scratch/schuelej/sar/data/{img_length}'
+video_path = get_random_video_path(base_path)
+
+
 class TestVideoFrame(unittest.TestCase):
     @classmethod
     def setUpClass(cls) -> None:
-        cls.img_raw_fp = os.path.join(data_path, '0000_00000.png')
+        cls.base_path = base_path
+        cls.video_path = video_path
+
+        img_name = get_random_raw_image(cls.video_path)
+        print(f'Video path: {cls.video_path}')
+        print(f'Image: {img_name}')
+
+        cls.img_raw_fp = os.path.join(cls.video_path, f'raw/{img_name}')
         cls.img_skeletonised_fp = cls.img_raw_fp.replace('raw', 'skeleton')
 
         cls.img_length = img_length
 
         assert os.path.isfile(cls.img_raw_fp)
         assert os.path.isfile(cls.img_skeletonised_fp)
+
+        cls.plot_cropped()
+
+    @classmethod
+    def plot_cropped(cls):
+        cropped_fp = cls.img_raw_fp.replace('raw', 'cropped')
+        img_cropped = cv2.imread(cropped_fp, cv2.IMREAD_COLOR)
+        plot_img(img_cropped)
+        plt.title(os.path.relpath(cls.img_raw_fp, start=base_path))
+        plt.show()
 
 
 class TestImage(TestVideoFrame):
