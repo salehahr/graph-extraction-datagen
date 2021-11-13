@@ -25,12 +25,8 @@ class TestGraph(TestVideoFrame):
         cls.img_skel = cv2.imread(cls.img_skeletonised_fp, cv2.IMREAD_GRAYSCALE)
         cls.plot_skeletonised()
 
-        cls.graph = cls.get_graph()
-
-    @classmethod
-    def get_graph(cls):
-        graph, _, _, _ = extract_graph_and_helpers(cls.img_skel, '')
-        return graph
+        cls.graph, _, _, _ = extract_graph_and_helpers(cls.img_skel, '')
+        cls.pos_list = get_positions_list(cls.graph)
 
     @classmethod
     def plot_skeletonised(cls):
@@ -39,25 +35,33 @@ class TestGraph(TestVideoFrame):
         plt.show()
 
     def test_generate_node_pos_img(self):
-        self.assertIsNotNone(self.graph)
-
-        pos = get_positions_list(self.graph)
-        self.assertIsNotNone(pos)
-
         node_pos_img = generate_node_pos_img(self.graph, img_length)
 
         plot_img(node_pos_img)
         plt.show()
 
+    def test_is_pos_list_sorted(self):
+        row = [x for x, _ in self.pos_list]
+        col = [y for _, y in self.pos_list]
+
+        print(self.pos_list)
+
+        def is_sorted_ascending(arr):
+            return all(arr[i] <= arr[i + 1] for i in range(len(arr) - 1))
+
+        is_sorted_row = is_sorted_ascending(row)
+        is_sorted_col = is_sorted_ascending(col)
+
+        self.assertTrue(is_sorted_row or is_sorted_col)
+
     def test_adjacency_matrix_skeletonised_match(self):
-        pos = get_positions_list(self.graph)
         ext_adj_matr = get_ext_adjacency_matrix(self.graph,
                                                 do_save=True,
                                                 filepath=self.fp_adj_matrix)
         self.assertTrue(os.path.isfile(self.fp_adj_matrix))
 
         adj_matr = ext_adj_matr[0, :, 2:]
-        plot_graph_on_img_straight(self.img_skel, pos, adj_matr)
+        plot_graph_on_img_straight(self.img_skel, self.pos_list, adj_matr)
 
     def test_adjacency_matrix(self):
         """ Test adjacency matrix with and without nodelist. """
@@ -72,4 +76,7 @@ class TestGraph(TestVideoFrame):
 
     @classmethod
     def tearDownClass(cls) -> None:
-        os.remove(cls.fp_adj_matrix)
+        try:
+            os.remove(cls.fp_adj_matrix)
+        except FileNotFoundError:
+            pass

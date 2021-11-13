@@ -794,6 +794,7 @@ def graph_extraction(edge_course_xy,
         node_size, landmarks_fp)
 
     graph = nx.Graph()
+    helper_xy = sort_list_of_nodes(helper_xy)
 
     # define nodes with attribute position
     for i, xy in enumerate(helper_xy):
@@ -813,6 +814,10 @@ def graph_extraction(edge_course_xy,
             graph.add_edge(startidx, endidx, label=p, deg2=deg2[p])
 
     return graph
+
+
+def sort_list_of_nodes(unsorted):
+    return sorted(unsorted, key=lambda x: [x[0], x[1]])
 
 
 def graph_poly(original: np.ndarray,
