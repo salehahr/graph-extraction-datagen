@@ -468,20 +468,25 @@ def helpernodes_BasicGraph_for_polyfit(coordinates_global: list, esecoor: list, 
                 else:
                     # print('edge', i, ' is a circle')
                     selected_elements = []
-                    x = []
-                    coursecoor_global = helperedges[i].copy()
-                    index = int(np.ceil(len(coursecoor_global) / 2))
-                    ese_helperedges[i][1] = coursecoor_global[index]
-                    if coursecoor_global[index][0] < coursecoor_global[-1][0]:
-                        ese_helperedges.insert(i + 1, [coursecoor_global[index], coursecoor_global[-1]])
+                    edge_xy = helperedges[i].copy()
+
+                    idx_mid = int(np.ceil(len(edge_xy) / 2))
+                    edge_xy_mid = edge_xy[idx_mid]
+                    edge_xy_last = edge_xy[-1]
+
+                    ese_helperedges[i][1] = edge_xy_mid
+
+                    if edge_xy_mid[0] < edge_xy[-1][0]:
+                        ese_helperedges.insert(i + 1, [edge_xy_mid, edge_xy_last])
                     else:
-                        ese_helperedges.insert(i + 1, [coursecoor_global[-1], coursecoor_global[index]])
-                    helpernodescoor.append(coursecoor_global[index])
-                    for j in range(index, len(coursecoor_global)):
-                        selected_elements.append(coursecoor_global[j])
+                        ese_helperedges.insert(i + 1, [edge_xy_last, edge_xy_mid])
+
+                    helpernodescoor.append(edge_xy_mid)
+                    for j in range(idx_mid, len(edge_xy)):
+                        selected_elements.append(edge_xy[j])
                     selected_elements.reverse()
                     helperedges.insert(i + 1, selected_elements)
-                    for j in range(index + 1, len(coursecoor_global)):
+                    for j in range(idx_mid + 1, len(edge_xy)):
                         del helperedges[i][-1]
                     check_again.append(True)
             double_points = ese_helperedges[i]
@@ -541,47 +546,51 @@ def helpernodes_BasicGraph_for_structure(edge_course_xy: list,
         check_again = []
 
         for i in range(len_begin, len_end):
+            edge_se = ese_helperedges[i]
+            edge_start, edge_end = edge_se
 
             # edge is a circle
-            if ese_helperedges[i][0] == ese_helperedges[i][1]:
+            if edge_start == edge_end:
                 if len(helperedges[i]) >= 6:
-                    selected_elements = []
+                    edge_xy = helperedges[i].copy()
 
-                    coursecoor_global = helperedges[i].copy()
-                    index = int(np.ceil(len(coursecoor_global) / 2))
-                    ese_helperedges[i][1] = coursecoor_global[index]
+                    idx_mid = int(np.ceil(len(edge_xy) / 2))
+                    edge_xy_mid = edge_xy[idx_mid]
+                    edge_xy_last = edge_xy[-1]
 
-                    if coursecoor_global[index][0] < coursecoor_global[-1][0]:
-                        ese_helperedges.insert(i + 1, [coursecoor_global[index], coursecoor_global[-1]])
+                    # split edge_xy into two:
+                    # halve the current edge -- set endpoint to midpoint
+                    edge_end = edge_xy_mid
+
+                    # make a new edge between the midpoint and the old endpoint
+                    if edge_xy_mid[0] < edge_xy_last[0]:
+                        ese_helperedges.insert(i + 1, [edge_xy_mid, edge_xy_last])
                     else:
-                        ese_helperedges.insert(i + 1, [coursecoor_global[-1], coursecoor_global[index]])
+                        ese_helperedges.insert(i + 1, [edge_xy_last, edge_xy_mid])
 
-                    helpernodescoor.append(coursecoor_global[index])
-                    cv2.circle(pltimage, (coursecoor_global[index][0], coursecoor_global[index][1]),
-                               0, (0, 255, 0), node_thick)
+                    helpernodescoor.append(edge_xy_mid)
 
-                    for j in range(index, len(coursecoor_global)):
-                        selected_elements.append(coursecoor_global[j])
+                    cv2.circle(pltimage, tuple(edge_xy_mid), 0, (0, 255, 0), node_thick)
 
-                    selected_elements.reverse()
-                    helperedges.insert(i + 1, selected_elements)
-                    for j in range(index + 1, len(coursecoor_global)):
+                    new_half_edge = edge_xy[idx_mid:].reverse()
+                    helperedges.insert(i + 1, new_half_edge)
+
+                    for _ in edge_xy[idx_mid + 1:]:
                         del helperedges[i][-1]
 
                     check_again.append(True)
 
-            double_points = ese_helperedges[i]
-            indices = [j for j, points in enumerate(ese_helperedges) if points == double_points]
+            indices = [j for j, point in enumerate(ese_helperedges) if point == edge_se]
 
             if len(indices) > 1:
                 for j in range(1, len(indices)):
-                    selected_elements = []
                     len_edge1 = len(helperedges[i])
                     len_edge2 = len(helperedges[indices[j]])
                     if len_edge1 > len_edge2:
                         helperindex = i
                     else:
                         helperindex = indices[j]
+
                     coursecoor_global = helperedges[helperindex].copy()
                     if len(coursecoor_global) > 10:
                         # print('edge', i, ' has a double edge')
@@ -591,14 +600,16 @@ def helpernodes_BasicGraph_for_structure(edge_course_xy: list,
                             ese_helperedges.insert(helperindex + 1, [coursecoor_global[index], coursecoor_global[-1]])
                         else:
                             ese_helperedges.insert(helperindex + 1, [coursecoor_global[-1], coursecoor_global[index]])
+
                         helpernodescoor.append(coursecoor_global[index])
+
                         cv2.circle(pltimage, (coursecoor_global[index][0], coursecoor_global[index][1]), 0, (0, 255, 0),
                                    node_thick)
-                        for j in range(index, len(coursecoor_global)):
-                            selected_elements.append(coursecoor_global[j])
-                        selected_elements.reverse()
+
+                        selected_elements = coursecoor_global[index:].reverse()
                         helperedges.insert(helperindex + 1, selected_elements)
-                        for j in range(index + 1, len(coursecoor_global)):
+
+                        for _ in coursecoor_global[index + 1:]:
                             del helperedges[helperindex][-1]
                         check_again.append(True)
                     # else: print('double edge ', i, 'too short')
