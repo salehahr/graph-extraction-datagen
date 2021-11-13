@@ -187,22 +187,32 @@ def extract_graphs(conf, skip_existing):
                                                                              conf.lm_plot,
                                                                              conf.lm_save)
 
-        get_positions_vector(graph, do_save=True, filepath=node_pos_vec_fp)
-        generate_node_pos_img(graph, conf.img_length, do_save=True, filepath=node_pos_img_fp)
-        get_ext_adjacency_matrix(graph, do_save=True, filepath=adj_matr_fp)
+        if conf.node_pos_save or conf.adj_matr_save:
+            get_positions_vector(graph,
+                                 do_save=conf.node_pos_save, filepath=node_pos_vec_fp)
+            generate_node_pos_img(graph, conf.img_length,
+                                  do_save=conf.node_pos_save, filepath=node_pos_img_fp)
+            get_ext_adjacency_matrix(graph,
+                                     do_save=conf.adj_matr_save, filepath=adj_matr_fp)
 
         # plot polynomials
-        edge_width = 2
-        _, polyfit_coordinates, _, _ = polyfit_visualize(h_edges, ese_h_edges)
+        visualise_poly = conf.poly_plot or conf.poly_save
+        visualise_overlay = conf.overlay_plot or conf.overlay_save
 
-        node_size = 10
-        graph_poly(img_cropped, h_edges_cds, polyfit_coordinates, conf.poly_plot, conf.poly_save,
-                   node_size, edge_width, poly_fp)
+        if visualise_poly or visualise_overlay:
+            edge_width = 2
+            _, polyfit_coordinates, _, _ = polyfit_visualize(h_edges, ese_h_edges)
 
-        node_size = 7
-        plot_graph_on_img_poly(img_cropped, h_edges_cds, polyfit_coordinates,
-                               conf.overlay_plot, conf.overlay_save,
-                               node_size, edge_width, overlay_fp)
+            if visualise_poly:
+                node_size = 10
+                graph_poly(img_cropped, h_edges_cds, polyfit_coordinates, conf.poly_plot, conf.poly_save,
+                           node_size, edge_width, poly_fp)
+
+            if visualise_overlay:
+                node_size = 7
+                plot_graph_on_img_poly(img_cropped, h_edges_cds, polyfit_coordinates,
+                                       conf.overlay_plot, conf.overlay_save,
+                                       node_size, edge_width, overlay_fp)
 
 
 def extract_graph_and_helpers(img_preproc, skel_fp, lm_plot=False, lm_save=False):

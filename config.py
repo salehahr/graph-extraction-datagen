@@ -8,7 +8,7 @@ from tools.videos import trim_video, generate_time_tag_from_interval
 pattern = '(.*)_(\d{4}_\d{5}__\d{4}_\d{5})'
 
 # Image Dimensions
-img_length = 256
+image_length = 256
 
 # Plot/Save options
 thr_plot = False
@@ -23,6 +23,10 @@ lm_save = True
 poly_save = True
 overlay_save = True
 
+node_pos_save = True
+node_pos_img_save = True
+adj_matr_save = True
+
 
 class Config:
     def __init__(self,
@@ -34,7 +38,7 @@ class Config:
                  start=None,
                  end=None):
 
-        self._filepath = filepath
+        self.filepath = filepath
         self.ext = os.path.splitext(filepath)[1]
         self.trim_times = trim_times
         self.sections = [self]
@@ -57,6 +61,10 @@ class Config:
         self.poly_save = poly_save
         self.overlay_save = overlay_save
 
+        self.node_pos_save = node_pos_save
+        self.node_pos_img_save = node_pos_img_save
+        self.adj_matr_save = adj_matr_save
+
         # trim video if trim_times given, else
         if self.has_trimmed:
             if do_trim:
@@ -74,7 +82,7 @@ class Config:
         else:
             self._generate_folders()
 
-        self.generate_start_time(start)
+        self._generate_start_time(start)
 
     def _generate_folders(self):
         # TODO: raw images on outside of directory
@@ -85,12 +93,12 @@ class Config:
         self.threshed_img_folder = f'{self.basename}/threshed'
         self.preproc_img_folder = f'{self.basename}/skeleton'
         self.landmarks_img_folder = f'{self.basename}/landmarks'
-        self.poly_graph_img_folder = f'{self.basename}/poly_graph'
-        self.overlay_img_folder = f'{self.basename}/overlay'
         self.node_positions_folder = f'{self.basename}/node_positions'
         self.adj_matr_folder = f'{self.basename}/adj_matr'
+        self.poly_graph_img_folder = f'{self.basename}/poly_graph'
+        self.overlay_img_folder = f'{self.basename}/overlay'
 
-    def generate_start_time(self, start):
+    def _generate_start_time(self, start):
         if self.is_trimmed:
             if start is None:
                 start_pattern = '(\d{4})_(\d{5})__\d{4}_\d{5}\.'
@@ -106,15 +114,16 @@ class Config:
             self._start = 0
         assert (self._start is not None)
 
-    @property
-    def filepath(self):
-        return self._filepath
+    def save_all(self):
+        self.thr_save = True
+        self.pr_save = True
+        self.lm_save = True
+        self.poly_save = True
+        self.overlay_save = True
 
-    @filepath.setter
-    def filepath(self, new_fp: str):
-        assert (os.path.isfile(new_fp))
-        self._filepath = new_fp
-        self._generate_folders()
+        self.node_pos_save = True
+        self.node_pos_img_save = True
+        self.adj_matr_save = True
 
     @property
     def basename(self):

@@ -19,6 +19,8 @@ class TestVideo(unittest.TestCase):
 
     def test_before_filter(self):
         if self.config:
+            self.config.save_all()
+
             delete_files(self.config.raw_image_files)
             delete_files(self.config.cropped_image_files)
             self.assertEqual(len(self.config.raw_image_files), 0)
@@ -31,8 +33,9 @@ class TestVideo(unittest.TestCase):
 
     def test_after_filter(self):
         if self.config:
-            delete_files(self.config.masked_image_files)
             self.config.overlay_plot = True
+
+            delete_files(self.config.masked_image_files)
 
             self.assertGreaterEqual(len(self.config.filtered_image_files), 1)
             self.assertEqual(len(self.config.masked_image_files), 0)
