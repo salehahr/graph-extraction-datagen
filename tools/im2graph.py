@@ -812,10 +812,10 @@ def graph_extraction(edge_course_xy,
             startidx = helper_xy.index(start_xy)
             endidx = helper_xy.index(end_xy)
 
-            graph.add_edge(startidx, endidx, label=p)
-            graph.add_edge(startidx, endidx, label=p, length=edge_length[p])
-            graph.add_edge(startidx, endidx, label=p, deg3=deg3[p])
-            graph.add_edge(startidx, endidx, label=p, deg2=deg2[p])
+            graph.add_edge(startidx, endidx, label=p,
+                           length=edge_length[p],
+                           deg3=deg3[p],
+                           deg2=deg2[p])
 
     if do_save_graph:
         graph_data = nx.node_link_data(graph)

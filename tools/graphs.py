@@ -7,21 +7,16 @@ from tools.plots import plot_landmarks
 
 def get_positions_list(graph) -> list:
     """ Returns list of coordinate tuples """
-    pos_dict = nx.get_node_attributes(graph, 'pos')
-    return [xy for xy in pos_dict.values()]
+    return list(nx.get_node_attributes(graph, 'pos').values())
 
 
 def get_positions_vector(graph, do_save: bool = True, filepath: str = '') -> np.ndarray:
-    pos_list = get_positions_list(graph)
-
-    positions_vector = np.zeros((len(graph), 2))
-    for i, xy in enumerate(pos_list):
-        positions_vector[i, :] = xy
+    pos = np.array(get_positions_list(graph))
 
     if do_save and filepath:
-        np.save(filepath, positions_vector)
+        np.save(filepath, pos)
 
-    return positions_vector
+    return pos
 
 
 def extract_nodes_edges(img_preproc, node_size):
