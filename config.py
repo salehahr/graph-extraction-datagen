@@ -23,9 +23,10 @@ lm_save = True
 poly_save = True
 overlay_save = True
 
-node_pos_save = True
-node_pos_img_save = True
-adj_matr_save = True
+node_pos_save = False
+node_pos_img_save = False
+adj_matr_save = False
+graph_save = True
 
 
 class Config:
@@ -64,6 +65,7 @@ class Config:
         self.node_pos_save = node_pos_save
         self.node_pos_img_save = node_pos_img_save
         self.adj_matr_save = adj_matr_save
+        self.graph_save = graph_save
 
         # trim video if trim_times given, else
         if self.has_trimmed:
@@ -95,6 +97,7 @@ class Config:
         self.landmarks_img_folder = f'{self.basename}/landmarks'
         self.node_positions_folder = f'{self.basename}/node_positions'
         self.adj_matr_folder = f'{self.basename}/adj_matr'
+        self.graph_folder = f'{self.basename}/graphs'
         self.poly_graph_img_folder = f'{self.basename}/poly_graph'
         self.overlay_img_folder = f'{self.basename}/overlay'
 
@@ -124,6 +127,7 @@ class Config:
         self.node_pos_save = True
         self.node_pos_img_save = True
         self.adj_matr_save = True
+        self.graph_save = True
 
     @property
     def basename(self):
@@ -158,6 +162,7 @@ class Config:
                 self.overlay_img_folder,
                 self.node_positions_folder,
                 self.adj_matr_folder,
+                self.graph_folder,
             ]
 
     @property

@@ -185,7 +185,8 @@ def extract_graphs(conf, skip_existing):
         graph, ese_h_edges, h_edges, h_edges_cds = extract_graph_and_helpers(img_preproc,
                                                                              fp,
                                                                              conf.lm_plot,
-                                                                             conf.lm_save)
+                                                                             conf.lm_save,
+                                                                             conf.graph_save)
 
         if conf.node_pos_save or conf.adj_matr_save:
             get_positions_vector(graph,
@@ -215,8 +216,9 @@ def extract_graphs(conf, skip_existing):
                                        node_size, edge_width, overlay_fp)
 
 
-def extract_graph_and_helpers(img_preproc, skel_fp, lm_plot=False, lm_save=False):
+def extract_graph_and_helpers(img_preproc, skel_fp, lm_plot=False, lm_save=False, graph_save=False):
     landmarks_fp = skel_fp.replace('skeleton', 'landmarks')
+    graph_fp = os.path.splitext(skel_fp.replace('skeleton', 'graphs'))[0] + '.json'
 
     node_size = 6
     allnodes_xy, edge_course_xy, ese_xy, img_lm = extract_nodes_edges(img_preproc,
@@ -234,7 +236,9 @@ def extract_graph_and_helpers(img_preproc, skel_fp, lm_plot=False, lm_save=False
                              lm_save,
                              node_size,
                              landmarks_fp,
-                             training_parameters)
+                             training_parameters,
+                             graph_save,
+                             graph_fp)
 
     return graph, ese_helperedges, helperedges, helpernodescoor
 

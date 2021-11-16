@@ -1,3 +1,4 @@
+import json
 import math
 import numpy as np
 import cv2
@@ -779,18 +780,21 @@ def graph_extraction(edge_course_xy,
                      ese_xy,
                      allnodes_xy,
                      marked_img,
-                     do_plot,
-                     do_save,
+                     do_plot_lm,
+                     do_save_lm,
                      node_size,
                      landmarks_fp,
-                     training_parameters):
+                     training_parameters,
+                     do_save_graph,
+                     graph_fp
+                     ):
     deg3 = [item[0][0] for item in training_parameters]
     deg2 = [item[0][1] for item in training_parameters]
     edge_length = [item[1] for item in training_parameters]
 
     ese_helper_edges, helper_xy = helpernodes_BasicGraph_for_structure(
         edge_course_xy, ese_xy, allnodes_xy, marked_img,
-        do_plot, do_save,
+        do_plot_lm, do_save_lm,
         node_size, landmarks_fp)
 
     graph = nx.Graph()
@@ -812,6 +816,11 @@ def graph_extraction(edge_course_xy,
             graph.add_edge(startidx, endidx, label=p, length=edge_length[p])
             graph.add_edge(startidx, endidx, label=p, deg3=deg3[p])
             graph.add_edge(startidx, endidx, label=p, deg2=deg2[p])
+
+    if do_save_graph:
+        graph_data = nx.node_link_data(graph)
+        with open(graph_fp, 'w') as f:
+            json.dump(graph_data, f)
 
     return graph
 
