@@ -6,7 +6,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 
 from tools.files import get_random_video_path, get_random_raw_image
-from tools.images import crop_resize_square, crop_radius
+from tools.images import crop_resize_square, crop_radius, create_mask
 from tools.images import get_rgb, get_centre
 
 
@@ -95,3 +95,34 @@ class TestImage(TestVideoFrame):
         self.assertEqual(self.img_length, cr_height)
         self.assertEqual(self.img_length, cr_width)
 
+    def test_apply_new_mask(self):
+        """
+        Old mask was a graphic created in Inkscape and imported as a numpy file.
+        New mask is created using the cv2.circle function
+        """
+        old_mask_fp = f'/graphics/scratch/schuelej/sar/graph-training/data/mask{img_length:d}.png'
+        self.assertTrue(os.path.isfile(old_mask_fp))
+
+        old_mask = cv2.imread(old_mask_fp, cv2.IMREAD_GRAYSCALE) / 255
+        new_mask = create_mask(img_length)
+
+        filtered_fp = self.img_raw_fp.replace('raw', 'filtered')
+        img_filtered = cv2.imread(filtered_fp, cv2.IMREAD_GRAYSCALE)
+        plot_img(img_filtered, title='filtered')
+
+        img_masked_old = np.multiply(old_mask, img_filtered).astype(np.uint8)
+        img_masked_new = np.multiply(new_mask, img_filtered).astype(np.uint8)
+        plot_img(img_masked_old, title='masked old')
+        plot_img(img_masked_new, title='masked new')
+        plt.show()
+
+        # goal: less than 1% mismatch in pixels
+        mismatches = np.where(img_masked_old != img_masked_new)
+        num_mismatches = len(mismatches[0])
+        total_elements = img_masked_old.size
+        fraction_mismatches = num_mismatches / total_elements
+
+        print(f'{num_mismatches} mismatches out of {total_elements} elements, '
+              f'{fraction_mismatches * 100:.2f} %')
+
+        self.assertLessEqual(fraction_mismatches, 1)

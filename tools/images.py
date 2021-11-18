@@ -11,6 +11,8 @@ from tools.im2graph import polyfit_visualize, graph_extraction, graph_poly, \
 
 blur_kernel = (5, 5)
 crop_radius = 575
+mask_radius_256 = 102.5
+mask_radius_512 = 205
 
 
 def get_rgb(img):
@@ -105,9 +107,7 @@ def centre_crop(img: np.ndarray):
 
 
 def apply_img_mask(conf):
-    mask_path = f'../data/mask{conf.img_length:d}.png' if 'tests' in os.getcwd() \
-        else f'data/mask{conf.img_length:d}.png'
-    mask = cv2.imread(mask_path, cv2.IMREAD_GRAYSCALE) / 255
+    mask = create_mask(conf.img_length)
 
     for fp in conf.filtered_image_files:
         img = cv2.imread(fp, cv2.IMREAD_GRAYSCALE)
@@ -115,6 +115,21 @@ def apply_img_mask(conf):
 
         new_fp = fp.replace('filtered', 'masked')
         cv2.imwrite(new_fp, masked)
+
+
+def create_mask(img_length: int) -> np.ndarray:
+    centre = (int(img_length/2), int(img_length/2))
+
+    radius = 0
+    if img_length == 256:
+        radius = mask_radius_256
+    elif img_length == 512:
+        radius = mask_radius_512
+
+    mask = np.zeros((img_length, img_length), np.float32)
+    cv2.circle(mask, centre, int(radius), (1., 1., 1.), -1)
+
+    return mask
 
 
 def threshold_imgs(conf):
