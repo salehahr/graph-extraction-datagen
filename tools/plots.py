@@ -3,8 +3,6 @@ import networkx as nx
 import numpy as np
 import matplotlib.pyplot as plt
 
-from tools.im2graph import flip_node_coordinates
-
 
 def plot_graph_on_img_straight(img_skel: np.ndarray,
                                pos: list,
@@ -39,16 +37,21 @@ def plot_graph_on_img_straight(img_skel: np.ndarray,
     plt.show()
 
 
-def plot_landmarks(bcnodes_yx, endpoints_yx, node_size, result):
+def plot_landmarks(nodes, node_size, result):
     img_lm = result.copy()
     img_lm = cv2.cvtColor(img_lm, cv2.COLOR_GRAY2RGB)
 
-    bcnodes_xy = flip_node_coordinates(bcnodes_yx)
-    for xy in bcnodes_xy:
-        cv2.circle(img_lm, tuple(xy), 0, (255, 0, 0), node_size)
+    bgr_blue = (255, 0, 0)
+    bgr_red = (0, 0, 255)
+    bgr_yellow = (0, 255, 255)
 
-    endpoints_xy = flip_node_coordinates(endpoints_yx)
-    for xy in endpoints_xy:
-        cv2.circle(img_lm, tuple(xy), 0, (0, 0, 255), node_size)
+    for xy in nodes.crossing_nodes_xy:
+        cv2.circle(img_lm, tuple(xy), 0, bgr_blue, node_size)
+
+    for xy in nodes.end_nodes_xy:
+        cv2.circle(img_lm, tuple(xy), 0, bgr_red, node_size)
+
+    for xy in nodes.border_nodes_xy:
+        cv2.circle(img_lm, tuple(xy), 0, bgr_yellow, node_size)
 
     return img_lm

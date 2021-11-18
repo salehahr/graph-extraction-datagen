@@ -2,17 +2,12 @@ import os
 import cv2
 import numpy as np
 
-from tools.graphs import extract_nodes_edges, get_positions_vector, get_positions_list, get_ext_adjacency_matrix
+from config import image_centre, border_size, border_radius
 
-from tools.im2graph import preprocess, polyfit_training
-from tools.im2graph import helpernodes_BasicGraph_for_polyfit
-from tools.im2graph import polyfit_visualize, graph_extraction, graph_poly, \
-    plot_graph_on_img_poly
+from tools.im2graph import preprocess
 
 blur_kernel = (5, 5)
 crop_radius = 575
-mask_radius_256 = 102.5
-mask_radius_512 = 205
 
 
 def get_rgb(img):
@@ -118,16 +113,11 @@ def apply_img_mask(conf):
 
 
 def create_mask(img_length: int) -> np.ndarray:
-    centre = (int(img_length/2), int(img_length/2))
-
-    radius = 0
-    if img_length == 256:
-        radius = mask_radius_256
-    elif img_length == 512:
-        radius = mask_radius_512
+    centre = (int(img_length / 2), int(img_length / 2))
+    mask_radius = 102.5 if img_length == 256 else 205
 
     mask = np.zeros((img_length, img_length), np.float32)
-    cv2.circle(mask, centre, int(radius), (1., 1., 1.), -1)
+    cv2.circle(mask, centre, int(mask_radius), (1., 1., 1.), -1)
 
     return mask
 
@@ -161,103 +151,6 @@ def skeletonise_imgs(conf):
                    conf.pr_plot, conf.pr_save, skel_fp)
 
 
-def extract_graphs(conf, skip_existing):
-    """ Starting with the thresholded images, performs the operations
-    skeletonise, node extraction, edge extraction"""
-
-    for fp in conf.skeletonised_image_files:
-        cropped_fp = fp.replace('skeleton', 'cropped')
-        overlay_fp = fp.replace('skeleton', 'overlay')
-        poly_fp = fp.replace('skeleton', 'poly_graph')
-
-        node_pos_img_fp = fp.replace('skeleton', 'node_positions')
-        node_pos_vec_fp = os.path.splitext(fp.replace('skeleton', 'node_positions'))[0] + '.npy'
-        adj_matr_fp = os.path.splitext(fp.replace('skeleton', 'adj_matr'))[0] + '.npy'
-
-        img_cropped = cv2.imread(cropped_fp, cv2.IMREAD_COLOR)
-        img_preproc = cv2.imread(fp, cv2.IMREAD_GRAYSCALE)
-
-        # exit if no raw image found
-        if img_preproc is None:
-            print(f'No skeletonised image found.')
-            raise Exception
-
-        # skip already processed frames
-        if os.path.isfile(overlay_fp) and skip_existing:
-            continue
-
-        # landmarks
-        graph, ese_h_edges, h_edges, h_edges_cds = extract_graph_and_helpers(img_preproc,
-                                                                             fp,
-                                                                             conf.lm_plot,
-                                                                             conf.lm_save,
-                                                                             conf.graph_save)
-
-        if conf.node_pos_save or conf.adj_matr_save:
-            get_positions_vector(graph,
-                                 do_save=conf.node_pos_save, filepath=node_pos_vec_fp)
-            generate_node_pos_img(graph, conf.img_length,
-                                  do_save=conf.node_pos_save, filepath=node_pos_img_fp)
-            get_ext_adjacency_matrix(graph,
-                                     do_save=conf.adj_matr_save, filepath=adj_matr_fp)
-
-        # plot polynomials
-        visualise_poly = conf.poly_plot or conf.poly_save
-        visualise_overlay = conf.overlay_plot or conf.overlay_save
-
-        if visualise_poly or visualise_overlay:
-            edge_width = 2
-            _, polyfit_coordinates, _, _ = polyfit_visualize(h_edges, ese_h_edges)
-
-            if visualise_poly:
-                node_size = 10
-                graph_poly(img_cropped, h_edges_cds, polyfit_coordinates, conf.poly_plot, conf.poly_save,
-                           node_size, edge_width, poly_fp)
-
-            if visualise_overlay:
-                node_size = 7
-                plot_graph_on_img_poly(img_cropped, h_edges_cds, polyfit_coordinates,
-                                       conf.overlay_plot, conf.overlay_save,
-                                       node_size, edge_width, overlay_fp)
-
-
-def extract_graph_and_helpers(img_preproc, skel_fp, lm_plot=False, lm_save=False, graph_save=False):
-    landmarks_fp = skel_fp.replace('skeleton', 'landmarks')
-    graph_fp = os.path.splitext(skel_fp.replace('skeleton', 'graphs'))[0] + '.json'
-
-    node_size = 6
-    allnodes_xy, edge_course_xy, ese_xy, img_lm = extract_nodes_edges(img_preproc,
-                                                                      node_size)
-    helperedges, ese_helperedges, helpernodescoor = helpernodes_BasicGraph_for_polyfit(edge_course_xy,
-                                                                                       ese_xy,
-                                                                                       allnodes_xy)
-
-    training_parameters = polyfit_training(helperedges, ese_helperedges)
-    graph = graph_extraction(edge_course_xy,
-                             ese_xy,
-                             allnodes_xy,
-                             img_lm,
-                             lm_plot,
-                             lm_save,
-                             node_size,
-                             landmarks_fp,
-                             training_parameters,
-                             graph_save,
-                             graph_fp)
-
-    return graph, ese_helperedges, helperedges, helpernodescoor
-
-
-def generate_node_pos_img(graph, dim, do_save: bool = True, filepath: str = ''):
-    img = np.zeros((dim, dim)).astype(np.uint8)
-
-    node_positions = get_positions_list(graph)
-    for coords in node_positions:
-        x, y = coords
-        row, col = y, x
-        img[row][col] = 255
-
-    if do_save and filepath:
-        cv2.imwrite(filepath, img)
-
-    return img
+def overlay_border(img: np.ndarray):
+    bgr_yellow = (0, 255, 255)
+    cv2.circle(img, image_centre, border_radius, bgr_yellow, border_size)

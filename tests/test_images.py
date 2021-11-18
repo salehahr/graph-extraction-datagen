@@ -6,8 +6,8 @@ import numpy as np
 import matplotlib.pyplot as plt
 
 from tools.files import get_random_video_path, get_random_raw_image
-from tools.images import crop_resize_square, crop_radius, create_mask
 from tools.images import get_rgb, get_centre
+from tools.images import crop_resize_square, crop_radius, create_mask
 
 
 def plot_img(img, title=''):

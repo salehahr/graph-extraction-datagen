@@ -1,8 +1,7 @@
+import json
+
 import networkx as nx
 import numpy as np
-
-from tools.im2graph import node_extraction, edge_extraction
-from tools.plots import plot_landmarks
 
 
 def get_positions_list(graph) -> list:
@@ -17,15 +16,6 @@ def get_positions_vector(graph, do_save: bool = True, filepath: str = '') -> np.
         np.save(filepath, pos)
 
     return pos
-
-
-def extract_nodes_edges(img_preproc, node_size):
-    bcnodes_yx, endpoints_yx, allnodes_xy, cleaned_skeleton = node_extraction(img_preproc)
-    ese_xy, edge_course_xy = edge_extraction(img_preproc, endpoints_yx, bcnodes_yx)
-
-    img_lm = plot_landmarks(bcnodes_yx, endpoints_yx, node_size, cleaned_skeleton)
-
-    return allnodes_xy, edge_course_xy, ese_xy, img_lm
 
 
 def get_ext_adjacency_matrix(graph, nodelist=None,
@@ -50,3 +40,10 @@ def get_ext_adjacency_matrix(graph, nodelist=None,
         np.save(filepath, extended_adj_matrix)
 
     return extended_adj_matrix
+
+
+def load_graph(filepath):
+    with open(filepath, 'r') as f:
+        data_dict = json.load(f)
+        graph = nx.node_link_graph(data_dict)
+    return graph

@@ -1,7 +1,7 @@
 import numpy as np
 
 from tools.images import apply_img_mask, threshold_imgs, skeletonise_imgs
-from tools.images import extract_graphs
+from tools.im2graph import extract_graphs
 
 from config import Config, image_length
 from video_data import video_filepath, frequency, trim_times

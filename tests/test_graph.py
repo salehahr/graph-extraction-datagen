@@ -11,9 +11,9 @@ import matplotlib.pyplot as plt
 from test_images import TestVideoFrame, plot_img
 from test_images import test_data_path, img_length
 
-from tools.graphs import get_positions_list, get_ext_adjacency_matrix
-from tools.im2graph import sort_list_of_nodes
-from tools.images import extract_graph_and_helpers, generate_node_pos_img
+from tools.im2graph import extract_graph_and_helpers, generate_node_pos_img
+from tools.graphs import get_positions_list
+from tools.NodeContainer import sort_list_of_nodes
 from tools.plots import plot_graph_on_img_straight
 
 
@@ -43,16 +43,17 @@ class TestGraph(TestVideoFrame):
         plot_graph_on_img_straight(self.img_skel, self.pos_list, adj_matr)
 
     def test_is_pos_list_sorted(self):
-        rows, cols = zip(*self.pos_list)
-        print(self.pos_list)
-
         def is_sorted_ascending(arr):
             return all(arr[i] <= arr[i + 1] for i in range(len(arr) - 1))
 
-        is_sorted_row = is_sorted_ascending(rows)
-        is_sorted_col = is_sorted_ascending(cols)
+        if self.pos_list:
+            rows, cols = zip(*self.pos_list)
+            print(self.pos_list)
 
-        self.assertTrue(is_sorted_row or is_sorted_col)
+            is_sorted_row = is_sorted_ascending(rows)
+            is_sorted_col = is_sorted_ascending(cols)
+
+            self.assertTrue(is_sorted_row or is_sorted_col)
 
     def test_adjacency_matrix_skeletonised_match(self):
         pass
@@ -96,7 +97,7 @@ class TestGenerateGraph(TestGraph):
         if os.path.isfile(cls.fp_adj_matrix):
             os.remove(cls.fp_adj_matrix)
 
-        cls.graph, _, _, _ = extract_graph_and_helpers(cls.img_skel, '')
+        cls.graph, _, _, _, _ = extract_graph_and_helpers(cls.img_skel, '')
         cls.pos_list = get_positions_list(cls.graph)
 
     def test_generate_node_pos_img(self):
@@ -127,7 +128,7 @@ class TestSaveGraph(unittest.TestCase):
     def setUpClass(cls) -> None:
         list_of_nodes = [[7, 2.5], [2, 2], [4, 0], [0, 3], [0, 0]]
 
-        cls.sorted_nodes = sort_list_of_nodes(list_of_nodes)
+        _, cls.sorted_nodes = sort_list_of_nodes(list_of_nodes)
         cls.graph = cls.create_graph()
 
         cls.filepath = os.path.join(test_data_path, 'graph.json')

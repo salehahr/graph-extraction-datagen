@@ -1,5 +1,7 @@
 import json
 import math
+import os
+
 import numpy as np
 import cv2
 import copy
@@ -7,6 +9,12 @@ import networkx as nx
 import matplotlib.pyplot as plt
 from skimage import morphology
 from skimage.morphology import skeletonize
+
+from tools.NodeContainer import NodeContainer, flip_node_coordinates
+from tools.graphs import get_positions_vector, get_ext_adjacency_matrix, get_positions_list
+from tools.plots import plot_landmarks
+
+bgr_green = (0, 255, 0)
 
 
 def four_connectivity(a: int, b: int):
@@ -135,8 +143,7 @@ def set_black_border(img):
 
 def node_extraction(img_skeleton: np.ndarray):
     cleaned_skeleton = img_skeleton.copy()
-    binary = img_skeleton.copy()
-    binary[binary == 255] = 1
+    binary = np.uint8(img_skeleton.copy() / 255)
 
     kernel = 3
 
@@ -223,16 +230,20 @@ def node_extraction(img_skeleton: np.ndarray):
                         cleaned_skeleton[row, col - 1] = 0
                         cleaned_skeleton[row - 1, col] = 0
 
-    # get all nodes
-    allnodes_yx = bcnodes_yx + endpoints_yx
-    allnodes_xy = flip_node_coordinates(allnodes_yx)
+    nodes = NodeContainer(bcnodes_yx, endpoints_yx, [])
 
-    return bcnodes_yx, endpoints_yx, allnodes_xy, cleaned_skeleton
+    return nodes, cleaned_skeleton
 
 
-def edge_extraction(skeleton: np.ndarray, endpoints: list, bcnodes: list):
+def edge_extraction(skeleton: np.ndarray, nodes):
+    def flip_edge_coordinates(list_of_edges):
+        return [flip_node_coordinates(edge_yx) for edge_yx in list_of_edges]
+
     binary = skeleton.copy()
     binary[binary == 255] = 1
+
+    endpoints = nodes.end_nodes_yx + nodes.border_nodes_yx
+    bcnodes = nodes.crossing_nodes_yx
 
     endpoints_temp = endpoints.copy()
 
@@ -446,18 +457,12 @@ def edge_extraction(skeleton: np.ndarray, endpoints: list, bcnodes: list):
     return ese_xy, edge_course_xy
 
 
-def flip_node_coordinates(list_of_nodes_yx):
-    return [[yx[1], yx[0]] for yx in list_of_nodes_yx]
-
-
-def flip_edge_coordinates(list_of_edges):
-    return [flip_node_coordinates(edge_yx) for edge_yx in list_of_edges]
-
-
-def helpernodes_BasicGraph_for_polyfit(coordinates_global: list, esecoor: list, allnodescoor: list):
+def helpernodes_BasicGraph_for_polyfit(coordinates_global: list, esecoor: list,
+                                       nodes):
     helperedges = copy.deepcopy(coordinates_global)
     ese_helperedges = copy.deepcopy(esecoor)
-    helpernodescoor = allnodescoor.copy()
+    helpernodescoor = nodes.all_nodes_xy
+
     # order coordinates_global -> is there a circle or any other critical structure
     check_again = [True] * len(helperedges)
     len_begin = 0
@@ -534,7 +539,7 @@ def helpernodes_BasicGraph_for_polyfit(coordinates_global: list, esecoor: list, 
 
 def helpernodes_BasicGraph_for_structure(edge_course_xy: list,
                                          ese_xy: list,
-                                         allnodes_xy: list,
+                                         nodes,
                                          pltimage: np.ndarray,
                                          plot: bool,
                                          save: bool,
@@ -542,7 +547,7 @@ def helpernodes_BasicGraph_for_structure(edge_course_xy: list,
                                          dir: str):
     helperedges = copy.deepcopy(edge_course_xy)
     ese_helperedges = copy.deepcopy(ese_xy)
-    helpernodescoor = allnodes_xy.copy()
+    helpernodescoor = nodes.all_nodes_xy
 
     # order coordinates_global -> is there a circle or any other critical structure
     check_again = [True] * len(helperedges)
@@ -557,7 +562,7 @@ def helpernodes_BasicGraph_for_structure(edge_course_xy: list,
             edge_se = ese_helperedges[i]
             edge_start, edge_end = edge_se
 
-            # edge is a circle
+            # edge is a circlex
             if edge_start == edge_end:
                 if len(helperedges[i]) >= 6:
                     edge_xy = helperedges[i].copy()
@@ -568,18 +573,20 @@ def helpernodes_BasicGraph_for_structure(edge_course_xy: list,
 
                     # split edge_xy into two:
                     # halve the current edge -- set endpoint to midpoint
-                    edge_end = edge_xy_mid
+                    # edge_end = edge_xy_mid
 
+                    # append new start and end point
                     # make a new edge between the midpoint and the old endpoint
                     if edge_xy_mid[0] < edge_xy_last[0]:
                         ese_helperedges.insert(i + 1, [edge_xy_mid, edge_xy_last])
                     else:
                         ese_helperedges.insert(i + 1, [edge_xy_last, edge_xy_mid])
 
-                    helpernodescoor.append(edge_xy_mid)
+                    # append new helper node, plot it in green
+                    nodes.add_helper_node(edge_xy_mid)
+                    cv2.circle(pltimage, tuple(edge_xy_mid), 0, bgr_green, node_thick)
 
-                    cv2.circle(pltimage, tuple(edge_xy_mid), 0, (0, 255, 0), node_thick)
-
+                    # add the new half edge
                     new_half_edge = edge_xy[idx_mid:].reverse()
                     helperedges.insert(i + 1, new_half_edge)
 
@@ -609,9 +616,9 @@ def helpernodes_BasicGraph_for_structure(edge_course_xy: list,
                         else:
                             ese_helperedges.insert(helperindex + 1, [coursecoor_global[-1], coursecoor_global[index]])
 
-                        helpernodescoor.append(coursecoor_global[index])
+                        nodes.add_helper_node(coursecoor_global[index])
 
-                        cv2.circle(pltimage, (coursecoor_global[index][0], coursecoor_global[index][1]), 0, (0, 255, 0),
+                        cv2.circle(pltimage, (coursecoor_global[index][0], coursecoor_global[index][1]), 0, bgr_green,
                                    node_thick)
 
                         selected_elements = coursecoor_global[index:].reverse()
@@ -631,7 +638,7 @@ def helpernodes_BasicGraph_for_structure(edge_course_xy: list,
     if save:
         cv2.imwrite(dir, pltimage)
 
-    return ese_helperedges, helpernodescoor
+    return ese_helperedges
 
 
 def polyfit_visualize(helperedges: list, ese_helperedges: list):
@@ -778,7 +785,7 @@ def get_local_edge_coords(edge_global, start_xy):
 
 def graph_extraction(edge_course_xy,
                      ese_xy,
-                     allnodes_xy,
+                     nodes,
                      marked_img,
                      do_plot_lm,
                      do_save_lm,
@@ -792,25 +799,26 @@ def graph_extraction(edge_course_xy,
     deg2 = [item[0][1] for item in training_parameters]
     edge_length = [item[1] for item in training_parameters]
 
-    ese_helper_edges, helper_xy = helpernodes_BasicGraph_for_structure(
-        edge_course_xy, ese_xy, allnodes_xy, marked_img,
+    ese_helper_edges = helpernodes_BasicGraph_for_structure(
+        edge_course_xy, ese_xy, nodes, marked_img,
         do_plot_lm, do_save_lm,
         node_size, landmarks_fp)
 
     graph = nx.Graph()
-    helper_xy = sort_list_of_nodes(helper_xy)
+    all_nodes_xy = nodes.all_nodes_xy
+    node_types = nodes.node_types
 
     # define nodes with attribute position
-    for i, xy in enumerate(helper_xy):
-        graph.add_node(i, pos=tuple(xy))
+    for i, xy in enumerate(all_nodes_xy):
+        graph.add_node(i, pos=tuple(xy), type=node_types[i])
 
     # define edges with attributes: weight
     for p, edge in enumerate(ese_helper_edges):
         start_xy, end_xy = edge
 
-        if start_xy in helper_xy and end_xy in helper_xy:
-            startidx = helper_xy.index(start_xy)
-            endidx = helper_xy.index(end_xy)
+        if start_xy in all_nodes_xy and end_xy in all_nodes_xy:
+            startidx = all_nodes_xy.index(start_xy)
+            endidx = all_nodes_xy.index(end_xy)
 
             graph.add_edge(startidx, endidx, label=p,
                            length=edge_length[p],
@@ -823,10 +831,6 @@ def graph_extraction(edge_course_xy,
             json.dump(graph_data, f)
 
     return graph
-
-
-def sort_list_of_nodes(unsorted):
-    return sorted(unsorted, key=lambda x: [x[0], x[1]])
 
 
 def graph_poly(original: np.ndarray,
@@ -875,3 +879,114 @@ def plot_graph_on_img_poly(original: np.ndarray,
         cv2.imwrite(path, overlay)
 
     return overlay
+
+
+def extract_nodes_edges(img_preproc, node_size):
+    nodes, cleaned_skeleton = node_extraction(img_preproc)
+    ese_xy, edge_course_xy = edge_extraction(img_preproc, nodes)
+
+    img_lm = plot_landmarks(nodes, node_size, cleaned_skeleton)
+
+    return nodes, edge_course_xy, ese_xy, img_lm
+
+
+def extract_graphs(conf, skip_existing):
+    """ Starting with the thresholded images, performs the operations
+    skeletonise, node extraction, edge extraction"""
+
+    for fp in conf.skeletonised_image_files:
+        cropped_fp = fp.replace('skeleton', 'cropped')
+        overlay_fp = fp.replace('skeleton', 'overlay')
+        poly_fp = fp.replace('skeleton', 'poly_graph')
+
+        node_pos_img_fp = fp.replace('skeleton', 'node_positions')
+        node_pos_vec_fp = os.path.splitext(fp.replace('skeleton', 'node_positions'))[0] + '.npy'
+        adj_matr_fp = os.path.splitext(fp.replace('skeleton', 'adj_matr'))[0] + '.npy'
+
+        img_cropped = cv2.imread(cropped_fp, cv2.IMREAD_COLOR)
+        img_preproc = cv2.imread(fp, cv2.IMREAD_GRAYSCALE)
+
+        # exit if no raw image found
+        if img_preproc is None:
+            print(f'No skeletonised image found.')
+            raise Exception
+
+        # skip already processed frames
+        if os.path.isfile(overlay_fp) and skip_existing:
+            continue
+
+        # landmarks
+        graph, _, ese_h_edges, h_edges, h_edges_cds = extract_graph_and_helpers(img_preproc,
+                                                                             fp,
+                                                                             conf.lm_plot,
+                                                                             conf.lm_save,
+                                                                             conf.graph_save)
+
+        if conf.node_pos_save or conf.adj_matr_save:
+            get_positions_vector(graph,
+                                 do_save=conf.node_pos_save, filepath=node_pos_vec_fp)
+            generate_node_pos_img(graph, conf.img_length,
+                                  do_save=conf.node_pos_save, filepath=node_pos_img_fp)
+            get_ext_adjacency_matrix(graph,
+                                     do_save=conf.adj_matr_save, filepath=adj_matr_fp)
+
+        # plot polynomials
+        visualise_poly = conf.poly_plot or conf.poly_save
+        visualise_overlay = conf.overlay_plot or conf.overlay_save
+
+        if visualise_poly or visualise_overlay:
+            edge_width = 2
+            _, polyfit_coordinates, _, _ = polyfit_visualize(h_edges, ese_h_edges)
+
+            if visualise_poly:
+                node_size = 10
+                graph_poly(img_cropped, h_edges_cds, polyfit_coordinates, conf.poly_plot, conf.poly_save,
+                           node_size, edge_width, poly_fp)
+
+            if visualise_overlay:
+                node_size = 7
+                plot_graph_on_img_poly(img_cropped, h_edges_cds, polyfit_coordinates,
+                                       conf.overlay_plot, conf.overlay_save,
+                                       node_size, edge_width, overlay_fp)
+
+
+def extract_graph_and_helpers(img_preproc, skel_fp, lm_plot=False, lm_save=False, graph_save=False):
+    landmarks_fp = skel_fp.replace('skeleton', 'landmarks')
+    graph_fp = os.path.splitext(skel_fp.replace('skeleton', 'graphs'))[0] + '.json'
+
+    node_size = 6
+    nodes, edge_course_xy, ese_xy, img_lm = extract_nodes_edges(img_preproc,
+                                                                node_size)
+    helperedges, ese_helperedges, helpernodescoor = helpernodes_BasicGraph_for_polyfit(edge_course_xy,
+                                                                                       ese_xy,
+                                                                                       nodes)
+
+    training_parameters = polyfit_training(helperedges, ese_helperedges)
+    graph = graph_extraction(edge_course_xy,
+                             ese_xy,
+                             nodes,
+                             img_lm,
+                             lm_plot,
+                             lm_save,
+                             node_size,
+                             landmarks_fp,
+                             training_parameters,
+                             graph_save,
+                             graph_fp)
+
+    return graph, nodes, ese_helperedges, helperedges, helpernodescoor
+
+
+def generate_node_pos_img(graph, dim, do_save: bool = True, filepath: str = ''):
+    img = np.zeros((dim, dim)).astype(np.uint8)
+
+    node_positions = get_positions_list(graph)
+    for coords in node_positions:
+        x, y = coords
+        row, col = y, x
+        img[row][col] = 255
+
+    if do_save and filepath:
+        cv2.imwrite(filepath, img)
+
+    return img
