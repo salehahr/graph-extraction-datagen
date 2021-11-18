@@ -2,18 +2,30 @@ import os
 import unittest
 
 import cv2
+import numpy as np
 import matplotlib.pyplot as plt
 
 from tools.files import get_random_video_path, get_random_raw_image
-from tools.images import crop_resize_square, is_square, crop_radius
+from tools.images import crop_resize_square, crop_radius
 from tools.images import get_rgb, get_centre
 
 
-def plot_img(img):
-    rgb_img = get_rgb(img)
-    plt.imshow(rgb_img)
+def plot_img(img, title=''):
+    n_channels = img.shape[2] if len(img.shape) >= 3 else 1
+    cmap = 'gray' if n_channels == 1 else None
+
+    image = get_rgb(img)
+
+    plt.figure()
+    plt.imshow(image, cmap=cmap)
     plt.xticks([])
     plt.yticks([])
+    plt.title(title)
+
+
+def is_square(img: np.ndarray):
+    h, w, _ = img.shape
+    return h == w
 
 
 img_length = 256
@@ -57,7 +69,6 @@ class TestImage(TestVideoFrame):
         super(TestImage, cls).setUpClass()
 
         cls.img_raw = cv2.imread(cls.img_raw_fp, cv2.IMREAD_COLOR)
-        cls.img_skel = cv2.imread(cls.img_skeletonised_fp, cv2.IMREAD_GRAYSCALE)
 
     def test_find_centre(self):
         cx, cy = get_centre(self.img_raw)

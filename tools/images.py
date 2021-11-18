@@ -15,12 +15,12 @@ crop_radius = 575
 
 def get_rgb(img):
     """ Gets RGB image for matplotlib plots. """
-    return cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
+    n_channels = img.shape[2] if len(img.shape) >= 3 else 1
 
-
-def is_square(img: np.ndarray):
-    h, w, _ = img.shape
-    return h == w
+    if n_channels == 1:
+        return img
+    else:
+        return cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
 
 
 def get_centre(img):
@@ -57,14 +57,7 @@ def crop_imgs(conf):
             continue
 
         img = cv2.imread(fp, cv2.IMREAD_COLOR)
-
-        if is_square(img):
-            continue
-
         img_cropped = crop_resize_square(img, conf.img_length)
-
-        # cv2.imshow('title', img_cropped)
-        # cv2.waitKey()
 
         cv2.imwrite(new_fp, img_cropped)
 
@@ -119,9 +112,6 @@ def apply_img_mask(conf):
     for fp in conf.filtered_image_files:
         img = cv2.imread(fp, cv2.IMREAD_GRAYSCALE)
         masked = np.multiply(mask, img)
-
-        # cv2.imshow('title', masked_img)
-        # cv2.waitKey()
 
         new_fp = fp.replace('filtered', 'masked')
         cv2.imwrite(new_fp, masked)
