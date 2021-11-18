@@ -1,10 +1,10 @@
 import cv2
 import numpy as np
-import networkx as nx
+
+from tools.PolyGraph import PolyGraph
+from tools.NodeType import NodeType
 
 from config import image_length, image_centre, border_radius, border_size
-from tools.NodeType import NodeType
-from tools.graphs import load_graph
 
 
 def flip_node_coordinates(list_of_nodes_yx):
@@ -58,10 +58,10 @@ class NodeContainer(object):
         """
         Loads all nodes and their corresponding types from graph.
         """
-        graph = load_graph(graph_fp)
+        graph = PolyGraph.load(graph_fp)
 
-        self.all_nodes_xy = list(nx.get_node_attributes(graph, 'pos').values())
-        self.node_types = list(nx.get_node_attributes(graph, 'type').values())
+        self.all_nodes_xy = graph.positions
+        self.node_types = graph.node_types
 
     def _classify_nodes(self):
         """

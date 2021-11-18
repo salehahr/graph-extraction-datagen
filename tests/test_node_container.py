@@ -85,3 +85,11 @@ class TestBorderCase(unittest.TestCase):
         plot_img(new_lm_img)
         plt.show()
 
+
+class TestNodeContainerFromGraph(TestBorderCase):
+    @classmethod
+    def extract_nodes(cls):
+        print('TestNodeContainerFromGraph.extract_nodes class method')
+        graph_fp = cls.img_skel_fp.replace('skeleton', 'graphs').replace('.png', '.json')
+
+        return NodeContainer(graph_fp=graph_fp)

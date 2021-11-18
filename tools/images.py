@@ -154,3 +154,23 @@ def skeletonise_imgs(conf):
 def overlay_border(img: np.ndarray):
     bgr_yellow = (0, 255, 255)
     cv2.circle(img, image_centre, border_radius, bgr_yellow, border_size)
+
+
+def node_types_image(image_length, nodes):
+    node_radius = 3
+    bgr_red = (0, 0, 255)
+    bgr_blue = (255, 0, 0)
+    bgr_yellow = (0, 255, 255)
+
+    img = np.zeros((image_length, image_length, 3)).astype(np.float32)
+
+    for xy in nodes.end_nodes_xy:
+        cv2.circle(img, xy, node_radius, bgr_red, -1)
+
+    for xy in nodes.crossing_nodes_xy:
+        cv2.circle(img, xy, node_radius, bgr_blue, -1)
+
+    for xy in nodes.border_nodes_xy:
+        cv2.circle(img, xy, node_radius, bgr_yellow, -1)
+
+    return img

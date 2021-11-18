@@ -1,17 +1,16 @@
-import json
 import math
 import os
 
-import numpy as np
 import cv2
 import copy
-import networkx as nx
+import numpy as np
 import matplotlib.pyplot as plt
+
 from skimage import morphology
 from skimage.morphology import skeletonize
 
+from tools.PolyGraph import PolyGraph
 from tools.NodeContainer import NodeContainer, flip_node_coordinates
-from tools.graphs import get_positions_vector, get_ext_adjacency_matrix, get_positions_list
 from tools.plots import plot_landmarks
 
 bgr_green = (0, 255, 0)
@@ -720,13 +719,16 @@ def polyfit_visualize(helperedges: list, ese_helperedges: list):
     return polyfit_coeff_visual, polyfit_coordinates, edge_coordinates, polyfit_points
 
 
-def polyfit_training(helperedges: list, ese_helperedges: list):
+def polyfit_training(helperedges: list, ese_helperedges: list) -> dict:
     cubic_thresh = 10  # deg3 > 10, otherwise only deg2 coefficients for training
 
     edges = helperedges.copy()
     ese = ese_helperedges.copy()
-    training_parameters = []
+    training_parameters = {'deg3': [],
+                           'deg2': [],
+                           'length': []}
     polyfit_norm_deg3 = []
+
     for i in range(len(edges)):
         # global
         edge = edges[i]
@@ -751,9 +753,10 @@ def polyfit_training(helperedges: list, ese_helperedges: list):
         p_norm = np.polyfit(x_rotated_norm, y_rotated, deg_norm)
 
         deg_coeffs = [p_norm[0], p_norm[1]] if is_cubic else [0, p_norm[0]]
-        d = len(edge)
 
-        training_parameters.append([deg_coeffs, d])
+        training_parameters['deg3'].append(deg_coeffs[0])
+        training_parameters['deg2'].append(deg_coeffs[1])
+        training_parameters['length'].append(len(edge))
 
     return training_parameters
 
@@ -791,44 +794,21 @@ def graph_extraction(edge_course_xy,
                      do_save_lm,
                      node_size,
                      landmarks_fp,
-                     training_parameters,
+                     training_parameters: dict,
                      do_save_graph,
                      graph_fp
                      ):
-    deg3 = [item[0][0] for item in training_parameters]
-    deg2 = [item[0][1] for item in training_parameters]
-    edge_length = [item[1] for item in training_parameters]
-
     ese_helper_edges = helpernodes_BasicGraph_for_structure(
         edge_course_xy, ese_xy, nodes, marked_img,
         do_plot_lm, do_save_lm,
         node_size, landmarks_fp)
 
-    graph = nx.Graph()
-    all_nodes_xy = nodes.all_nodes_xy
-    node_types = nodes.node_types
-
-    # define nodes with attribute position
-    for i, xy in enumerate(all_nodes_xy):
-        graph.add_node(i, pos=tuple(xy), type=node_types[i])
-
-    # define edges with attributes: weight
-    for p, edge in enumerate(ese_helper_edges):
-        start_xy, end_xy = edge
-
-        if start_xy in all_nodes_xy and end_xy in all_nodes_xy:
-            startidx = all_nodes_xy.index(start_xy)
-            endidx = all_nodes_xy.index(end_xy)
-
-            graph.add_edge(startidx, endidx, label=p,
-                           length=edge_length[p],
-                           deg3=deg3[p],
-                           deg2=deg2[p])
+    graph = PolyGraph()
+    graph.add_nodes(nodes)
+    graph.add_edges(ese_helper_edges, training_parameters, nodes)
 
     if do_save_graph:
-        graph_data = nx.node_link_data(graph)
-        with open(graph_fp, 'w') as f:
-            json.dump(graph_data, f)
+        graph.save(graph_fp)
 
     return graph
 
@@ -923,12 +903,14 @@ def extract_graphs(conf, skip_existing):
                                                                              conf.graph_save)
 
         if conf.node_pos_save or conf.adj_matr_save:
-            get_positions_vector(graph,
-                                 do_save=conf.node_pos_save, filepath=node_pos_vec_fp)
+            if conf.node_pos_save:
+                graph.save_positions(node_pos_vec_fp)
+
             generate_node_pos_img(graph, conf.img_length,
                                   do_save=conf.node_pos_save, filepath=node_pos_img_fp)
-            get_ext_adjacency_matrix(graph,
-                                     do_save=conf.adj_matr_save, filepath=adj_matr_fp)
+
+            if conf.adj_matr_save:
+                graph.save_extended_adj_matrix(adj_matr_fp)
 
         # plot polynomials
         visualise_poly = conf.poly_plot or conf.poly_save
@@ -980,8 +962,7 @@ def extract_graph_and_helpers(img_preproc, skel_fp, lm_plot=False, lm_save=False
 def generate_node_pos_img(graph, dim, do_save: bool = True, filepath: str = ''):
     img = np.zeros((dim, dim)).astype(np.uint8)
 
-    node_positions = get_positions_list(graph)
-    for coords in node_positions:
+    for coords in graph.positions:
         x, y = coords
         row, col = y, x
         img[row][col] = 255
