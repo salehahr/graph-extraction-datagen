@@ -7,8 +7,14 @@ from tools.videos import trim_video, generate_time_tag_from_interval
 # Time tag pattern
 pattern = '(.*)_(\d{4}_\d{5}__\d{4}_\d{5})'
 
-# Image Dimensions
+# Image and mask dimensions
 image_length = 256
+image_centre = (int(image_length / 2), int(image_length / 2))
+mask_radius = 102.5 if image_length == 256 else 205
+
+# Border attributes for classifying nodes
+border_size = 2
+border_radius = int(mask_radius - border_size)
 
 # Plot/Save options
 thr_plot = False
@@ -23,9 +29,9 @@ lm_save = True
 poly_save = True
 overlay_save = True
 
-node_pos_save = False
-node_pos_img_save = False
-adj_matr_save = False
+node_pos_save = True
+node_pos_img_save = True
+adj_matr_save = True
 graph_save = True
 
 
