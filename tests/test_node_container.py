@@ -1,53 +1,35 @@
 import os
-import unittest
 
 import cv2
 import matplotlib.pyplot as plt
 import numpy as np
 
-from test_images import plot_img
-from tools.images import overlay_border, node_types_image
-from tools.im2graph import extract_graph_and_helpers
+from test_images import ImageWithBorderNodes
+from plots import plot_bgr_img
+from tools.plots import node_types_image
+from tools.im2graph import extract_nodes_and_edges
 from tools.NodeContainer import NodeContainer, get_border_coordinates
 
 test_data_path = '/graphics/scratch/schuelej/sar/graph-training/data/test'
 
 img_length = 256
 base_path = f'/graphics/scratch/schuelej/sar/data/{img_length}'
-video_path = os.path.join(base_path, 'GRK011/0002_17000__0002_21000')
 
 
-def plot_overlay(img_lm_fp):
-    """
-    Plot a circular border on the landmarks image.
-    """
-    img_lm_border = cv2.imread(img_lm_fp, cv2.IMREAD_COLOR)
-    overlay_border(img_lm_border)
-
-    plot_img(img_lm_border, title='landmarks')
-    plt.show()
-
-
-class TestBorderCase(unittest.TestCase):
+class TestExtractNodes(ImageWithBorderNodes):
     """
     Checks functions of the NodeContainer class for an image which
     has nodes on the border.
+    Note: helper nodes aren't couunted in this test.
     """
     @classmethod
     def setUpClass(cls) -> None:
-        img_name = '0002_20039.png'
-        cls.img_cropped_fp = os.path.join(video_path, f'cropped/{img_name}')
-        cls.img_skel_fp = os.path.join(video_path, f'skeleton/{img_name}')
-        cls.img_skel = cv2.imread(cls.img_skel_fp, cv2.IMREAD_GRAYSCALE)
-
-        img_landmarks_fp = os.path.join(video_path, f'landmarks/{img_name}')
-        plot_overlay(img_landmarks_fp)
-
+        super(TestExtractNodes, cls).setUpClass()
         cls.nodes = cls.extract_nodes()
 
     @classmethod
     def extract_nodes(cls):
-        _, nodes, _, _, _ = extract_graph_and_helpers(cls.img_skel, '')
+        nodes, _, _ = extract_nodes_and_edges(cls.img_skel)
         assert isinstance(nodes, NodeContainer)
         return nodes
 
@@ -64,7 +46,7 @@ class TestBorderCase(unittest.TestCase):
         for xy in border_coords:
             cv2.circle(border_img, xy, 1, bgr_red, -1)
 
-        plot_img(border_img)
+        plot_bgr_img(border_img)
         plt.show()
 
     def test_extract_nodes(self):
@@ -80,13 +62,13 @@ class TestBorderCase(unittest.TestCase):
         """
         Visual test for checking that the border nodes are classified correctly.
         """
-        new_lm_img = node_types_image(img_length, self.nodes)
+        new_lm_img = node_types_image(self.nodes, image_length=img_length)
 
-        plot_img(new_lm_img)
+        plot_bgr_img(new_lm_img)
         plt.show()
 
 
-class TestNodeContainerFromGraph(TestBorderCase):
+class TestNodeContainerFromGraph(TestExtractNodes):
     @classmethod
     def extract_nodes(cls):
         print('TestNodeContainerFromGraph.extract_nodes class method')

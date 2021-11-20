@@ -8,18 +8,19 @@ import numpy as np
 import networkx as nx
 import matplotlib.pyplot as plt
 
-from test_images import TestVideoFrame, plot_img
+from test_images import RandomImage
+from plots import plot_bgr_img
 from test_images import test_data_path, img_length
 
 from tools.PolyGraph import PolyGraph
 from tools.NodeContainer import NodeContainer, sort_list_of_nodes
 
-from tools.im2graph import extract_graph_and_helpers, generate_node_pos_img
-from tools.images import node_types_image
-from tools.plots import plot_graph_on_img_straight
+from tools.im2graph import extract_graph
+from images import generate_node_pos_img
+from tools.plots import plot_graph_on_img_straight, node_types_image
 
 
-class TestGraph(TestVideoFrame):
+class TestGraph(RandomImage):
     """
     Sanity checks:
         * tests whether the node positions are sorted
@@ -42,7 +43,7 @@ class TestGraph(TestVideoFrame):
 
     @classmethod
     def plot_skeletonised(cls):
-        plot_img(cls.img_skel)
+        plot_bgr_img(cls.img_skel)
         plt.title(os.path.relpath(cls.img_skeletonised_fp, start=cls.base_path))
         plt.show()
 
@@ -74,17 +75,17 @@ class TestGraph(TestVideoFrame):
             lm_fp = self.img_raw_fp.replace('raw', 'landmarks')
 
             old_lm_img = cv2.imread(lm_fp, cv2.IMREAD_COLOR)
-            new_lm_img = node_types_image(img_length, self.nodes)
+            new_lm_img = node_types_image(self.nodes, image_length=img_length)
 
-            plot_img(old_lm_img)
-            plot_img(new_lm_img)
+            plot_bgr_img(old_lm_img)
+            plot_bgr_img(new_lm_img)
             plt.show()
 
     def test_generate_node_pos_img(self):
         if self.graph:
             node_pos_img = generate_node_pos_img(self.graph, img_length)
 
-            plot_img(node_pos_img)
+            plot_bgr_img(node_pos_img)
             plt.show()
 
 
@@ -118,7 +119,7 @@ class TestGenerateGraph(TestGraph):
     def setUpClass(cls) -> None:
         super(TestGenerateGraph, cls).setUpClass()
 
-        cls.graph, cls.nodes, _, _, _ = extract_graph_and_helpers(cls.img_skel, '')
+        cls.graph, cls.nodes, _, _, _ = extract_graph(cls.img_skel, '')
 
         cls.adj_matr = nx.to_numpy_array(cls.graph)
         cls.positions = cls.graph.positions
@@ -144,19 +145,6 @@ class TestReadNumpyFiles(TestGraph):
         node_pos_vec_fp = fp.replace('skeleton', 'node_positions').replace('.png', '.npy')
         node_pos = np.load(node_pos_vec_fp).astype(np.uint8)
         cls.positions = np.ndarray.tolist(node_pos)
-
-    def test_recreate_landmarks_image(self):
-        """
-        Visual test for checking that the nodes are classified correctly.
-        """
-        lm_fp = self.img_raw_fp.replace('raw', 'landmarks')
-
-        old_lm_img = cv2.imread(lm_fp, cv2.IMREAD_COLOR)
-        new_lm_img = node_types_image(img_length, self.nodes)
-
-        plot_img(new_lm_img)
-        plot_img(old_lm_img)
-        plt.show()
 
 
 class TestSaveSimpleGraph(unittest.TestCase):

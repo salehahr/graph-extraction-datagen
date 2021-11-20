@@ -31,6 +31,10 @@ border_coordinates = get_border_coordinates()
 
 
 class NodeContainer(object):
+    """
+    Container object for all the nodes in a graph.
+    Auto-classification of border nodes is carried out upon initialisation.
+    """
 
     def __init__(self,
                  crossing_nodes=None,

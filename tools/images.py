@@ -2,9 +2,12 @@ import os
 import cv2
 import numpy as np
 
+from matplotlib import pyplot as plt
+from skimage import morphology
+from skimage.morphology import skeletonize
+
 from config import image_centre, border_size, border_radius
 
-from tools.im2graph import preprocess
 
 blur_kernel = (5, 5)
 crop_radius = 575
@@ -126,11 +129,10 @@ def threshold_imgs(conf):
     for fp in conf.masked_image_files:
         new_fp = fp.replace('masked', 'threshed')
         img = cv2.imread(fp, 0)
-        thresholding(img, conf.thr_save, new_fp)
+        threshold(img, conf.thr_save, new_fp)
 
 
-def thresholding(filtered_img: np.ndarray, do_save: bool, filepath: str = '') \
-        -> np.ndarray:
+def threshold(filtered_img: np.ndarray, do_save: bool, filepath: str = '') -> np.ndarray:
     blurred_img = cv2.GaussianBlur(filtered_img, blur_kernel, 0)
     _, thresholded_img = cv2.threshold(blurred_img, 0, 255,
                                        cv2.THRESH_BINARY + cv2.THRESH_OTSU)
@@ -147,30 +149,116 @@ def skeletonise_imgs(conf):
 
         img_threshed = cv2.imread(fp, cv2.IMREAD_GRAYSCALE)
 
-        preprocess(img_threshed,
-                   conf.pr_plot, conf.pr_save, skel_fp)
+        skeletonise_and_clean(img_threshed,
+                              conf.pr_plot, conf.pr_save, skel_fp)
+
+
+def skeletonise_and_clean(thr_image: np.ndarray, plot: bool, save: bool, directory: str):
+    """
+    Creates skeletonised image
+    :param thr_image: thresholded image
+    :param plot:
+    :param save:
+    :param directory:
+    :return:
+    """
+    edgelength = 10
+
+    # skeletonize
+    img = thr_image.copy() / 255
+    img = img.astype(int)
+    skeleton_noisy = skeletonize(img).astype(int) * 255
+
+    # remove too small edges
+    bool_img = (skeleton_noisy.copy() / 255).astype(bool)
+    labeled = morphology.label(bool_img)
+    skeleton = morphology.remove_small_objects(labeled, edgelength + 1)
+    skeleton[skeleton > 0] = 255
+    skeleton = np.uint8(skeleton)
+
+    remove_bug_pixels(skeleton)
+    set_black_border(skeleton)
+
+    if plot:
+        fig, axes = plt.subplots(1, 2)
+        for a in axes:
+            a.set_xticks([])
+            a.set_yticks([])
+
+        axes[0].imshow(thr_image, 'gray')
+        axes[0].set_title('thresholded')
+
+        axes[1].imshow(skeleton, 'gray')
+        axes[1].set_title('skeletonised')
+
+        plt.show()
+
+    if save:
+        cv2.imwrite(directory, skeleton)
+
+    return np.uint8(skeleton)
+
+
+def remove_bug_pixels(skeleton: np.ndarray):
+    # bug pixel elimination based on
+    # "Preprocessing and postprocessing for skeleton-based fingerprint minutiae extraction"
+    bug_pixels = []
+    for x in range(1, skeleton.shape[0] - 1):
+        for y in range(1, skeleton.shape[1] - 1):
+            if skeleton[x, y] == 255:
+                s = num_in_4connectivity(x, y, skeleton)
+
+                if s > 2:
+                    bug_pixels.append([x, y])
+
+    for bpx, bpy in bug_pixels:
+        s = num_in_4connectivity(bpx, bpy, skeleton)
+
+        if s > 2:
+            skeleton[bpx, bpy] = 0
+
+
+def set_black_border(img: np.ndarray):
+    mask = np.ones(img.shape, dtype=np.int8)
+
+    mask[:, 0] = 0
+    mask[:, -1] = 0
+    mask[0, :] = 0
+    mask[-1, :] = 0
+
+    np.uint8(np.multiply(mask, img))
+
+
+def four_connectivity(a: int, b: int):
+    # list of pixels in 4-connectivity of [a,b]
+    return [[a + 1, b], [a - 1, b], [a, b + 1], [a, b - 1]]
+
+
+def num_in_4connectivity(a: int, b: int, image: np.ndarray):
+    # how many pixel with value 255 are in 4-connectivity of [a,b]
+    neighbours = four_connectivity(a, b)
+
+    count = 0
+    for nr, nc in neighbours:
+        if image[nr, nc] == 255:
+            count += 1
+
+    return count
 
 
 def overlay_border(img: np.ndarray):
+    """"
+    Applies an overlay of the mask border to the image
+    """
     bgr_yellow = (0, 255, 255)
     cv2.circle(img, image_centre, border_radius, bgr_yellow, border_size)
 
 
-def node_types_image(image_length, nodes):
-    node_radius = 3
-    bgr_red = (0, 0, 255)
-    bgr_blue = (255, 0, 0)
-    bgr_yellow = (0, 255, 255)
+def generate_node_pos_img(graph, img_length):
+    img = np.zeros((img_length, img_length)).astype(np.uint8)
 
-    img = np.zeros((image_length, image_length, 3)).astype(np.float32)
-
-    for xy in nodes.end_nodes_xy:
-        cv2.circle(img, xy, node_radius, bgr_red, -1)
-
-    for xy in nodes.crossing_nodes_xy:
-        cv2.circle(img, xy, node_radius, bgr_blue, -1)
-
-    for xy in nodes.border_nodes_xy:
-        cv2.circle(img, xy, node_radius, bgr_yellow, -1)
+    for x, y in graph.positions:
+        row, col = y, x
+        img[row][col] = 255
 
     return img

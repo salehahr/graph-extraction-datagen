@@ -4,33 +4,11 @@ import os
 import cv2
 import copy
 import numpy as np
-import matplotlib.pyplot as plt
-
-from skimage import morphology
-from skimage.morphology import skeletonize
 
 from tools.PolyGraph import PolyGraph
 from tools.NodeContainer import NodeContainer, flip_node_coordinates
-from tools.plots import plot_landmarks
-
-bgr_green = (0, 255, 0)
-
-
-def four_connectivity(a: int, b: int):
-    # list of pixels in 4-connectivity of [a,b]
-    return [[a + 1, b], [a - 1, b], [a, b + 1], [a, b - 1]]
-
-
-def num_in_4connectivity(a: int, b: int, image: np.ndarray):
-    # how many pixel with value 255 are in 4-connectivity of [a,b]
-    neighbours = four_connectivity(a, b)
-
-    count = 0
-    for nr, nc in neighbours:
-        if image[nr, nc] == 255:
-            count += 1
-
-    return count
+from tools.images import four_connectivity, generate_node_pos_img
+from tools.plots import plot_landmarks_img, plot_overlay, plot_poly_graph
 
 
 def positive_neighbours(a: int, b: int, image: np.ndarray):
@@ -64,83 +42,7 @@ def distance(a: list, b: list):
     return math.sqrt((a[0] - b[0]) ** 2 + (a[1] - b[1]) ** 2)
 
 
-def preprocess(thr_image: np.ndarray, plot: bool, save: bool, directory: str):
-    """
-    Creates skeletonised image
-    :param thr_image: thresholded image
-    :param plot:
-    :param save:
-    :param directory:
-    :return:
-    """
-    edgelength = 10
-
-    # skeletonize
-    img = thr_image.copy() / 255
-    img = img.astype(int)
-    skeleton_noisy = skeletonize(img).astype(int) * 255
-
-    # remove too small edges
-    bool_img = (skeleton_noisy.copy() / 255).astype(bool)
-    labeled = morphology.label(bool_img)
-    skeleton = morphology.remove_small_objects(labeled, edgelength + 1)
-    skeleton[skeleton > 0] = 255
-    skeleton = np.uint8(skeleton)
-
-    remove_bug_pixels(skeleton)
-    set_black_border(skeleton)
-
-    if plot:
-        fig, axes = plt.subplots(1, 2)
-        for a in axes:
-            a.set_xticks([])
-            a.set_yticks([])
-
-        axes[0].imshow(thr_image, 'gray')
-        axes[0].set_title('thresholded')
-
-        axes[1].imshow(skeleton, 'gray')
-        axes[1].set_title('skeletonised')
-
-        plt.show()
-
-    if save:
-        cv2.imwrite(directory, skeleton)
-
-    return np.uint8(skeleton)
-
-
-def remove_bug_pixels(skeleton):
-    # bug pixel elimination based on
-    # "Preprocessing and postprocessing for skeleton-based fingerprint minutiae extraction"
-    bug_pixels = []
-    for x in range(1, skeleton.shape[0] - 1):
-        for y in range(1, skeleton.shape[1] - 1):
-            if skeleton[x, y] == 255:
-                s = num_in_4connectivity(x, y, skeleton)
-
-                if s > 2:
-                    bug_pixels.append([x, y])
-
-    for bpx, bpy in bug_pixels:
-        s = num_in_4connectivity(bpx, bpy, skeleton)
-
-        if s > 2:
-            skeleton[bpx, bpy] = 0
-
-
-def set_black_border(img):
-    mask = np.ones(img.shape, dtype=np.int8)
-
-    mask[:, 0] = 0
-    mask[:, -1] = 0
-    mask[0, :] = 0
-    mask[-1, :] = 0
-
-    img = np.uint8(np.multiply(mask, img))
-
-
-def node_extraction(img_skeleton: np.ndarray):
+def clean_skeleton_img(img_skeleton: np.ndarray):
     cleaned_skeleton = img_skeleton.copy()
     binary = np.uint8(img_skeleton.copy() / 255)
 
@@ -163,12 +65,12 @@ def node_extraction(img_skeleton: np.ndarray):
                               col - n:col + n + 1])
                 if aux == 2:  # endpoint
                     endpoints_yx.append([row, col])
-                if aux == 3:  # endpoint bei 90° Winkel
+                elif aux == 3:  # endpoint bei 90° Winkel
                     neighbours_nodeall = positive_neighbours(row, col, binary)
                     conn = four_connectivity(neighbours_nodeall[0][0], neighbours_nodeall[0][1])
                     if neighbours_nodeall[1] in conn:
                         endpoints_yx.append([row, col])
-                if aux == 4:  # Vergabelung = 4 Pixel mit 1 -> Punkt wird gelöscht, Koordinaten werden gespeichert
+                elif aux == 4:  # Vergabelung = 4 Pixel mit 1 -> Punkt wird gelöscht, Koordinaten werden gespeichert
                     neighbours_nodeall = positive_neighbours(row, col, binary)
                     for q in range(0, len(neighbours_nodeall)):
                         neighbours_nn.append(four_connectivity(neighbours_nodeall[q][0], neighbours_nodeall[q][1]))
@@ -210,16 +112,24 @@ def node_extraction(img_skeleton: np.ndarray):
                     if not any(bo):
                         cleaned_skeleton[row, col] = 0
                         bcnodes_yx.append([row, col])
+
                 if row < binary.shape[0] and col < binary.shape[1]:
-                    if binary[row - 1, col - 1] == 1: cross.append(True)
-                    if binary[row + 1, col - 2] == 1: cross.append(True)
-                    if binary[row, col - 1] == 1: cross.append(True)
-                    if binary[row - 1, col] == 1: cross.append(True)
-                    if binary[row - 2, col - 2] == 1: cross.append(True)
-                    if binary[row - 2, col + 1] == 1: cross.append(True)
-                    if binary[row + 1, col + 1] == 1: cross.append(True)
+                    if binary[row - 1, col - 1] == 1:
+                        cross.append(True)
+                    if binary[row + 1, col - 2] == 1:
+                        cross.append(True)
+                    if binary[row, col - 1] == 1:
+                        cross.append(True)
+                    if binary[row - 1, col] == 1:
+                        cross.append(True)
+                    if binary[row - 2, col - 2] == 1:
+                        cross.append(True)
+                    if binary[row - 2, col + 1] == 1:
+                        cross.append(True)
+                    if binary[row + 1, col + 1] == 1:
+                        cross.append(True)
+
                     if len(cross) == 7:
-                        # print('crossing at ', [it_x, it_y])
                         bcnodes_yx.append([row, col])
                         bcnodes_yx.append([row - 1, col - 1])
                         bcnodes_yx.append([row, col - 1])
@@ -229,17 +139,15 @@ def node_extraction(img_skeleton: np.ndarray):
                         cleaned_skeleton[row, col - 1] = 0
                         cleaned_skeleton[row - 1, col] = 0
 
-    nodes = NodeContainer(bcnodes_yx, endpoints_yx, [])
-
-    return nodes, cleaned_skeleton
+    return cleaned_skeleton, bcnodes_yx, endpoints_yx
 
 
-def edge_extraction(skeleton: np.ndarray, nodes):
+def edge_extraction(skeleton: np.ndarray, nodes) -> dict:
     def flip_edge_coordinates(list_of_edges):
         return [flip_node_coordinates(edge_yx) for edge_yx in list_of_edges]
 
-    binary = skeleton.copy()
-    binary[binary == 255] = 1
+    img_binary = skeleton.copy()
+    img_binary[img_binary == 255] = 1
 
     endpoints = nodes.end_nodes_yx + nodes.border_nodes_yx
     bcnodes = nodes.crossing_nodes_yx
@@ -248,35 +156,32 @@ def edge_extraction(skeleton: np.ndarray, nodes):
 
     ese_yx = []
     edge_course_yx = []
+
+    addpoints = []
+    se = []
+    n = []
+
     i = 0
 
     while len(endpoints_temp) > 0:
-        addpoints = []
-        se = []
         point = endpoints_temp[i]
+        img_binary[point[0], point[1]] = 0
+
         addpoints.append(point)
-        n = positive_neighbours(point[0], point[1], binary)
-        binary[point[0], point[1]] = 0
         endpoints_temp.remove(point)
+
         reached = False
 
-        # Nachbarn abhängig von Distanz sortieren
-        if len(n) > 1:
-            dist = []
-            for p in range(len(n)):
-                dist.append([distance(point, n[p]), n[p]])
-            dist_sorted = sorted(dist, key=lambda x: x[0])
-            n = []
-            for p in range(len(dist_sorted)):
-                n.append(dist_sorted[p][1])
+        addpoints = []
+        se = []
+        n = get_sorted_neighbours(point, img_binary)
+
         while reached is False:
             bo = []
             # Nachbarn abhängig von Distanz sortieren
             if len(n) > 1:
-                # print('len > 1')
                 for k in range(len(n)):
                     if n[k] in bcnodes:
-                        # print('point ', n[k], ' in bcnodes')
                         bo.append(True)
                         reached = True
                         point = n[k]
@@ -288,22 +193,16 @@ def edge_extraction(skeleton: np.ndarray, nodes):
                         point = n[k]
                         addpoints.append(point)
                         endpoints_temp.remove(point)
-                        binary[point[0], point[1]] = 0
+                        img_binary[point[0], point[1]] = 0
                     if not any(bo):
                         reached = False
                         point = n[k]
                         addpoints.append(point)
                         # print('new point = ', point)
-                        binary[point[0], point[1]] = 0
-                n = positive_neighbours(point[0], point[1], binary)
-                if len(n) > 1:
-                    dist = []
-                    for p in range(len(n)):
-                        dist.append([distance(point, n[p]), n[p]])
-                    dist_sorted = sorted(dist, key=lambda x: x[0])
-                    n = []
-                    for p in range(len(dist_sorted)):
-                        n.append(dist_sorted[p][1])
+                        img_binary[point[0], point[1]] = 0
+
+                n = get_sorted_neighbours(point, img_binary)
+
             elif len(n) == 1:
                 # print('len == 1')
                 if n[0] in bcnodes:
@@ -319,32 +218,24 @@ def edge_extraction(skeleton: np.ndarray, nodes):
                     point = n[0]
                     addpoints.append(point)
                     endpoints_temp.remove(point)
-                    binary[point[0], point[1]] = 0
+                    img_binary[point[0], point[1]] = 0
                 if not any(bo):
                     reached = False
                     if len(n) > 0:
                         point = n[0]
                         addpoints.append(point)
-                        # print('newpoint = ', point)
-                        binary[point[0], point[1]] = 0
-                        n = positive_neighbours(point[0], point[1], binary)
-                        if len(n) > 1:
-                            dist = []
-                            for p in range(len(n)):
-                                dist.append([distance(point, n[p]), n[p]])
-                            dist_sorted = sorted(dist, key=lambda x: x[0])
-                            n = []
-                            for p in range(len(dist_sorted)):
-                                n.append(dist_sorted[p][1])
+                        img_binary[point[0], point[1]] = 0
+                        n = get_sorted_neighbours(point, img_binary)
+
                     else:
                         reached = True
-        # print('addpoints = ', addpoints)
+
         l = len(addpoints)
         if addpoints[0][1] > addpoints[l - 1][1]:
             addpoints.reverse()
         elif addpoints[0][1] == addpoints[l - 1][1] and addpoints[0][0] < addpoints[l - 1][0]:
             addpoints.reverse()
-        # print('added points: ', addpoints)
+
         se.append(addpoints[0])
         se.append(addpoints[l - 1])
         ese_yx.append(se)
@@ -359,10 +250,10 @@ def edge_extraction(skeleton: np.ndarray, nodes):
         i = 0
         point1 = bcnodes_temp[i]
 
-        n1 = positive_neighbours(point1[0], point1[1], binary)
+        n1 = positive_neighbours(point1[0], point1[1], img_binary)
         n1_original = n1.copy()
         n1_4conn = four_connectivity(point1[0], point1[1])
-        binary[point1[0], point1[1]] = 0
+        img_binary[point1[0], point1[1]] = 0
         bcnodes_temp.remove(point1)
         if len(n1) > 0:
             # evtl. andere nodes aus der Nachbarschaft entfernen
@@ -381,15 +272,15 @@ def edge_extraction(skeleton: np.ndarray, nodes):
         if len(n1) > 0:
             for j in range(len(n1)):
                 point = n1[j]
+
                 # don't add the same neighbour again
-                if point not in addpoints and binary[point[0], point[1]] == 1:
-                    # print('neighbours: ', n1, ' nextneighbour: ', point)
+                if point not in addpoints and img_binary[point[0], point[1]] == 1:
                     addpoints = []
                     se = []
                     addpoints.append(point1)  # node
                     addpoints.append(point)  # first neighbour
-                    n = positive_neighbours(point[0], point[1], binary)  # neighbours of first neighbours
-                    binary[point[0], point[1]] = 0
+                    n = positive_neighbours(point[0], point[1], img_binary)  # neighbours of first neighbours
+                    img_binary[point[0], point[1]] = 0
                     reached = False
                     dont_add = False
                 else:
@@ -397,10 +288,9 @@ def edge_extraction(skeleton: np.ndarray, nodes):
                     dont_add = True
                 while reached is False:
                     bo = []
-                    # print('neighbours ', n)
                     for k in range(len(n)):
-                        if n[k] in bcnodes and n[
-                            k] not in n1_4conn:  # nicht in 4conn des ursprünglichen nodes -> damit es nicht wieder zurück geht
+                        # nicht in 4conn des ursprünglichen nodes -> damit es nicht wieder zurück geht
+                        if n[k] in bcnodes and n[k] not in n1_4conn:
                             bo.append(True)
                             reached = True
                             point = n[k]
@@ -417,8 +307,8 @@ def edge_extraction(skeleton: np.ndarray, nodes):
                             point = n[0]
                             addpoints.append(point)
                             # print('len(n) == 1 ', point, 'added')
-                            n = positive_neighbours(point[0], point[1], binary)
-                            binary[point[0], point[1]] = 0
+                            n = positive_neighbours(point[0], point[1], img_binary)
+                            img_binary[point[0], point[1]] = 0
                         elif len(n) > 1:
                             dist = []
                             for p in range(len(n)):
@@ -430,16 +320,14 @@ def edge_extraction(skeleton: np.ndarray, nodes):
                                     # print('len(n) > 1 ', n[p], 'added')
                             dist_sorted = sorted(dist, key=lambda x: x[0])
                             for p in range(len(dist_sorted)):
-                                binary[dist_sorted[p][1][0], dist_sorted[p][1][1]] = 0
+                                img_binary[dist_sorted[p][1][0], dist_sorted[p][1][1]] = 0
                                 point = dist_sorted[p][1]
-                                n = positive_neighbours(point[0], point[1], binary)
+                                n = positive_neighbours(point[0], point[1], img_binary)
                         else:
                             reached = True
 
-                # if reached: #print('reached')
                 if not dont_add:
                     l = len(addpoints)
-                    # print('addpoints', addpoints)
                     if addpoints[0][1] > addpoints[l - 1][1]:
                         addpoints.reverse()
                     elif addpoints[0][1] == addpoints[l - 1][1] and addpoints[0][0] <= addpoints[l - 1][0]:
@@ -449,17 +337,29 @@ def edge_extraction(skeleton: np.ndarray, nodes):
                     ese_yx.append(se)
                     edge_course_yx.append(addpoints)
 
-        # flip yx coordinates to xy
         ese_xy = flip_edge_coordinates(ese_yx)
         edge_course_xy = flip_edge_coordinates(edge_course_yx)
 
-    return ese_xy, edge_course_xy
+    return {'ese': ese_xy, 'path': edge_course_xy}
 
 
-def helpernodes_BasicGraph_for_polyfit(coordinates_global: list, esecoor: list,
-                                       nodes):
-    helperedges = copy.deepcopy(coordinates_global)
-    ese_helperedges = copy.deepcopy(esecoor)
+def get_sorted_neighbours(point, img):
+    """Nachbarn abhängig von Distanz sortieren. """
+
+    n = positive_neighbours(point[0], point[1], img)
+
+    if len(n) > 1:
+        dist = [[distance(point, neighb), neighb] for neighb in n]
+        dist_sorted = sorted(dist, key=lambda x: x[0])
+        n = [neighb for _, neighb in dist_sorted]
+
+    return n
+
+
+def helper_polyfit(nodes, edges: dict):
+    helperedges = copy.deepcopy(edges['path'])
+    ese_helperedges = copy.deepcopy(edges['ese'])
+
     helpernodescoor = nodes.all_nodes_xy
 
     # order coordinates_global -> is there a circle or any other critical structure
@@ -470,83 +370,52 @@ def helpernodes_BasicGraph_for_polyfit(coordinates_global: list, esecoor: list,
         len_end = len_begin + len_check
         check_again = []
         for i in range(len_begin, len_end):
-            # for i in range(len(helperedges)):
-            if ese_helperedges[i][0] == ese_helperedges[i][1]:
+            edge_se = ese_helperedges[i]
+            edge_start, edge_end = edge_se
+
+            # edge is a circle
+            if edge_start == edge_end:
+                # same start and end (too short)
                 if len(helperedges[i]) < 6:
-                    # print('edge', i, 'same start and end')
                     del helperedges[i][-1]
                     ese_helperedges[i][1] = helperedges[i][-1]
                     helpernodescoor.append(helperedges[i][-1])
-                else:
-                    # print('edge', i, ' is a circle')
-                    selected_elements = []
-                    edge_xy = helperedges[i].copy()
+                    continue
 
-                    idx_mid = int(np.ceil(len(edge_xy) / 2))
-                    edge_xy_mid = edge_xy[idx_mid]
-                    edge_xy_last = edge_xy[-1]
-
-                    ese_helperedges[i][1] = edge_xy_mid
-
-                    if edge_xy_mid[0] < edge_xy[-1][0]:
-                        ese_helperedges.insert(i + 1, [edge_xy_mid, edge_xy_last])
-                    else:
-                        ese_helperedges.insert(i + 1, [edge_xy_last, edge_xy_mid])
-
+                # edge is a circle
+                if len(helperedges[i]) >= 6:
+                    edge_xy_mid = split_edge(i, helperedges, ese_helperedges)
                     helpernodescoor.append(edge_xy_mid)
-                    for j in range(idx_mid, len(edge_xy)):
-                        selected_elements.append(edge_xy[j])
-                    selected_elements.reverse()
-                    helperedges.insert(i + 1, selected_elements)
-                    for j in range(idx_mid + 1, len(edge_xy)):
-                        del helperedges[i][-1]
+
                     check_again.append(True)
-            double_points = ese_helperedges[i]
-            indices = [j for j, points in enumerate(ese_helperedges) if points == double_points]
-            if len(indices) > 1:
-                for j in range(1, len(indices)):
-                    selected_elements = []
-                    x = []
-                    len_edge1 = len(helperedges[i])
-                    len_edge2 = len(helperedges[indices[j]])
-                    if len_edge1 > len_edge2:
-                        helperindex = i
-                    else:
-                        helperindex = indices[j]
-                    coursecoor_global = helperedges[helperindex].copy()
-                    if len(coursecoor_global) > 10:
-                        # print('edge', i, ' has a double edge')
-                        index = int(np.ceil(len(coursecoor_global) / 2))
-                        ese_helperedges[helperindex][1] = coursecoor_global[index]
-                        if coursecoor_global[index][0] < coursecoor_global[-1][0]:
-                            ese_helperedges.insert(helperindex + 1, [coursecoor_global[index], coursecoor_global[-1]])
-                        else:
-                            ese_helperedges.insert(helperindex + 1, [coursecoor_global[-1], coursecoor_global[index]])
-                        helpernodescoor.append(coursecoor_global[index])
-                        for j in range(index, len(coursecoor_global)):
-                            selected_elements.append(coursecoor_global[j])
-                        selected_elements.reverse()
-                        helperedges.insert(helperindex + 1, selected_elements)
-                        for j in range(index + 1, len(coursecoor_global)):
-                            del helperedges[helperindex][-1]
-                        check_again.append(True)
-                    # else: print('double edge ', i, 'too short')
+
+            # occurences of edge_se within ese_helperedges
+            indices = [j for j, points in enumerate(ese_helperedges) if points == edge_se]
+
+            # parallel edges (if any; loop doesn't execute if len(indices) == 1)
+            for j in range(1, len(indices)):
+                len_edge1 = len(helperedges[i])
+                len_edge2 = len(helperedges[indices[j]])
+
+                # set helperindex to the index of the longer edge
+                helperindex = i if len_edge1 > len_edge2 else indices[j]
+
+                if len(helperedges[helperindex]) > 10:
+                    edge_xy_mid = split_edge(helperindex, helperedges, ese_helperedges)
+                    helpernodescoor.append(edge_xy_mid)
+
+                    check_again.append(True)
+
         len_begin = len_end
 
-    return helperedges, ese_helperedges, helpernodescoor
+    return {'path': helperedges, 'ese': ese_helperedges}, helpernodescoor
 
 
-def helpernodes_BasicGraph_for_structure(edge_course_xy: list,
-                                         ese_xy: list,
-                                         nodes,
-                                         pltimage: np.ndarray,
-                                         plot: bool,
-                                         save: bool,
-                                         node_thick: int,
-                                         dir: str):
-    helperedges = copy.deepcopy(edge_course_xy)
-    ese_helperedges = copy.deepcopy(ese_xy)
-    helpernodescoor = nodes.all_nodes_xy
+def helper_structural_graph(nodes, edges: dict):
+    helperedges = copy.deepcopy(edges['path'])
+    ese_helperedges = copy.deepcopy(edges['ese'])
+
+    new_helpers = []
 
     # order coordinates_global -> is there a circle or any other critical structure
     check_again = [True] * len(helperedges)
@@ -561,91 +430,85 @@ def helpernodes_BasicGraph_for_structure(edge_course_xy: list,
             edge_se = ese_helperedges[i]
             edge_start, edge_end = edge_se
 
-            # edge is a circlex
+            # edge is a circle
             if edge_start == edge_end:
                 if len(helperedges[i]) >= 6:
-                    edge_xy = helperedges[i].copy()
+                    edge_xy_mid = split_edge(i, ese_helperedges, helperedges)
 
-                    idx_mid = int(np.ceil(len(edge_xy) / 2))
-                    edge_xy_mid = edge_xy[idx_mid]
-                    edge_xy_last = edge_xy[-1]
-
-                    # split edge_xy into two:
-                    # halve the current edge -- set endpoint to midpoint
-                    # edge_end = edge_xy_mid
-
-                    # append new start and end point
-                    # make a new edge between the midpoint and the old endpoint
-                    if edge_xy_mid[0] < edge_xy_last[0]:
-                        ese_helperedges.insert(i + 1, [edge_xy_mid, edge_xy_last])
-                    else:
-                        ese_helperedges.insert(i + 1, [edge_xy_last, edge_xy_mid])
-
-                    # append new helper node, plot it in green
                     nodes.add_helper_node(edge_xy_mid)
-                    cv2.circle(pltimage, tuple(edge_xy_mid), 0, bgr_green, node_thick)
-
-                    # add the new half edge
-                    new_half_edge = edge_xy[idx_mid:].reverse()
-                    helperedges.insert(i + 1, new_half_edge)
-
-                    for _ in edge_xy[idx_mid + 1:]:
-                        del helperedges[i][-1]
+                    new_helpers.append(edge_xy_mid)
 
                     check_again.append(True)
 
+            # occurences of edge_se within ese_helperedges
             indices = [j for j, point in enumerate(ese_helperedges) if point == edge_se]
 
-            if len(indices) > 1:
-                for j in range(1, len(indices)):
-                    len_edge1 = len(helperedges[i])
-                    len_edge2 = len(helperedges[indices[j]])
-                    if len_edge1 > len_edge2:
-                        helperindex = i
-                    else:
-                        helperindex = indices[j]
+            # parallel edges (if any; loop doesn't execute if len(indices) == 1)
+            for j in range(1, len(indices)):
+                len_edge1 = len(helperedges[i])
+                len_edge2 = len(helperedges[indices[j]])
 
-                    coursecoor_global = helperedges[helperindex].copy()
-                    if len(coursecoor_global) > 10:
-                        # print('edge', i, ' has a double edge')
-                        index = int(np.ceil(len(coursecoor_global) / 2))
-                        ese_helperedges[helperindex][1] = coursecoor_global[index]
-                        if coursecoor_global[index][0] < coursecoor_global[-1][0]:
-                            ese_helperedges.insert(helperindex + 1, [coursecoor_global[index], coursecoor_global[-1]])
-                        else:
-                            ese_helperedges.insert(helperindex + 1, [coursecoor_global[-1], coursecoor_global[index]])
+                # set helperindex to the index of the longer edge
+                helperindex = i if len_edge1 > len_edge2 else indices[j]
 
-                        nodes.add_helper_node(coursecoor_global[index])
+                if len(helperedges[helperindex]) > 10:
+                    edge_xy_mid = split_edge(helperindex, ese_helperedges, helperedges)
 
-                        cv2.circle(pltimage, (coursecoor_global[index][0], coursecoor_global[index][1]), 0, bgr_green,
-                                   node_thick)
+                    nodes.add_helper_node(edge_xy_mid)
+                    new_helpers.append(edge_xy_mid)
 
-                        selected_elements = coursecoor_global[index:].reverse()
-                        helperedges.insert(helperindex + 1, selected_elements)
+                    check_again.append(True)
 
-                        for _ in coursecoor_global[index + 1:]:
-                            del helperedges[helperindex][-1]
-                        check_again.append(True)
-                    # else: print('double edge ', i, 'too short')
         len_begin = len_end
-    if plot:
-        plt.figure()
-        plt.imshow(pltimage)
-        plt.title('Landmarks')
-        plt.xticks([]), plt.yticks([])
-        plt.show()
-    if save:
-        cv2.imwrite(dir, pltimage)
 
-    return ese_helperedges
+    return ese_helperedges, new_helpers
 
 
-def polyfit_visualize(helperedges: list, ese_helperedges: list):
+def split_edge(i, edges_se, edges_path) -> list:
+    """
+    Splits the i-th edge into half.
+
+    :param i: edge index
+    :param edges_se:  start and end coordinates of all edges
+    :param edges_path: path coordinates of all edges
+    """
+    edge_xy = edges_path[i].copy()
+    idx_mid = int(np.ceil(len(edge_xy) / 2))
+
+    edge_xy_mid = edge_xy[idx_mid]
+    edge_xy_end = edge_xy[-1]
+
+    # set new endpoint of current edge
+    edges_se[i][1] = edge_xy_mid
+
+    # split edge_xy into two:
+    # halve the current edge -- set endpoint to midpoint
+    # edge_end = edge_xy_mid
+
+    # append new start and end point
+    # make a new edge between the midpoint and the old endpoint
+    if edge_xy_mid[0] < edge_xy_end[0]:
+        edges_se.insert(i + 1, [edge_xy_mid, edge_xy_end])
+    else:
+        edges_se.insert(i + 1, [edge_xy_end, edge_xy_mid])
+
+    # add the new half edge
+    new_half_edge = edge_xy[idx_mid:].reverse()
+    edges_path.insert(i + 1, new_half_edge)
+
+    # shorted the old edge
+    for _ in edge_xy[idx_mid + 1:]:
+        del edges_path[i][-1]
+
+    return edge_xy_mid
+
+
+def polyfit_visualize(helper_edges: dict):
     visual_degree = 5
     point_density = 2
 
-    edges = helperedges.copy()
-    ese = ese_helperedges.copy()
+    edges = helper_edges['path'].copy()
+    ese = helper_edges['ese'].copy()
 
     polyfit_coor_rotated = []
     polyfit_coor_local = []
@@ -714,24 +577,22 @@ def polyfit_visualize(helperedges: list, ese_helperedges: list):
         polyfit_coor_rotated.append(polycoor_rotated)
 
     polyfit_coordinates = [polyfit_coor_global, polyfit_coor_local, polyfit_coor_rotated]
-    edge_coordinates = [edges, coordinates_local, coordinates_rotated]
+    # edge_coordinates = [edges, coordinates_local, coordinates_rotated]
 
-    return polyfit_coeff_visual, polyfit_coordinates, edge_coordinates, polyfit_points
+    return polyfit_coordinates
 
 
-def polyfit_training(helperedges: list, ese_helperedges: list) -> dict:
+def polyfit_training(helper_edges: dict) -> dict:
     cubic_thresh = 10  # deg3 > 10, otherwise only deg2 coefficients for training
 
-    edges = helperedges.copy()
-    ese = ese_helperedges.copy()
+    edges = helper_edges['path'].copy()
+    ese = helper_edges['ese'].copy()
     training_parameters = {'deg3': [],
                            'deg2': [],
                            'length': []}
-    polyfit_norm_deg3 = []
 
-    for i in range(len(edges)):
+    for i, edge in enumerate(edges):
         # global
-        edge = edges[i]
         edge_se = ese[i]
         origin_global, _ = edge_se
 
@@ -745,13 +606,11 @@ def polyfit_training(helperedges: list, ese_helperedges: list) -> dict:
         x_rotated_norm = [xr / m for xr in x_rotated]
 
         p_norm_deg3 = np.polyfit(x_rotated_norm, y_rotated, 3)
-        polyfit_norm_deg3.append(p_norm_deg3)
 
         is_cubic = abs(p_norm_deg3[0]) > cubic_thresh
-
         deg_norm = 3 if is_cubic else 2
-        p_norm = np.polyfit(x_rotated_norm, y_rotated, deg_norm)
 
+        p_norm = np.polyfit(x_rotated_norm, y_rotated, deg_norm)
         deg_coeffs = [p_norm[0], p_norm[1]] if is_cubic else [0, p_norm[0]]
 
         training_parameters['deg3'].append(deg_coeffs[0])
@@ -786,88 +645,17 @@ def get_local_edge_coords(edge_global, start_xy):
     return [[x - xo_global, -(y - yo_global)] for x, y in edge_global]
 
 
-def graph_extraction(edge_course_xy,
-                     ese_xy,
-                     nodes,
-                     marked_img,
-                     do_plot_lm,
-                     do_save_lm,
-                     node_size,
-                     landmarks_fp,
-                     training_parameters: dict,
-                     do_save_graph,
-                     graph_fp
-                     ):
-    ese_helper_edges = helpernodes_BasicGraph_for_structure(
-        edge_course_xy, ese_xy, nodes, marked_img,
-        do_plot_lm, do_save_lm,
-        node_size, landmarks_fp)
-
+def generate_graph(ese_helper_edges, nodes,
+                   training_parameters: dict,
+                   save: bool, graph_fp: str):
     graph = PolyGraph()
     graph.add_nodes(nodes)
     graph.add_edges(ese_helper_edges, training_parameters, nodes)
 
-    if do_save_graph:
+    if save:
         graph.save(graph_fp)
 
     return graph
-
-
-def graph_poly(original: np.ndarray,
-               helpernodescoor: list, polyfit_coordinates: list,
-               plot: bool, save: bool,
-               node_size: int, edge_width: int, path: str):
-    visual_graph = np.zeros([original.shape[0], original.shape[1], original.shape[2]], dtype=np.int8)
-    for j in range(len(helpernodescoor)):
-        cv2.circle(visual_graph, (helpernodescoor[j][0], helpernodescoor[j][1]), 0, (255, 255, 255), node_size)
-
-    for j in range(len(polyfit_coordinates[0])):
-        coordinates_global = polyfit_coordinates[0][j]
-        for p in range(len(coordinates_global)):
-            cv2.circle(visual_graph, (coordinates_global[p][0], coordinates_global[p][1]), 0, (255, 255, 255),
-                       edge_width)
-
-    if plot:
-        plt.imshow(visual_graph)
-        plt.show()
-
-    if save:
-        cv2.imwrite(path, visual_graph)
-
-    return visual_graph
-
-
-def plot_graph_on_img_poly(original: np.ndarray,
-                           nodes_xy: list, polyfit_coordinates,
-                           plot: bool, save: bool,
-                           node_size: int, edge_thick: int, path: str):
-    overlay = original.copy()
-
-    for x, y in nodes_xy:
-        cv2.circle(overlay, (x, y), 0, (67, 211, 255), node_size)
-
-    for j in range(len(polyfit_coordinates[0])):
-        coordinates_global = polyfit_coordinates[0][j]
-        for p in range(len(coordinates_global)):
-            cv2.circle(overlay, (coordinates_global[p][0], coordinates_global[p][1]), 0, (67, 211, 255), edge_thick)
-
-    if plot:
-        overlay = cv2.cvtColor(overlay, cv2.COLOR_BGR2RGB)
-        plt.imshow(overlay)
-        plt.show()
-    if save:
-        cv2.imwrite(path, overlay)
-
-    return overlay
-
-
-def extract_nodes_edges(img_preproc, node_size):
-    nodes, cleaned_skeleton = node_extraction(img_preproc)
-    ese_xy, edge_course_xy = edge_extraction(img_preproc, nodes)
-
-    img_lm = plot_landmarks(nodes, node_size, cleaned_skeleton)
-
-    return nodes, edge_course_xy, ese_xy, img_lm
 
 
 def extract_graphs(conf, skip_existing):
@@ -876,18 +664,19 @@ def extract_graphs(conf, skip_existing):
 
     for fp in conf.skeletonised_image_files:
         cropped_fp = fp.replace('skeleton', 'cropped')
-        overlay_fp = fp.replace('skeleton', 'overlay')
+        landmarks_fp = fp.replace('skeleton', 'landmarks')
         poly_fp = fp.replace('skeleton', 'poly_graph')
+        overlay_fp = fp.replace('skeleton', 'overlay')
 
         node_pos_img_fp = fp.replace('skeleton', 'node_positions')
         node_pos_vec_fp = os.path.splitext(fp.replace('skeleton', 'node_positions'))[0] + '.npy'
         adj_matr_fp = os.path.splitext(fp.replace('skeleton', 'adj_matr'))[0] + '.npy'
 
         img_cropped = cv2.imread(cropped_fp, cv2.IMREAD_COLOR)
-        img_preproc = cv2.imread(fp, cv2.IMREAD_GRAYSCALE)
+        img_skel = cv2.imread(fp, cv2.IMREAD_GRAYSCALE)
 
         # exit if no raw image found
-        if img_preproc is None:
+        if img_skel is None:
             print(f'No skeletonised image found.')
             raise Exception
 
@@ -895,79 +684,71 @@ def extract_graphs(conf, skip_existing):
         if os.path.isfile(overlay_fp) and skip_existing:
             continue
 
+        # graph
+        graph, nodes, cleaned_skel, pf_coords, helper_nodes = extract_graph(img_skel, fp, conf.graph_save)
+
         # landmarks
-        graph, _, ese_h_edges, h_edges, h_edges_cds = extract_graph_and_helpers(img_preproc,
-                                                                             fp,
-                                                                             conf.lm_plot,
-                                                                             conf.lm_save,
-                                                                             conf.graph_save)
+        plot_landmarks_img(nodes, helper_nodes['sg'], cleaned_skel,
+                           conf.lm_plot, conf.lm_save, landmarks_fp)
 
-        if conf.node_pos_save or conf.adj_matr_save:
-            if conf.node_pos_save:
-                graph.save_positions(node_pos_vec_fp)
+        # numpy files
+        if conf.node_pos_save:
+            graph.save_positions(node_pos_vec_fp)
 
-            generate_node_pos_img(graph, conf.img_length,
-                                  do_save=conf.node_pos_save, filepath=node_pos_img_fp)
+        if conf.node_pos_img_save:
+            node_pos_img = generate_node_pos_img(graph, conf.img_length)
+            cv2.imwrite(node_pos_img_fp, node_pos_img)
 
-            if conf.adj_matr_save:
-                graph.save_extended_adj_matrix(adj_matr_fp)
+        if conf.adj_matr_save:
+            graph.save_extended_adj_matrix(adj_matr_fp)
 
-        # plot polynomials
+        # polynomial graph and overlay
         visualise_poly = conf.poly_plot or conf.poly_save
         visualise_overlay = conf.overlay_plot or conf.overlay_save
 
         if visualise_poly or visualise_overlay:
             edge_width = 2
-            _, polyfit_coordinates, _, _ = polyfit_visualize(h_edges, ese_h_edges)
 
             if visualise_poly:
                 node_size = 10
-                graph_poly(img_cropped, h_edges_cds, polyfit_coordinates, conf.poly_plot, conf.poly_save,
-                           node_size, edge_width, poly_fp)
+                plot_poly_graph(conf.img_length, helper_nodes['pf'], pf_coords, conf.poly_plot, conf.poly_save,
+                                node_size, edge_width, poly_fp)
 
             if visualise_overlay:
                 node_size = 7
-                plot_graph_on_img_poly(img_cropped, h_edges_cds, polyfit_coordinates,
-                                       conf.overlay_plot, conf.overlay_save,
-                                       node_size, edge_width, overlay_fp)
+                plot_overlay(img_cropped, helper_nodes['pf'], pf_coords,
+                             conf.overlay_plot, conf.overlay_save,
+                             node_size, edge_width, overlay_fp)
 
 
-def extract_graph_and_helpers(img_preproc, skel_fp, lm_plot=False, lm_save=False, graph_save=False):
-    landmarks_fp = skel_fp.replace('skeleton', 'landmarks')
+def extract_graph(img_preproc, skel_fp, graph_save=False):
     graph_fp = os.path.splitext(skel_fp.replace('skeleton', 'graphs'))[0] + '.json'
 
-    node_size = 6
-    nodes, edge_course_xy, ese_xy, img_lm = extract_nodes_edges(img_preproc,
-                                                                node_size)
-    helperedges, ese_helperedges, helpernodescoor = helpernodes_BasicGraph_for_polyfit(edge_course_xy,
-                                                                                       ese_xy,
-                                                                                       nodes)
+    nodes, edges, cleaned_skeleton = extract_nodes_and_edges(img_preproc)
+    helper_pf_edges, helper_pf_nodes = helper_polyfit(nodes, edges)
+    helper_sg_edges, helper_sg_nodes = helper_structural_graph(nodes, edges)
 
-    training_parameters = polyfit_training(helperedges, ese_helperedges)
-    graph = graph_extraction(edge_course_xy,
-                             ese_xy,
-                             nodes,
-                             img_lm,
-                             lm_plot,
-                             lm_save,
-                             node_size,
-                             landmarks_fp,
-                             training_parameters,
-                             graph_save,
-                             graph_fp)
+    polyfit_params = polyfit_training(helper_pf_edges)
+    pf_coords = polyfit_visualize(helper_pf_edges)
 
-    return graph, nodes, ese_helperedges, helperedges, helpernodescoor
+    graph = generate_graph(helper_sg_edges, nodes, polyfit_params,
+                           graph_save, graph_fp)
+
+    return graph, nodes, cleaned_skeleton, pf_coords, {'pf': helper_pf_nodes, 'sg': helper_sg_nodes}
 
 
-def generate_node_pos_img(graph, dim, do_save: bool = True, filepath: str = ''):
-    img = np.zeros((dim, dim)).astype(np.uint8)
+def extract_nodes_and_edges(img_preproc: np.ndarray):
+    """
+    Extracts the nodes and edges from the skeletonised image.
 
-    for coords in graph.positions:
-        x, y = coords
-        row, col = y, x
-        img[row][col] = 255
+    :param img_preproc:
+    :return:
+    """
+    # clean the skeletonised image
+    cleaned_skeleton, bcnodes_yx, endpoints_yx = clean_skeleton_img(img_preproc)
 
-    if do_save and filepath:
-        cv2.imwrite(filepath, img)
+    # extract nodes and edges
+    nodes = NodeContainer(bcnodes_yx, endpoints_yx, [])
+    edges = edge_extraction(img_preproc, nodes)
 
-    return img
+    return nodes, edges, cleaned_skeleton

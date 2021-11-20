@@ -34,6 +34,7 @@ class TestVideo(unittest.TestCase):
     def test_after_filter(self):
         if self.config:
             self.config.overlay_plot = True
+            self.config.lm_plot = True
 
             delete_files(self.config.masked_image_files)
 

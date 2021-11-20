@@ -6,21 +6,8 @@ import numpy as np
 import matplotlib.pyplot as plt
 
 from tools.files import get_random_video_path, get_random_raw_image
-from tools.images import get_rgb, get_centre
-from tools.images import crop_resize_square, crop_radius, create_mask
-
-
-def plot_img(img, title=''):
-    n_channels = img.shape[2] if len(img.shape) >= 3 else 1
-    cmap = 'gray' if n_channels == 1 else None
-
-    image = get_rgb(img)
-
-    plt.figure()
-    plt.imshow(image, cmap=cmap)
-    plt.xticks([])
-    plt.yticks([])
-    plt.title(title)
+from tools.images import get_centre, crop_resize_square, crop_radius, create_mask
+from tools.plots import plot_bgr_img, plot_border_overlay
 
 
 def is_square(img: np.ndarray):
@@ -34,7 +21,7 @@ base_path = f'/graphics/scratch/schuelej/sar/data/{img_length}'
 video_path = get_random_video_path(base_path)
 
 
-class TestVideoFrame(unittest.TestCase):
+class RandomImage(unittest.TestCase):
     @classmethod
     def setUpClass(cls) -> None:
         cls.base_path = base_path
@@ -58,12 +45,43 @@ class TestVideoFrame(unittest.TestCase):
     def plot_cropped(cls):
         cropped_fp = cls.img_raw_fp.replace('raw', 'cropped')
         img_cropped = cv2.imread(cropped_fp, cv2.IMREAD_COLOR)
-        plot_img(img_cropped)
+        plot_bgr_img(img_cropped)
         plt.title(os.path.relpath(cls.img_raw_fp, start=base_path))
         plt.show()
 
 
-class TestImage(TestVideoFrame):
+class ImageWithBorderNodes(unittest.TestCase):
+    @classmethod
+    def setUpClass(cls) -> None:
+        border_img_name = '0002_20039.png'
+        border_video_path = os.path.join(base_path, 'GRK011/0002_17000__0002_21000')
+
+        cls.img_cropped_fp = os.path.join(border_video_path, f'cropped/{border_img_name}')
+        cls.img_skel_fp = os.path.join(border_video_path, f'skeleton/{border_img_name}')
+        cls.img_skel = cv2.imread(cls.img_skel_fp, cv2.IMREAD_GRAYSCALE)
+
+        img_landmarks_fp = os.path.join(border_video_path, f'landmarks/{border_img_name}')
+        plot_border_overlay(img_landmarks_fp)
+
+
+class NaNImage(unittest.TestCase):
+    """
+    Image that causes a NaN in polyfit_training.
+    """
+    @classmethod
+    def setUpClass(cls) -> None:
+        nan_img_name = '0000_14120.png'
+        nan_video_path = os.path.join(base_path, 'GRK008')
+
+        cls.img_cropped_fp = os.path.join(nan_video_path, f'cropped/{nan_img_name}')
+        cls.img_skel_fp = os.path.join(nan_video_path, f'skeleton/{nan_img_name}')
+        cls.img_skel = cv2.imread(cls.img_skel_fp, cv2.IMREAD_GRAYSCALE)
+
+        img_landmarks_fp = os.path.join(nan_video_path, f'landmarks/{nan_img_name}')
+        plot_border_overlay(img_landmarks_fp)
+
+
+class TestImage(RandomImage):
     @classmethod
     def setUpClass(cls) -> None:
         super(TestImage, cls).setUpClass()
@@ -75,7 +93,7 @@ class TestImage(TestVideoFrame):
         cv2.circle(self.img_raw, (cx, cy), int(crop_radius / 2), (10, 80, 10), -1)
 
         plt.figure()
-        plot_img(self.img_raw)
+        plot_bgr_img(self.img_raw)
         plt.show()
 
     def test_crop(self):
@@ -88,7 +106,7 @@ class TestImage(TestVideoFrame):
         cr_height, cr_width, _ = square_img.shape
 
         # plt.figure()
-        # plot_img(square_img)
+        # plot_bgr_img(square_img)
         # plt.show()
 
         self.assertTrue(is_square(square_img))
@@ -108,12 +126,12 @@ class TestImage(TestVideoFrame):
 
         filtered_fp = self.img_raw_fp.replace('raw', 'filtered')
         img_filtered = cv2.imread(filtered_fp, cv2.IMREAD_GRAYSCALE)
-        plot_img(img_filtered, title='filtered')
+        plot_bgr_img(img_filtered, title='filtered')
 
         img_masked_old = np.multiply(old_mask, img_filtered).astype(np.uint8)
         img_masked_new = np.multiply(new_mask, img_filtered).astype(np.uint8)
-        plot_img(img_masked_old, title='masked old')
-        plot_img(img_masked_new, title='masked new')
+        plot_bgr_img(img_masked_old, title='masked old')
+        plot_bgr_img(img_masked_new, title='masked new')
         plt.show()
 
         # goal: less than 1% mismatch in pixels
