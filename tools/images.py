@@ -49,28 +49,29 @@ def get_centre(img):
     return cx, cy
 
 
-def crop_imgs(conf):
+def crop_imgs(conf, is_synthetic: bool = False):
     for fp in conf.raw_image_files:
         new_fp = fp.replace('raw', 'cropped')
 
-        if os.path.isfile(new_fp):
-            continue
+        # uncomment to skip existing files
+        # if os.path.isfile(new_fp):
+        #     continue
 
         img = cv2.imread(fp, cv2.IMREAD_COLOR)
-        img_cropped = crop_resize_square(img, conf.img_length)
+        img_cropped = crop_resize_square(img, conf.img_length, is_synthetic)
 
         cv2.imwrite(new_fp, img_cropped)
 
 
-def crop_resize_square(img: np.ndarray, length: int):
-    return resize_square(centre_crop(img), length)
+def crop_resize_square(img: np.ndarray, length: int, is_synthetic: bool):
+    return resize_square(centre_crop(img, is_synthetic), length)
 
 
 def resize_square(img: np.ndarray, length: int):
     return cv2.resize(img, (length, length))
 
 
-def centre_crop(img: np.ndarray):
+def centre_crop(img: np.ndarray, is_synthetic):
     """
     Extracts a square from the original image,
     from around the original image's centroid.
@@ -78,7 +79,13 @@ def centre_crop(img: np.ndarray):
     min_y, min_x = 0, 0
     max_y, max_x, _ = img.shape
 
-    cx, cy = get_centre(img)
+    if not is_synthetic:
+        cx, cy = get_centre(img)
+    else:
+        cx = int(img.shape[1] / 2)
+        cy = int(img.shape[0] / 2)
+
+        crop_radius = int(img.shape[0] / 2)
 
     # get crop dimensions
     crop_left = cx - crop_radius

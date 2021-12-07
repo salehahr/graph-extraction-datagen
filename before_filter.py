@@ -6,7 +6,7 @@ from tools.images import crop_imgs
 from tools.videos import video2img
 
 from config import Config, image_length
-from video_data import video_filepath, frequency, trim_times
+from video_data import video_filepath, frequency, trim_times, is_synthetic
 
 
 def before_filter(conf=None):
@@ -14,7 +14,7 @@ def before_filter(conf=None):
         make_folders(section)
         video2img(section)
 
-    crop_imgs(conf)
+    crop_imgs(conf, is_synthetic)
 
     assert(len(conf.raw_image_files) == len(conf.cropped_image_files))
 
