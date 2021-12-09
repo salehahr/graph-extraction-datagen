@@ -11,7 +11,12 @@ import warnings
 warnings.simplefilter('ignore', np.RankWarning)
 
 
-def after_filter(conf, skip_existing=True):
+def after_filter(conf: Config, skip_existing: bool) -> None:
+    """
+    Applies image processing functions to filtered images in the video directory.
+    :param conf: video-dependent configuration
+    :param skip_existing: False to overwrite existing graph file.
+    """
     apply_img_mask(conf)
     threshold_imgs(conf)
     skeletonise_imgs(conf)
@@ -23,4 +28,4 @@ if __name__ == '__main__':
           f'\t{video_filepath}')
     conf = Config(video_filepath, frequency,
                   img_length=image_length, trim_times=trim_times)
-    after_filter(conf, skip_existing=False)
+    after_filter(conf, skip_existing=True)
