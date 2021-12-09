@@ -375,6 +375,12 @@ def helper_polyfit(nodes, edges: dict):
 
             # edge is a circle
             if edge_start == edge_end:
+                if len(helperedges[i]) == 1:
+                    # del helperedges[i]
+                    # del ese_helperedges[i]
+                    # can't delete because this will break the indexing
+                    continue
+
                 # same start and end (too short)
                 if len(helperedges[i]) < 6:
                     del helperedges[i][-1]
@@ -539,7 +545,11 @@ def polyfit_visualize(helper_edges: dict):
 
         polyfit_points_temp = []
 
-        p = np.polyfit(x_rotated, y_rotated, visual_degree)
+        one_pixel_edge = len(x_rotated) <= 1
+        if one_pixel_edge:
+            p = np.zeros((visual_degree + 1,))
+        else:
+            p = np.polyfit(x_rotated, y_rotated, visual_degree)
 
         y_poly_rotated = []
         x_poly_rotated = x_rotated.copy()
@@ -605,16 +615,20 @@ def polyfit_training(helper_edges: dict) -> dict:
         # rotated
         x_rotated, y_rotated, _ = get_rotated_coords(edge_se, edge_local)
 
-        m = max(x_rotated)
-        x_rotated_norm = [xr / m for xr in x_rotated]
+        one_pixel_edge = len(edge) <= 1
+        if one_pixel_edge:
+            deg_coeffs = [0, 0]
+        else:
+            m = max(x_rotated)
+            x_rotated_norm = [xr / m for xr in x_rotated]
+            p_norm_deg3 = np.polyfit(x_rotated_norm, y_rotated, 3)
 
-        p_norm_deg3 = np.polyfit(x_rotated_norm, y_rotated, 3)
+            is_cubic = abs(p_norm_deg3[0]) > cubic_thresh
+            deg_norm = 3 if is_cubic else 2
 
-        is_cubic = abs(p_norm_deg3[0]) > cubic_thresh
-        deg_norm = 3 if is_cubic else 2
+            p_norm = np.polyfit(x_rotated_norm, y_rotated, deg_norm)
 
-        p_norm = np.polyfit(x_rotated_norm, y_rotated, deg_norm)
-        deg_coeffs = [p_norm[0], p_norm[1]] if is_cubic else [0, p_norm[0]]
+            deg_coeffs = [p_norm[0], p_norm[1]] if is_cubic else [0, p_norm[0]]
 
         training_parameters['deg3'].append(deg_coeffs[0])
         training_parameters['deg2'].append(deg_coeffs[1])
@@ -633,9 +647,12 @@ def get_rotated_coords(edge_se, coursecoor_local):
 
     dx = xe_local - xo_local
     dy = ye_local - yo_local
+
+    # avoid NaN errors
     ll = np.sqrt(dx * dx + dy * dy)
-    s = dy / ll
-    c = dx / ll
+
+    s = 0 if ll == 0 else dy / ll
+    c = 0 if ll == 0 else dx / ll
 
     x_rotated = [int(round(xl * c + yl * s, 0)) for xl, yl in coursecoor_local]
     y_rotated = [int(round(-xl * s + yl * c, 0)) for xl, yl in coursecoor_local]
