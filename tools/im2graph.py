@@ -384,7 +384,7 @@ def helper_polyfit(nodes, edges: dict):
 
                 # edge is a circle
                 if len(helperedges[i]) >= 6:
-                    edge_xy_mid = split_edge(i, helperedges, ese_helperedges)
+                    edge_xy_mid = split_edge(i, ese_helperedges, helperedges)
                     helpernodescoor.append(edge_xy_mid)
 
                     check_again.append(True)
@@ -401,7 +401,7 @@ def helper_polyfit(nodes, edges: dict):
                 helperindex = i if len_edge1 > len_edge2 else indices[j]
 
                 if len(helperedges[helperindex]) > 10:
-                    edge_xy_mid = split_edge(helperindex, helperedges, ese_helperedges)
+                    edge_xy_mid = split_edge(helperindex, ese_helperedges, helperedges)
                     helpernodescoor.append(edge_xy_mid)
 
                     check_again.append(True)
@@ -472,6 +472,8 @@ def split_edge(i, edges_se, edges_path) -> list:
     :param edges_se:  start and end coordinates of all edges
     :param edges_path: path coordinates of all edges
     """
+    assert len(edges_se[0]) == 2
+
     edge_xy = edges_path[i].copy()
     idx_mid = int(np.ceil(len(edge_xy) / 2))
 
@@ -493,12 +495,13 @@ def split_edge(i, edges_se, edges_path) -> list:
         edges_se.insert(i + 1, [edge_xy_end, edge_xy_mid])
 
     # add the new half edge
-    new_half_edge = edge_xy[idx_mid:].reverse()
+    new_half_edge = copy.deepcopy(edge_xy[idx_mid:])
+    new_half_edge.reverse()
     edges_path.insert(i + 1, new_half_edge)
 
     # shorted the old edge
-    for _ in edge_xy[idx_mid + 1:]:
-        del edges_path[i][-1]
+    num_to_delete = len(new_half_edge) - 1
+    edges_path[9] = edges_path[9][:-num_to_delete]
 
     return edge_xy_mid
 
