@@ -2,6 +2,6 @@ from enum import Enum
 
 
 class NodeType(Enum):
-    BORDER = 0
+    BORDER = 3
     CROSSING = 1
     END = 2
