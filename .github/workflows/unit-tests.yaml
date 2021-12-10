@@ -1,0 +1,38 @@
+name: unit-tests
+
+on:
+  push:
+    branches:
+      - master
+      - working
+
+jobs:
+  pytest:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+
+      - name: Set up python
+        uses: actions/setup-python@v2
+        with:
+          python-version: 3.8
+      
+      - name: Cache
+        uses: actions/cache@v2
+        with:
+          path: ${{ env.pythonLocation }}
+          key: ${{ env.pythonLocation }}-${{ hashFiles('requirements.txt') }}
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install pytest
+          if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
+
+      - name: Tests that don't require RandomImage
+        run: |
+          cd tests/
+          pytest test_file_functions.py
+          pytest test_graph.py -k "TestSaveSimpleGraph"
+          pytest test_image_processing.py test_node_container.py test_videos.py
