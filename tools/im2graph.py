@@ -164,6 +164,9 @@ def edge_extraction(skeleton: np.ndarray, nodes) -> dict:
     i = 0
 
     while len(endpoints_temp) > 0:
+        addpoints = []
+        se = []
+
         point = endpoints_temp[i]
         img_binary[point[0], point[1]] = 0
 
@@ -172,8 +175,6 @@ def edge_extraction(skeleton: np.ndarray, nodes) -> dict:
 
         reached = False
 
-        addpoints = []
-        se = []
         n = get_sorted_neighbours(point, img_binary)
 
         while reached is False:
