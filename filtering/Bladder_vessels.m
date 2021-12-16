@@ -31,15 +31,12 @@ plotImage = false;
 skip_existing_files = false; 
 
 %% Read Image
-
 % VIDEO_FILEPATH = VIDEO_FILEPATH_EXT(1:end-4);   % read from config.py
-VIDEO_FILEPATH = 'M:/data/256/GRK011';           % manual entry
-% VIDEO_FILEPATH = 'N:/master-thesis/02_Video_Data_to-be_filled/Videos/GRK008';           % manual entry
+VIDEO_FILEPATH = 'S:/data/256/synthetic-bladder11';           % manual entry
 
 imageFolder = sprintf('%s/', VIDEO_FILEPATH);
-% ImageFolder_filtered_images = sprintf('../%s/filtered/', VIDEO_FILEPATH);
 
-imds          = imageDatastore(imageFolder, 'IncludeSubfolders', true, 'FileExtensions', '.png');
+imds = imageDatastore(imageFolder, 'IncludeSubfolders', true, 'FileExtensions', '.png');
 path(path,'./sort_list/');
 
 cropped_matches = strfind(imds.Files, 'cropped');
@@ -51,11 +48,13 @@ cropped_imgs = imds.Files(crop_filter>0);
 
 imds.Files =  natsortfiles(cropped_imgs);
 
-%% Symmetric filter params
-new_params = [10, 10, 1, 0, 10, 20, 2, 0];
-old_params = [7, 5, 1, 0, 2.5, 20, 1, 0];
-params = old_params;
+%% Filter params
+new_params = [10, 10, 1, 0, 10, 20, 2, 0];      % only coarse structures
+old_params = [7, 5, 1, 0, 2.5, 20, 1, 0];       % Studienarbeit Regine
+synth_params = [2.3, 3, 1, 0.5, 1, 2, 1.5, 0];  % optimized for synthetic data
+params = synth_params;
 
+%% Symmetric filter params
 symmfilter = struct();
 symmfilter.sigma     = params(1);
 symmfilter.len       = params(2);
