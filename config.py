@@ -43,7 +43,8 @@ class Config:
                  trim_times: list,
                  do_trim: bool = True,
                  start=None,
-                 end=None):
+                 end=None,
+                 synthetic: bool = False):
 
         self.filepath = filepath
         self.ext = os.path.splitext(filepath)[1]
@@ -51,6 +52,8 @@ class Config:
         self.sections = [self]
         self.frequency = frequency
         self.img_length = img_length
+
+        self.is_synthetic = synthetic
 
         self._start = start
         self._end = end

@@ -49,7 +49,7 @@ def get_centre(img):
     return cx, cy
 
 
-def crop_imgs(conf, is_synthetic: bool = False):
+def crop_imgs(conf):
     for fp in conf.raw_image_files:
         new_fp = fp.replace('raw', 'cropped')
 
@@ -58,7 +58,7 @@ def crop_imgs(conf, is_synthetic: bool = False):
         #     continue
 
         img = cv2.imread(fp, cv2.IMREAD_COLOR)
-        img_cropped = crop_resize_square(img, conf.img_length, is_synthetic)
+        img_cropped = crop_resize_square(img, conf.img_length, conf.is_synthetic)
 
         cv2.imwrite(new_fp, img_cropped)
 
