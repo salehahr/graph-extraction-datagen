@@ -1,7 +1,14 @@
+import json
 import os
 import unittest
 import cv2
 
+from time import time
+import matplotlib.pyplot as plt
+import numpy as np
+
+from images import create_mask
+from plots import plot_img
 from tools.PolyGraph import PolyGraph
 from im2graph import (
     extract_nodes_and_edges,
@@ -13,6 +20,20 @@ from im2graph import (
 
 
 base_path = os.path.join(os.getcwd(), 'edges-0000_00400')
+
+
+def timer(func):
+    def wrapper_timer(*args, **kwargs):
+        t_start = time()
+        fval = func(*args, **kwargs)
+        t_end = time()
+
+        t_elapsed = t_end - t_start
+        print(f'{func.__name__} took {t_elapsed:.3f} s')
+
+        return fval
+
+    return wrapper_timer
 
 
 class TestExtractEdges(unittest.TestCase):
@@ -44,3 +65,97 @@ class TestExtractEdges(unittest.TestCase):
         edges_in_graph = graph.edges
 
         self.assertEqual(len(edges_extracted), len(edges_in_graph))
+
+
+class TestMaskRGB(unittest.TestCase):
+    """ Tests three methods for loading a mask from file and masking
+     a sample RGB photo (pre-cropped. """
+
+    @classmethod
+    def setUpClass(cls) -> None:
+        # image
+        fp_rgb = os.path.join(os.getcwd(), 'synth-rgb.png')
+        img_bgr = cv2.imread(fp_rgb, cv2.IMREAD_COLOR)
+        cls.img_rgb = cv2.cvtColor(img_bgr, cv2.COLOR_BGR2RGB)
+        cls.img_masked = None
+
+        # filepaths
+        cls.mask_indices_fp = os.path.join(os.getcwd(),
+                                           'mask_invisible_indices.npy')
+        cls.mask_indices_json = os.path.join(os.getcwd(),
+                                             'mask_invisible_indices.json')
+        cls.mask_pic_fp = os.path.join(os.getcwd(),
+                                       'mask.png')
+
+        # save files
+        mask = create_mask(256)
+        cls._generate_indices(mask)
+        cls._generate_indices_json(mask)
+        cls._generate_mask_pic(mask)
+
+    def _plot(self, masked_rgb, title):
+        mask = create_mask(256)
+
+        plt.subplot(131)
+        plot_img(mask, cmap='gray')
+        plt.subplot(132)
+        plot_img(self.img_rgb)
+        plt.subplot(133)
+        plot_img(masked_rgb)
+
+        plt.suptitle(title)
+        plt.show()
+
+    @classmethod
+    def _generate_indices(cls, mask):
+        mask_invisible_indices = np.argwhere(mask == 0)
+        np.save(cls.mask_indices_fp, mask_invisible_indices)
+
+    @classmethod
+    def _generate_indices_json(cls, mask):
+        mask_invisible_indices = np.argwhere(mask == 0).tolist()
+        jdump = json.dumps(mask_invisible_indices,
+                           cls=json.JSONEncoder)
+
+        with open(cls.mask_indices_json, 'w+') as f:
+            json.dump(jdump, f)
+
+    @classmethod
+    def _generate_mask_pic(cls, mask):
+        cv2.imwrite(cls.mask_pic_fp, mask)
+
+    def setUp(self) -> None:
+        self.img_masked = self.img_rgb.copy()
+
+    @timer
+    def test_multiply_mask(self):
+        self.plot_title = 'multiply'
+
+        mask = cv2.imread(self.mask_pic_fp, cv2.IMREAD_GRAYSCALE)
+
+        for i in range(3):
+            self.img_masked[:, :, i] = np.multiply(mask, self.img_rgb[:, :, i])
+
+    @timer
+    def test_set_indices(self):
+        self.plot_title = 'set indices .npy'
+
+        mask_invisible_indices = np.load(self.mask_indices_fp)
+
+        for x, y in mask_invisible_indices:
+            self.img_masked[x, y, :] = [0, 0, 0]
+
+    @timer
+    def test_set_indices_json(self):
+        self.plot_title = 'set indices .json'
+
+        with open(self.mask_indices_json, 'r+') as f:
+            jdump = json.load(f)
+
+        mask_invisible_indices = np.asarray(eval(jdump))
+
+        for x, y in mask_invisible_indices:
+            self.img_masked[x, y, :] = [0, 0, 0]
+
+    def tearDown(self) -> None:
+        self._plot(self.img_masked, self.plot_title)
