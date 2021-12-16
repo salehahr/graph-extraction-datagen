@@ -13,6 +13,13 @@ bgr_yellow = (0, 255, 255)
 bgr_white = (255, 255, 255)
 
 
+def plot_img(img, cmap=None, title=''):
+    plt.imshow(img, cmap=cmap)
+    plt.xticks([])
+    plt.yticks([])
+    plt.title(title)
+
+
 def plot_bgr_img(img, title=''):
     n_channels = img.shape[2] if len(img.shape) >= 3 else 1
     cmap = 'gray' if n_channels == 1 else None
