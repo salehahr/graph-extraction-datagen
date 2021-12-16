@@ -1,8 +1,8 @@
 import os
 import re
-import sys
-
 import cv2
+
+from pymediainfo import MediaInfo
 from moviepy.video.io.VideoFileClip import VideoFileClip
 
 
@@ -23,21 +23,20 @@ def generate_time_tag_from_interval(interval: list) -> str:
     return start_tag + '__' + end_tag
 
 
-def video2img(config) -> None:
-    """
-    Saves video frames as .png images.
+def get_video_duration(video):
+    media_info = MediaInfo.parse(video)
+    return media_info.tracks[0].duration
 
-    :param frequency: number of frames per second
-    """
+
+def video2img(config) -> None:
+    """ Saves video frames as .png images. """
 
     cap = cv2.VideoCapture(config.filepath)
+    duration = get_video_duration(config.filepath) / 1000
 
     def get_frame(seconds: float):
         cap.set(cv2.CAP_PROP_POS_MSEC, seconds * 1000)
         success, image = cap.read()
-
-        # cv2.imshow('title', image_cropped)
-        # cv2.waitKey()
 
         return success, image
 
@@ -57,6 +56,9 @@ def video2img(config) -> None:
 
     while success:
         seconds_total = round(seconds_total, 2)
+
+        if seconds_total > duration:
+            break
 
         # only adjust time in filename here if trimmed
         if not config.is_trimmed:

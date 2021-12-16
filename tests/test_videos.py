@@ -9,13 +9,13 @@ from after_filter import after_filter
 from config import Config
 
 base_path = '/graphics/scratch/schuelej/sar/graph-training/data'
+test_path = '/graphics/scratch/schuelej/sar/graph-training/tests'
 
 
 class TestVideo(unittest.TestCase):
     @classmethod
     def setUpClass(cls) -> None:
         cls.config = None
-        cls.raw_img_folder = None
 
     def test_before_filter(self):
         if self.config:
@@ -59,7 +59,6 @@ class TestShortVideo(TestVideo):
         cls.config = Config(video_fp, frequency=2,
                             img_length=512,
                             trim_times=[])
-        cls.raw_img_folder = cls.config.raw_img_folder
 
     def test_is_not_trimmed(self):
         self.assertFalse(self.config.is_trimmed)
@@ -70,7 +69,6 @@ class TestTrimmedVideo(TestVideo):
     def setUpClass(cls) -> None:
         video_fp = os.path.join(base_path, 'test/trimmed_0000_02000__0000_03000.mp4')
         cls.config = Config(video_fp, frequency=2, img_length=512, trim_times=[])
-        cls.raw_img_folder = cls.config.raw_img_folder
 
     def test_is_trimmed(self):
         self.assertTrue(self.config.is_trimmed)
@@ -91,6 +89,17 @@ class TestMultiSectionVideo(TestVideo):
     def test_make_folders(self):
         for section in self.config.sections:
             make_folders(section)
+
+
+class TestBuggyVideo(TestVideo):
+    """ Video for which the final frame keeps getting extracted
+    in a continous loop. """
+    @classmethod
+    def setUpClass(cls) -> None:
+        video_fp = os.path.join(test_path, 'synthetic-bladder11.mp4')
+        cls.config = Config(video_fp, frequency=2,
+                            img_length=512,
+                            trim_times=[])
 
 
 @unittest.skip('Skip trimming video')
