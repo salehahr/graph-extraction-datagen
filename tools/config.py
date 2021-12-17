@@ -1,7 +1,10 @@
 import glob
 import os
 import re
-from typing import List, Optional
+from typing import List, Optional, Tuple
+
+import yaml
+from pydantic import BaseModel, validator
 
 from tools.videos import convert_to_mp4, generate_time_tag_from_interval, trim_video
 
@@ -34,6 +37,134 @@ node_pos_save = False
 node_pos_img_save = False
 adj_matr_save = False
 graph_save = True
+
+
+class VideoConfig(BaseModel):
+    # user input in .yaml file
+    filepath: str
+    trim_times: Optional[list]
+    is_synthetic: bool
+    frequency: int
+
+    # generated from user input
+    has_trimmed: bool = False
+    is_trimmed: bool = False
+
+    @validator("filepath")
+    def check_filepath(cls, v):
+        return os.path.abspath(v)
+
+    def __init__(self, filepath: str, video_name: str):
+        with open(filepath) as f:
+            videos = yaml.load(f, Loader=yaml.FullLoader)
+            vid_data: dict = videos[video_name]
+
+        data = {k: v for k, v in vid_data.items()}
+        data["frequency"] = videos["frequency"]
+
+        super(VideoConfig, self).__init__(**data)
+
+        self._set_trim_properties()
+
+    def _set_trim_properties(self):
+        self.has_trimmed = True if self.trim_times else False
+
+        match = re.search(ttag_pattern, self.filepath)
+        self.is_trimmed = True if match is not None else False
+
+
+class ImageConfig(BaseModel):
+    # user input in .yaml file
+    length: int
+    mask_radius: int
+    border_size: int
+
+    thr_plot: bool
+    pr_plot: bool
+    lm_plot: bool
+    poly_plot: bool
+    overlay_plot: bool
+
+    thr_save: bool
+    pr_save: bool
+    lm_save: bool
+    poly_save: bool
+    overlay_save: bool
+    graph_save: bool
+    node_pos_save: bool
+    node_pos_img_save: bool
+    adj_matr_save: bool
+
+    # generated from user input
+    centre: Optional[Tuple[int, int]]
+    border_radius: Optional[int]
+
+    def __init__(self, filepath: str):
+        with open(filepath) as f:
+            data = yaml.load(f, Loader=yaml.FullLoader)
+
+        super(ImageConfig, self).__init__(**data)
+
+        self.centre = (int(self.length / 2), int(self.length / 2))
+        self.border_radius = int(self.mask_radius - self.border_size)
+
+
+class GeneralConfig:
+    def __init__(
+        self,
+        img_config_fp: str,
+        video_config_fp: str,
+        video_name: str,
+        start: Optional[float] = None,
+        end: Optional[float] = None,
+        do_trim: bool = True,
+    ):
+        self.img = ImageConfig(img_config_fp)
+        self.video = VideoConfig(video_config_fp, video_name)
+
+        self._start = start
+        self._end = end
+
+        # trim video if trim_times given
+        if self.video.has_trimmed:
+            if do_trim:
+                section_filepaths = trim_video(self)
+            else:
+                section_filepaths = [
+                    self.basename + "_" + generate_time_tag_from_interval(i) + self.ext
+                    for i in self.video.trim_times
+                ]
+            self.sections = [
+                Config(
+                    fp,
+                    frequency=self.video.frequency,
+                    img_length=self.img.length,
+                    trim_times=[],
+                    start=self.video.trim_times[i][0],
+                    end=self.video.trim_times[i][1],
+                )
+                for i, fp in enumerate(section_filepaths)
+            ]
+        else:
+            self._generate_folders()
+
+        self._generate_start_time(start)
+
+    @property
+    def basename(self):
+        directory = os.path.dirname(self.video.filepath)
+        img_length = str(self.img.length)
+        base_name = os.path.splitext(os.path.basename(self.video.filepath))[0]
+
+        if self.video.is_trimmed:
+            match = re.search(ttag_pattern, base_name)
+            name_without_timetags = match.group(1)
+            timetags = match.group(2)
+
+            return os.path.join(directory, img_length, name_without_timetags, timetags)
+
+        else:
+            return os.path.join(directory, img_length, base_name)
 
 
 class Config:

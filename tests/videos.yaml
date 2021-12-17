@@ -1,0 +1,8 @@
+# general settings
+frequency: 25 # fps
+
+# video specific settings
+untrimmed:
+  filepath: synthetic-bladder11.mp4
+  trim_times: null
+  is_synthetic: True

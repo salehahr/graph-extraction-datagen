@@ -1,0 +1,23 @@
+# image dimensions in pixels
+length: 256
+mask_radius: 102
+border_size: 2
+
+# plot options
+thr_plot: False
+pr_plot: False
+lm_plot: False
+poly_plot: False
+overlay_plot: False
+
+# save options
+thr_save: True
+pr_save: True
+lm_save: True
+poly_save: True
+overlay_save: True
+graph_save: True
+
+node_pos_save: True
+node_pos_img_save: True
+adj_matr_save: True
