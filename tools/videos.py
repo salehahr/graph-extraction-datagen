@@ -1,9 +1,9 @@
 import os
 import re
-import cv2
 
-from pymediainfo import MediaInfo
+import cv2
 from moviepy.video.io.VideoFileClip import VideoFileClip
+from pymediainfo import MediaInfo
 
 
 def generate_time_tag(time_in_s: float) -> str:
@@ -14,13 +14,13 @@ def generate_time_tag(time_in_s: float) -> str:
     """
     minute, seconds = divmod(time_in_s, 60)
     millisecs = int(seconds * 1000)
-    return str(int(minute)).zfill(4) + '_' + str(millisecs).zfill(5)
+    return str(int(minute)).zfill(4) + "_" + str(millisecs).zfill(5)
 
 
 def generate_time_tag_from_interval(interval: list) -> str:
     start_tag = generate_time_tag(interval[0])
     end_tag = generate_time_tag(interval[1])
-    return start_tag + '__' + end_tag
+    return start_tag + "__" + end_tag
 
 
 def get_video_duration(video):
@@ -29,7 +29,7 @@ def get_video_duration(video):
 
 
 def video2img(config) -> None:
-    """ Saves video frames as .png images. """
+    """Saves video frames as .png images."""
 
     cap = cv2.VideoCapture(config.filepath)
     duration = get_video_duration(config.filepath) / 1000
@@ -47,7 +47,7 @@ def video2img(config) -> None:
     if not config.raw_image_files:
         seconds_total = 0
     else:
-        pattern = '(\d{4})_(\d{5})\.png'
+        pattern = "(\d{4})_(\d{5})\.png"
         most_recent_img = sorted(config.raw_image_files)[-1]
         matches = re.search(pattern, most_recent_img)
         ts_min, ts_millisec = int(matches.group(1)), int(matches.group(2))
@@ -66,7 +66,7 @@ def video2img(config) -> None:
         else:
             img_filename = generate_time_tag(seconds_total + config._start)
 
-        img_filepath = os.path.join(config.raw_img_folder, f'{img_filename}.png')
+        img_filepath = os.path.join(config.raw_img_folder, f"{img_filename}.png")
 
         if not os.path.isfile(img_filepath):
             success, img = get_frame(seconds_total)
@@ -76,9 +76,9 @@ def video2img(config) -> None:
                 break
             count += 1
 
-        seconds_total += (1 / config.frequency)
+        seconds_total += 1 / config.frequency
 
-    print(f'{count} images were extracted into {config.raw_img_folder}.')
+    print(f"{count} images were extracted into {config.raw_img_folder}.")
 
 
 def trim_video_section(orig: str, interval: list, target: str = None) -> str:
@@ -92,8 +92,7 @@ def trim_video_section(orig: str, interval: list, target: str = None) -> str:
     time_tag = generate_time_tag_from_interval(interval)
 
     base_name, ext = os.path.splitext(orig)
-    target = base_name + '_' + time_tag + ext \
-        if target is None else target
+    target = base_name + "_" + time_tag + ext if target is None else target
 
     if not os.path.isfile(target):
         video = VideoFileClip(orig).subclip(interval[0], interval[1])
@@ -119,11 +118,13 @@ def trim_video(config, targets: list = []):
         return
 
     if targets:
-        assert (len(config.trim_times) == len(targets))
-        return [trim_video_section(config.filepath,
-                                   interval,
-                                   target=targets[i]) for i, interval in enumerate(config.trim_times)]
+        assert len(config.trim_times) == len(targets)
+        return [
+            trim_video_section(config.filepath, interval, target=targets[i])
+            for i, interval in enumerate(config.trim_times)
+        ]
     else:
-        return [trim_video_section(config.filepath,
-                                   interval) for interval in config.trim_times]
-
+        return [
+            trim_video_section(config.filepath, interval)
+            for interval in config.trim_times
+        ]

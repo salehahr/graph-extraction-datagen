@@ -2,10 +2,10 @@ import glob
 import os
 import re
 
-from tools.videos import trim_video, generate_time_tag_from_interval
+from tools.videos import generate_time_tag_from_interval, trim_video
 
 # Time tag pattern
-pattern = '(.*)_(\d{4}_\d{5}__\d{4}_\d{5})'
+pattern = "(.*)_(\d{4}_\d{5}__\d{4}_\d{5})"
 
 # Image and mask dimensions
 image_length = 256
@@ -36,15 +36,17 @@ graph_save = True
 
 
 class Config:
-    def __init__(self,
-                 filepath: str,
-                 frequency: int,
-                 img_length: int,
-                 trim_times: list,
-                 do_trim: bool = True,
-                 start=None,
-                 end=None,
-                 synthetic: bool = False):
+    def __init__(
+        self,
+        filepath: str,
+        frequency: int,
+        img_length: int,
+        trim_times: list,
+        do_trim: bool = True,
+        start=None,
+        end=None,
+        synthetic: bool = False,
+    ):
 
         self.filepath = filepath
         self.ext = os.path.splitext(filepath)[1]
@@ -81,15 +83,21 @@ class Config:
             if do_trim:
                 section_filepaths = trim_video(self)
             else:
-                section_filepaths = [self.basename + '_' + generate_time_tag_from_interval(i)
-                                     + self.ext for i in trim_times]
-            self.sections = [Config(fp,
-                                    frequency=self.frequency,
-                                    img_length=self.img_length,
-                                    trim_times=[],
-                                    start=trim_times[i][0],
-                                    end=trim_times[i][1])
-                             for i, fp in enumerate(section_filepaths)]
+                section_filepaths = [
+                    self.basename + "_" + generate_time_tag_from_interval(i) + self.ext
+                    for i in trim_times
+                ]
+            self.sections = [
+                Config(
+                    fp,
+                    frequency=self.frequency,
+                    img_length=self.img_length,
+                    trim_times=[],
+                    start=trim_times[i][0],
+                    end=trim_times[i][1],
+                )
+                for i, fp in enumerate(section_filepaths)
+            ]
         else:
             self._generate_folders()
 
@@ -97,23 +105,23 @@ class Config:
 
     def _generate_folders(self):
         # TODO: raw images on outside of directory
-        self.raw_img_folder = f'{self.basename}/raw'
-        self.cropped_img_folder = f'{self.basename}/cropped'
-        self.filtered_img_folder = f'{self.basename}/filtered'
-        self.masked_img_folder = f'{self.basename}/masked'
-        self.threshed_img_folder = f'{self.basename}/threshed'
-        self.preproc_img_folder = f'{self.basename}/skeleton'
-        self.landmarks_img_folder = f'{self.basename}/landmarks'
-        self.node_positions_folder = f'{self.basename}/node_positions'
-        self.adj_matr_folder = f'{self.basename}/adj_matr'
-        self.graph_folder = f'{self.basename}/graphs'
-        self.poly_graph_img_folder = f'{self.basename}/poly_graph'
-        self.overlay_img_folder = f'{self.basename}/overlay'
+        self.raw_img_folder = f"{self.basename}/raw"
+        self.cropped_img_folder = f"{self.basename}/cropped"
+        self.filtered_img_folder = f"{self.basename}/filtered"
+        self.masked_img_folder = f"{self.basename}/masked"
+        self.threshed_img_folder = f"{self.basename}/threshed"
+        self.preproc_img_folder = f"{self.basename}/skeleton"
+        self.landmarks_img_folder = f"{self.basename}/landmarks"
+        self.node_positions_folder = f"{self.basename}/node_positions"
+        self.adj_matr_folder = f"{self.basename}/adj_matr"
+        self.graph_folder = f"{self.basename}/graphs"
+        self.poly_graph_img_folder = f"{self.basename}/poly_graph"
+        self.overlay_img_folder = f"{self.basename}/overlay"
 
     def _generate_start_time(self, start):
         if self.is_trimmed:
             if start is None:
-                start_pattern = '(\d{4})_(\d{5})__\d{4}_\d{5}\.'
+                start_pattern = "(\d{4})_(\d{5})__\d{4}_\d{5}\."
                 match = re.search(start_pattern, self.filepath)
 
                 minutes = int(match.group(1))
@@ -124,7 +132,7 @@ class Config:
                 self._start = start
         else:
             self._start = 0
-        assert (self._start is not None)
+        assert self._start is not None
 
     def save_all(self):
         self.thr_save = True
@@ -185,36 +193,50 @@ class Config:
 
     @property
     def raw_image_files(self):
-        return glob.glob(os.path.join(self.basename, '**/raw/*.png'), recursive=True)
+        return glob.glob(os.path.join(self.basename, "**/raw/*.png"), recursive=True)
 
     @property
     def cropped_image_files(self):
-        return glob.glob(os.path.join(self.basename, '**/cropped/*.png'), recursive=True)
+        return glob.glob(
+            os.path.join(self.basename, "**/cropped/*.png"), recursive=True
+        )
 
     @property
     def filtered_image_files(self):
-        return glob.glob(os.path.join(self.basename, '**/filtered/*.png'), recursive=True)
+        return glob.glob(
+            os.path.join(self.basename, "**/filtered/*.png"), recursive=True
+        )
 
     @property
     def masked_image_files(self):
-        return glob.glob(os.path.join(self.basename, '**/masked/*.png'), recursive=True)
+        return glob.glob(os.path.join(self.basename, "**/masked/*.png"), recursive=True)
 
     @property
     def threshed_image_files(self):
-        return glob.glob(os.path.join(self.basename, '**/threshed/*.png'), recursive=True)
+        return glob.glob(
+            os.path.join(self.basename, "**/threshed/*.png"), recursive=True
+        )
 
     @property
     def skeletonised_image_files(self):
-        return glob.glob(os.path.join(self.basename, '**/skeleton/*.png'), recursive=True)
+        return glob.glob(
+            os.path.join(self.basename, "**/skeleton/*.png"), recursive=True
+        )
 
     @property
     def node_position_files(self):
-        return glob.glob(os.path.join(self.basename, '**/node_positions/*.npy'), recursive=True)
+        return glob.glob(
+            os.path.join(self.basename, "**/node_positions/*.npy"), recursive=True
+        )
 
     @property
     def node_position_img_files(self):
-        return glob.glob(os.path.join(self.basename, '**/node_positions/*.png'), recursive=True)
+        return glob.glob(
+            os.path.join(self.basename, "**/node_positions/*.png"), recursive=True
+        )
 
     @property
     def adj_matrix_files(self):
-        return glob.glob(os.path.join(self.basename, '**/adj_matr/*.npy'), recursive=True)
+        return glob.glob(
+            os.path.join(self.basename, "**/adj_matr/*.npy"), recursive=True
+        )

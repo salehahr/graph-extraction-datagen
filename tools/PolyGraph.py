@@ -1,12 +1,13 @@
 import json
 
-import numpy as np
 import networkx as nx
+import numpy as np
 
 
 class PolyGraph(nx.Graph):
     """
     Graph with polynomial edge attributes.
+    (not a lie detector)
     """
 
     def __init__(self, incoming_graph_data=None, **attr):
@@ -14,7 +15,7 @@ class PolyGraph(nx.Graph):
 
     @classmethod
     def load(cls, filepath: str):
-        with open(filepath, 'r') as f:
+        with open(filepath, "r") as f:
             data_dict = json.load(f)
             graph = nx.node_link_graph(data_dict)
         return cls(graph)
@@ -33,15 +34,18 @@ class PolyGraph(nx.Graph):
                 startidx = all_nodes.index(start)
                 endidx = all_nodes.index(end)
 
-                self.add_edge(startidx, endidx,
-                              label=i,
-                              length=attributes['length'][i],
-                              deg3=attributes['deg3'][i],
-                              deg2=attributes['deg2'][i])
+                self.add_edge(
+                    startidx,
+                    endidx,
+                    label=i,
+                    length=attributes["length"][i],
+                    deg3=attributes["deg3"][i],
+                    deg2=attributes["deg2"][i],
+                )
 
     def save(self, filepath: str):
         graph_data = nx.node_link_data(self)
-        with open(filepath, 'w') as f:
+        with open(filepath, "w") as f:
             json.dump(graph_data, f)
 
     def save_positions(self, filepath: str):
@@ -52,11 +56,11 @@ class PolyGraph(nx.Graph):
 
     @property
     def positions(self):
-        return list(nx.get_node_attributes(self, 'pos').values())
+        return list(nx.get_node_attributes(self, "pos").values())
 
     @property
     def node_types(self):
-        return list(nx.get_node_attributes(self, 'type').values())
+        return list(nx.get_node_attributes(self, "type").values())
 
     @property
     def extended_adj_matrix(self, nodelist=None):

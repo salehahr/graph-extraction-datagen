@@ -2,11 +2,11 @@ import os
 import unittest
 
 import cv2
-import numpy as np
 import matplotlib.pyplot as plt
+import numpy as np
 
-from tools.files import get_random_video_path, get_random_raw_image
-from tools.images import get_centre, crop_resize_square, crop_radius, create_mask
+from tools.files import get_random_raw_image, get_random_video_path
+from tools.images import create_mask, crop_radius, crop_resize_square, get_centre
 from tools.plots import plot_bgr_img, plot_border_overlay
 
 
@@ -16,8 +16,8 @@ def is_square(img: np.ndarray):
 
 
 img_length = 256
-test_data_path = '/graphics/scratch/schuelej/sar/graph-training/data/test'
-base_path = f'/graphics/scratch/schuelej/sar/data/{img_length}'
+test_data_path = "/graphics/scratch/schuelej/sar/graph-training/data/test"
+base_path = f"/graphics/scratch/schuelej/sar/data/{img_length}"
 video_path = get_random_video_path(base_path)
 
 
@@ -28,11 +28,11 @@ class RandomImage(unittest.TestCase):
         cls.video_path = video_path
 
         img_name = get_random_raw_image(cls.video_path)
-        print(f'Video path: {cls.video_path}')
-        print(f'Image: {img_name}')
+        print(f"Video path: {cls.video_path}")
+        print(f"Image: {img_name}")
 
-        cls.img_raw_fp = os.path.join(cls.video_path, f'raw/{img_name}')
-        cls.img_skeletonised_fp = cls.img_raw_fp.replace('raw', 'skeleton')
+        cls.img_raw_fp = os.path.join(cls.video_path, f"raw/{img_name}")
+        cls.img_skeletonised_fp = cls.img_raw_fp.replace("raw", "skeleton")
 
         cls.img_length = img_length
 
@@ -43,7 +43,7 @@ class RandomImage(unittest.TestCase):
 
     @classmethod
     def plot_cropped(cls):
-        cropped_fp = cls.img_raw_fp.replace('raw', 'cropped')
+        cropped_fp = cls.img_raw_fp.replace("raw", "cropped")
         img_cropped = cv2.imread(cropped_fp, cv2.IMREAD_COLOR)
         plot_bgr_img(img_cropped)
         plt.title(os.path.relpath(cls.img_raw_fp, start=base_path))
@@ -53,14 +53,18 @@ class RandomImage(unittest.TestCase):
 class ImageWithBorderNodes(unittest.TestCase):
     @classmethod
     def setUpClass(cls) -> None:
-        border_img_name = '0002_20039.png'
-        border_video_path = os.path.join(base_path, 'GRK011/0002_17000__0002_21000')
+        border_img_name = "0002_20039.png"
+        border_video_path = os.path.join(base_path, "GRK011/0002_17000__0002_21000")
 
-        cls.img_cropped_fp = os.path.join(border_video_path, f'cropped/{border_img_name}')
-        cls.img_skel_fp = os.path.join(border_video_path, f'skeleton/{border_img_name}')
+        cls.img_cropped_fp = os.path.join(
+            border_video_path, f"cropped/{border_img_name}"
+        )
+        cls.img_skel_fp = os.path.join(border_video_path, f"skeleton/{border_img_name}")
         cls.img_skel = cv2.imread(cls.img_skel_fp, cv2.IMREAD_GRAYSCALE)
 
-        img_landmarks_fp = os.path.join(border_video_path, f'landmarks/{border_img_name}')
+        img_landmarks_fp = os.path.join(
+            border_video_path, f"landmarks/{border_img_name}"
+        )
         plot_border_overlay(img_landmarks_fp)
 
 
@@ -68,16 +72,17 @@ class NaNImage(unittest.TestCase):
     """
     Image that causes a NaN in polyfit_training.
     """
+
     @classmethod
     def setUpClass(cls) -> None:
-        nan_img_name = '0000_14120.png'
-        nan_video_path = os.path.join(base_path, 'GRK008')
+        nan_img_name = "0000_14120.png"
+        nan_video_path = os.path.join(base_path, "GRK008")
 
-        cls.img_cropped_fp = os.path.join(nan_video_path, f'cropped/{nan_img_name}')
-        cls.img_skel_fp = os.path.join(nan_video_path, f'skeleton/{nan_img_name}')
+        cls.img_cropped_fp = os.path.join(nan_video_path, f"cropped/{nan_img_name}")
+        cls.img_skel_fp = os.path.join(nan_video_path, f"skeleton/{nan_img_name}")
         cls.img_skel = cv2.imread(cls.img_skel_fp, cv2.IMREAD_GRAYSCALE)
 
-        img_landmarks_fp = os.path.join(nan_video_path, f'landmarks/{nan_img_name}')
+        img_landmarks_fp = os.path.join(nan_video_path, f"landmarks/{nan_img_name}")
         plot_border_overlay(img_landmarks_fp)
 
 
@@ -118,20 +123,22 @@ class TestImage(RandomImage):
         Old mask was a graphic created in Inkscape and imported as a numpy file.
         New mask is created using the cv2.circle function
         """
-        old_mask_fp = f'/graphics/scratch/schuelej/sar/graph-training/data/mask{img_length:d}.png'
+        old_mask_fp = (
+            f"/graphics/scratch/schuelej/sar/graph-training/data/mask{img_length:d}.png"
+        )
         self.assertTrue(os.path.isfile(old_mask_fp))
 
         old_mask = cv2.imread(old_mask_fp, cv2.IMREAD_GRAYSCALE) / 255
         new_mask = create_mask(img_length)
 
-        filtered_fp = self.img_raw_fp.replace('raw', 'filtered')
+        filtered_fp = self.img_raw_fp.replace("raw", "filtered")
         img_filtered = cv2.imread(filtered_fp, cv2.IMREAD_GRAYSCALE)
-        plot_bgr_img(img_filtered, title='filtered')
+        plot_bgr_img(img_filtered, title="filtered")
 
         img_masked_old = np.multiply(old_mask, img_filtered).astype(np.uint8)
         img_masked_new = np.multiply(new_mask, img_filtered).astype(np.uint8)
-        plot_bgr_img(img_masked_old, title='masked old')
-        plot_bgr_img(img_masked_new, title='masked new')
+        plot_bgr_img(img_masked_old, title="masked old")
+        plot_bgr_img(img_masked_new, title="masked new")
         plt.show()
 
         # goal: less than 1% mismatch in pixels
@@ -140,7 +147,9 @@ class TestImage(RandomImage):
         total_elements = img_masked_old.size
         fraction_mismatches = num_mismatches / total_elements
 
-        print(f'{num_mismatches} mismatches out of {total_elements} elements, '
-              f'{fraction_mismatches * 100:.2f} %')
+        print(
+            f"{num_mismatches} mismatches out of {total_elements} elements, "
+            f"{fraction_mismatches * 100:.2f} %"
+        )
 
         self.assertLessEqual(fraction_mismatches, 1)

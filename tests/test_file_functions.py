@@ -2,16 +2,16 @@ import os
 import unittest
 
 from config import Config
-from tools.files import remove_data_folders, make_folders, clone_data_folders
+from tools.files import clone_data_folders, make_folders, remove_data_folders
 
-base_path = '/graphics/scratch/schuelej/sar/graph-training/data/test'
+base_path = "/graphics/scratch/schuelej/sar/graph-training/data/test"
 
 
 class TestFileFunctions(unittest.TestCase):
     @classmethod
     def setUpClass(cls) -> None:
-        video_fp = os.path.join(base_path, 'short_video.mp4')
-        cls.temp_folder = os.path.join(base_path, 'temp')
+        video_fp = os.path.join(base_path, "short_video.mp4")
+        cls.temp_folder = os.path.join(base_path, "temp")
         if os.path.isdir(cls.temp_folder):
             remove_data_folders(cls.temp_folder)
 
@@ -35,7 +35,7 @@ class TestFileFunctions(unittest.TestCase):
 
     @classmethod
     def tearDownClass(cls) -> None:
-        """ Restore data if originals present. """
+        """Restore data if originals present."""
         if cls.originals_exist:
             remove_data_folders(cls.config.basename)
             clone_data_folders(cls.temp_folder, cls.config.basename)

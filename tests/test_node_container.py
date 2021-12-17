@@ -3,17 +3,17 @@ import os
 import cv2
 import matplotlib.pyplot as plt
 import numpy as np
-
-from test_images import ImageWithBorderNodes
 from plots import plot_bgr_img
-from tools.plots import node_types_image
+from test_images import ImageWithBorderNodes
+
 from tools.im2graph import extract_nodes_and_edges
 from tools.NodeContainer import NodeContainer, get_border_coordinates
+from tools.plots import node_types_image
 
-test_data_path = '/graphics/scratch/schuelej/sar/graph-training/data/test'
+test_data_path = "/graphics/scratch/schuelej/sar/graph-training/data/test"
 
 img_length = 256
-base_path = f'/graphics/scratch/schuelej/sar/data/{img_length}'
+base_path = f"/graphics/scratch/schuelej/sar/data/{img_length}"
 
 
 class TestExtractNodes(ImageWithBorderNodes):
@@ -22,6 +22,7 @@ class TestExtractNodes(ImageWithBorderNodes):
     has nodes on the border.
     Note: helper nodes aren't couunted in this test.
     """
+
     @classmethod
     def setUpClass(cls) -> None:
         super(TestExtractNodes, cls).setUpClass()
@@ -53,10 +54,12 @@ class TestExtractNodes(ImageWithBorderNodes):
         self.assertIsNotNone(self.nodes.border_nodes_yx)
         self.assertIsNotNone(self.nodes.end_nodes_yx)
         self.assertIsNotNone(self.nodes.crossing_nodes_xy)
-        self.assertEqual(self.nodes.num_all_nodes,
-                         self.nodes.num_crossing_nodes
-                         + self.nodes.num_end_nodes
-                         + self.nodes.num_border_nodes)
+        self.assertEqual(
+            self.nodes.num_all_nodes,
+            self.nodes.num_crossing_nodes
+            + self.nodes.num_end_nodes
+            + self.nodes.num_border_nodes,
+        )
 
     def test_classify_nodes(self):
         """
@@ -71,7 +74,9 @@ class TestExtractNodes(ImageWithBorderNodes):
 class TestNodeContainerFromGraph(TestExtractNodes):
     @classmethod
     def extract_nodes(cls):
-        print('TestNodeContainerFromGraph.extract_nodes class method')
-        graph_fp = cls.img_skel_fp.replace('skeleton', 'graphs').replace('.png', '.json')
+        print("TestNodeContainerFromGraph.extract_nodes class method")
+        graph_fp = cls.img_skel_fp.replace("skeleton", "graphs").replace(
+            ".png", ".json"
+        )
 
         return NodeContainer(graph_fp=graph_fp)

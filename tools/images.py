@@ -1,19 +1,18 @@
 import os
+
 import cv2
 import numpy as np
-
 from matplotlib import pyplot as plt
 from skimage import morphology
 from skimage.morphology import skeletonize
 
-from config import image_centre, border_size, border_radius
-
+from config import border_radius, border_size, image_centre
 
 blur_kernel = (5, 5)
 
 
 def get_rgb(img):
-    """ Gets RGB image for matplotlib plots. """
+    """Gets RGB image for matplotlib plots."""
     n_channels = img.shape[2] if len(img.shape) >= 3 else 1
 
     if n_channels == 1:
@@ -34,7 +33,9 @@ def get_centre(img):
         src_no_bg = 255 - cv2.absdiff(img_grey, bg)
 
         # threshold
-        _, thresh = cv2.threshold(src_no_bg, 0, 255, cv2.THRESH_BINARY_INV + cv2.THRESH_OTSU)
+        _, thresh = cv2.threshold(
+            src_no_bg, 0, 255, cv2.THRESH_BINARY_INV + cv2.THRESH_OTSU
+        )
 
         return thresh
 
@@ -50,7 +51,7 @@ def get_centre(img):
 
 def crop_imgs(conf):
     for fp in conf.raw_image_files:
-        new_fp = fp.replace('raw', 'cropped')
+        new_fp = fp.replace("raw", "cropped")
 
         # uncomment to skip existing files
         # if os.path.isfile(new_fp):
@@ -106,8 +107,15 @@ def centre_crop(img: np.ndarray, is_synthetic):
 
     img = img[crop_top:crop_bottom, crop_left:crop_right]
 
-    return cv2.copyMakeBorder(img, top_pad, bottom_pad, left_pad, right_pad,
-                              cv2.BORDER_CONSTANT, value=[0, 0, 0])
+    return cv2.copyMakeBorder(
+        img,
+        top_pad,
+        bottom_pad,
+        left_pad,
+        right_pad,
+        cv2.BORDER_CONSTANT,
+        value=[0, 0, 0],
+    )
 
 
 def apply_img_mask(conf):
@@ -117,7 +125,7 @@ def apply_img_mask(conf):
         img = cv2.imread(fp, cv2.IMREAD_GRAYSCALE)
         masked = np.multiply(mask, img)
 
-        new_fp = fp.replace('filtered', 'masked')
+        new_fp = fp.replace("filtered", "masked")
         cv2.imwrite(new_fp, masked)
 
 
@@ -126,22 +134,25 @@ def create_mask(img_length: int) -> np.ndarray:
     mask_radius = 102.5 if img_length == 256 else 205
 
     mask = np.zeros((img_length, img_length), np.float32)
-    cv2.circle(mask, centre, int(mask_radius), (1., 1., 1.), -1)
+    cv2.circle(mask, centre, int(mask_radius), (1.0, 1.0, 1.0), -1)
 
     return mask
 
 
 def threshold_imgs(conf):
     for fp in conf.masked_image_files:
-        new_fp = fp.replace('masked', 'threshed')
+        new_fp = fp.replace("masked", "threshed")
         img = cv2.imread(fp, 0)
         threshold(img, conf.thr_save, new_fp)
 
 
-def threshold(filtered_img: np.ndarray, do_save: bool, filepath: str = '') -> np.ndarray:
+def threshold(
+    filtered_img: np.ndarray, do_save: bool, filepath: str = ""
+) -> np.ndarray:
     blurred_img = cv2.GaussianBlur(filtered_img, blur_kernel, 0)
-    _, thresholded_img = cv2.threshold(blurred_img, 0, 255,
-                                       cv2.THRESH_BINARY + cv2.THRESH_OTSU)
+    _, thresholded_img = cv2.threshold(
+        blurred_img, 0, 255, cv2.THRESH_BINARY + cv2.THRESH_OTSU
+    )
 
     if do_save:
         cv2.imwrite(filepath, thresholded_img)
@@ -151,15 +162,16 @@ def threshold(filtered_img: np.ndarray, do_save: bool, filepath: str = '') -> np
 
 def skeletonise_imgs(conf):
     for fp in conf.threshed_image_files:
-        skel_fp = fp.replace('threshed', 'skeleton')
+        skel_fp = fp.replace("threshed", "skeleton")
 
         img_threshed = cv2.imread(fp, cv2.IMREAD_GRAYSCALE)
 
-        skeletonise_and_clean(img_threshed,
-                              conf.pr_plot, conf.pr_save, skel_fp)
+        skeletonise_and_clean(img_threshed, conf.pr_plot, conf.pr_save, skel_fp)
 
 
-def skeletonise_and_clean(thr_image: np.ndarray, plot: bool, save: bool, directory: str):
+def skeletonise_and_clean(
+    thr_image: np.ndarray, plot: bool, save: bool, directory: str
+):
     """
     Creates skeletonised image
     :param thr_image: thresholded image
@@ -191,11 +203,11 @@ def skeletonise_and_clean(thr_image: np.ndarray, plot: bool, save: bool, directo
             a.set_xticks([])
             a.set_yticks([])
 
-        axes[0].imshow(thr_image, 'gray')
-        axes[0].set_title('thresholded')
+        axes[0].imshow(thr_image, "gray")
+        axes[0].set_title("thresholded")
 
-        axes[1].imshow(skeleton, 'gray')
-        axes[1].set_title('skeletonised')
+        axes[1].imshow(skeleton, "gray")
+        axes[1].set_title("skeletonised")
 
         plt.show()
 
@@ -253,7 +265,7 @@ def num_in_4connectivity(a: int, b: int, image: np.ndarray):
 
 
 def overlay_border(img: np.ndarray):
-    """"
+    """ "
     Applies an overlay of the mask border to the image
     """
     bgr_yellow = (0, 255, 255)

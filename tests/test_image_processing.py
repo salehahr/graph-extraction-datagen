@@ -1,25 +1,24 @@
 import json
 import os
 import unittest
-import cv2
-
 from time import time
+
+import cv2
 import matplotlib.pyplot as plt
 import numpy as np
-
-from images import create_mask
-from plots import plot_img
-from tools.PolyGraph import PolyGraph
 from im2graph import (
     extract_nodes_and_edges,
+    generate_graph,
     helper_polyfit,
     helper_structural_graph,
     polyfit_training,
-    generate_graph
 )
+from images import create_mask
+from plots import plot_img
 
+from tools.PolyGraph import PolyGraph
 
-base_path = os.path.join(os.getcwd(), 'edges-0000_00400')
+base_path = os.path.join(os.getcwd(), "edges-0000_00400")
 
 
 def timer(func):
@@ -29,7 +28,7 @@ def timer(func):
         t_end = time()
 
         t_elapsed = t_end - t_start
-        print(f'{func.__name__} took {t_elapsed:.3f} s')
+        print(f"{func.__name__} took {t_elapsed:.3f} s")
 
         return fval
 
@@ -39,14 +38,16 @@ def timer(func):
 class TestExtractEdges(unittest.TestCase):
     @classmethod
     def setUpClass(cls) -> None:
-        cls.skeleton_fp = os.path.join(base_path, 'skeleton.png')
-        cls.simple_skeleton_fp = os.path.join(base_path, 'simple-skeleton.png')
-        cls.landmarks_fp = os.path.join(base_path, 'landmarks.png')
-        cls.graph_fp = os.path.join(base_path, 'graph.json')
+        cls.skeleton_fp = os.path.join(base_path, "skeleton.png")
+        cls.simple_skeleton_fp = os.path.join(base_path, "simple-skeleton.png")
+        cls.landmarks_fp = os.path.join(base_path, "landmarks.png")
+        cls.graph_fp = os.path.join(base_path, "graph.json")
 
         cls.img_skel = cv2.imread(cls.skeleton_fp, cv2.IMREAD_GRAYSCALE)
         cls.img_simple_skel = cv2.imread(cls.simple_skeleton_fp, cv2.IMREAD_GRAYSCALE)
-        cls.img_lm = cv2.cvtColor(cv2.imread(cls.landmarks_fp, cv2.IMREAD_COLOR),cv2.COLOR_BGR2RGB)
+        cls.img_lm = cv2.cvtColor(
+            cv2.imread(cls.landmarks_fp, cv2.IMREAD_COLOR), cv2.COLOR_BGR2RGB
+        )
         cls.graph = PolyGraph.load(cls.graph_fp)
 
         cls.num_edges = 18
@@ -58,34 +59,30 @@ class TestExtractEdges(unittest.TestCase):
         helper_sg_edges, _ = helper_structural_graph(nodes, edges)
 
         polyfit_params = polyfit_training(helper_pf_edges)
-        graph = generate_graph(helper_sg_edges, nodes, polyfit_params,
-                               False, '')
+        graph = generate_graph(helper_sg_edges, nodes, polyfit_params, False, "")
 
-        edges_extracted = edges['path']
+        edges_extracted = edges["path"]
         edges_in_graph = graph.edges
 
         self.assertEqual(len(edges_extracted), len(edges_in_graph))
 
 
 class TestMaskRGB(unittest.TestCase):
-    """ Tests three methods for loading a mask from file and masking
-     a sample RGB photo (pre-cropped. """
+    """Tests three methods for loading a mask from file and masking
+    a sample RGB photo (pre-cropped."""
 
     @classmethod
     def setUpClass(cls) -> None:
         # image
-        fp_rgb = os.path.join(os.getcwd(), 'synth-rgb.png')
+        fp_rgb = os.path.join(os.getcwd(), "synth-rgb.png")
         img_bgr = cv2.imread(fp_rgb, cv2.IMREAD_COLOR)
         cls.img_rgb = cv2.cvtColor(img_bgr, cv2.COLOR_BGR2RGB)
         cls.img_masked = None
 
         # filepaths
-        cls.mask_indices_fp = os.path.join(os.getcwd(),
-                                           'mask_invisible_indices.npy')
-        cls.mask_indices_json = os.path.join(os.getcwd(),
-                                             'mask_invisible_indices.json')
-        cls.mask_pic_fp = os.path.join(os.getcwd(),
-                                       'mask.png')
+        cls.mask_indices_fp = os.path.join(os.getcwd(), "mask_invisible_indices.npy")
+        cls.mask_indices_json = os.path.join(os.getcwd(), "mask_invisible_indices.json")
+        cls.mask_pic_fp = os.path.join(os.getcwd(), "mask.png")
 
         # save files
         mask = create_mask(256)
@@ -97,7 +94,7 @@ class TestMaskRGB(unittest.TestCase):
         mask = create_mask(256)
 
         plt.subplot(131)
-        plot_img(mask, cmap='gray')
+        plot_img(mask, cmap="gray")
         plt.subplot(132)
         plot_img(self.img_rgb)
         plt.subplot(133)
@@ -114,10 +111,9 @@ class TestMaskRGB(unittest.TestCase):
     @classmethod
     def _generate_indices_json(cls, mask):
         mask_invisible_indices = np.argwhere(mask == 0).tolist()
-        jdump = json.dumps(mask_invisible_indices,
-                           cls=json.JSONEncoder)
+        jdump = json.dumps(mask_invisible_indices, cls=json.JSONEncoder)
 
-        with open(cls.mask_indices_json, 'w+') as f:
+        with open(cls.mask_indices_json, "w+") as f:
             json.dump(jdump, f)
 
     @classmethod
@@ -129,7 +125,7 @@ class TestMaskRGB(unittest.TestCase):
 
     @timer
     def test_multiply_mask(self):
-        self.plot_title = 'multiply'
+        self.plot_title = "multiply"
 
         mask = cv2.imread(self.mask_pic_fp, cv2.IMREAD_GRAYSCALE)
 
@@ -138,7 +134,7 @@ class TestMaskRGB(unittest.TestCase):
 
     @timer
     def test_set_indices(self):
-        self.plot_title = 'set indices .npy'
+        self.plot_title = "set indices .npy"
 
         mask_invisible_indices = np.load(self.mask_indices_fp)
 
@@ -147,9 +143,9 @@ class TestMaskRGB(unittest.TestCase):
 
     @timer
     def test_set_indices_json(self):
-        self.plot_title = 'set indices .json'
+        self.plot_title = "set indices .json"
 
-        with open(self.mask_indices_json, 'r+') as f:
+        with open(self.mask_indices_json, "r+") as f:
             jdump = json.load(f)
 
         mask_invisible_indices = np.asarray(eval(jdump))

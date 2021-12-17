@@ -1,9 +1,9 @@
 import cv2
+import matplotlib.pyplot as plt
 import networkx as nx
 import numpy as np
-import matplotlib.pyplot as plt
 
-from tools.images import overlay_border, get_rgb
+from tools.images import get_rgb, overlay_border
 
 node_size: int = 3
 bgr_blue = (255, 0, 0)
@@ -13,16 +13,16 @@ bgr_yellow = (0, 255, 255)
 bgr_white = (255, 255, 255)
 
 
-def plot_img(img, cmap=None, title=''):
+def plot_img(img, cmap=None, title=""):
     plt.imshow(img, cmap=cmap)
     plt.xticks([])
     plt.yticks([])
     plt.title(title)
 
 
-def plot_bgr_img(img, title=''):
+def plot_bgr_img(img, title=""):
     n_channels = img.shape[2] if len(img.shape) >= 3 else 1
-    cmap = 'gray' if n_channels == 1 else None
+    cmap = "gray" if n_channels == 1 else None
 
     image = get_rgb(img)
 
@@ -33,9 +33,9 @@ def plot_bgr_img(img, title=''):
     plt.title(title)
 
 
-def plot_graph_on_img_straight(img_skel: np.ndarray,
-                               pos: list,
-                               adjacency: np.ndarray) -> None:
+def plot_graph_on_img_straight(
+    img_skel: np.ndarray, pos: list, adjacency: np.ndarray
+) -> None:
     """
     Function for checking if the adjacency matrix matches the image
     by overlaying the graph over the skeletonised image.
@@ -52,41 +52,44 @@ def plot_graph_on_img_straight(img_skel: np.ndarray,
     pos_dict = {i: [x, img_height - y] for i, [x, y] in enumerate(pos)}
 
     graph = nx.from_numpy_array(adjacency)
-    nx.set_node_attributes(graph, pos_dict, 'pos')
+    nx.set_node_attributes(graph, pos_dict, "pos")
 
     y_lim, x_lim = img.shape[:-1]
     extent = 0, x_lim, 0, y_lim
 
     plt.figure(frameon=False, figsize=(20, 20))
-    plt.imshow(img, extent=extent, interpolation='nearest')
-    nx.draw(graph, pos=pos_dict,
-            node_size=50, node_color='r',
-            edge_color='g', width=7)
+    plt.imshow(img, extent=extent, interpolation="nearest")
+    nx.draw(graph, pos=pos_dict, node_size=50, node_color="r", edge_color="g", width=7)
 
     plt.show()
 
 
-def plot_landmarks_img(nodes, helper_nodes: list,
-                       skeleton: np.ndarray,
-                       plot: bool, save: bool,
-                       filepath: str = ''):
+def plot_landmarks_img(
+    nodes,
+    helper_nodes: list,
+    skeleton: np.ndarray,
+    plot: bool,
+    save: bool,
+    filepath: str = "",
+):
     img = node_types_image(nodes, skeleton=skeleton)
 
     for xy in helper_nodes:
-        cv2.circle(img, tuple(xy), int(node_size/2), bgr_green, -1)
+        cv2.circle(img, tuple(xy), int(node_size / 2), bgr_green, -1)
 
     if plot:
-        plot_bgr_img(img, 'Landmarks')
+        plot_bgr_img(img, "Landmarks")
         plt.show()
     if save:
         cv2.imwrite(filepath, img)
 
 
-def node_types_image(nodes,
-                     image_length=None, skeleton=None):
-    img = cv2.cvtColor(skeleton.copy(), cv2.COLOR_GRAY2RGB) \
-        if skeleton is not None else \
-        np.zeros((image_length, image_length, 3)).astype(np.float32)
+def node_types_image(nodes, image_length=None, skeleton=None):
+    img = (
+        cv2.cvtColor(skeleton.copy(), cv2.COLOR_GRAY2RGB)
+        if skeleton is not None
+        else np.zeros((image_length, image_length, 3)).astype(np.float32)
+    )
 
     for xy in nodes.end_nodes_xy:
         cv2.circle(img, xy, node_size, bgr_red, -1)
@@ -100,10 +103,16 @@ def node_types_image(nodes,
     return img
 
 
-def plot_overlay(original: np.ndarray,
-                 nodes_xy: list, polyfit_coordinates,
-                 plot: bool, save: bool,
-                 node_size: int, edge_thick: int, path: str):
+def plot_overlay(
+    original: np.ndarray,
+    nodes_xy: list,
+    polyfit_coordinates,
+    plot: bool,
+    save: bool,
+    node_size: int,
+    edge_thick: int,
+    path: str,
+):
     overlay = original.copy()
 
     for x, y in nodes_xy:
@@ -112,7 +121,13 @@ def plot_overlay(original: np.ndarray,
     for j in range(len(polyfit_coordinates[0])):
         coordinates_global = polyfit_coordinates[0][j]
         for p in range(len(coordinates_global)):
-            cv2.circle(overlay, (coordinates_global[p][0], coordinates_global[p][1]), 0, (67, 211, 255), edge_thick)
+            cv2.circle(
+                overlay,
+                (coordinates_global[p][0], coordinates_global[p][1]),
+                0,
+                (67, 211, 255),
+                edge_thick,
+            )
 
     if plot:
         plot_bgr_img(overlay)
@@ -123,10 +138,16 @@ def plot_overlay(original: np.ndarray,
     return overlay
 
 
-def plot_poly_graph(img_length: int,
-                    helpernodescoor: list, polyfit_coordinates: list,
-                    plot: bool, save: bool,
-                    node_size: int, edge_width: int, path: str):
+def plot_poly_graph(
+    img_length: int,
+    helpernodescoor: list,
+    polyfit_coordinates: list,
+    plot: bool,
+    save: bool,
+    node_size: int,
+    edge_width: int,
+    path: str,
+):
     visual_graph = np.zeros((img_length, img_length, 3), dtype=np.int8)
 
     for xy in helpernodescoor:
@@ -154,5 +175,5 @@ def plot_border_overlay(img_lm_fp):
     img_lm_border = cv2.imread(img_lm_fp, cv2.IMREAD_COLOR)
     overlay_border(img_lm_border)
 
-    plot_bgr_img(img_lm_border, title='landmarks')
+    plot_bgr_img(img_lm_border, title="landmarks")
     plt.show()

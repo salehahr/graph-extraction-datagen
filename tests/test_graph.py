@@ -2,22 +2,19 @@ import json
 import os
 import pprint
 import unittest
+
 import cv2
-
-import numpy as np
-import networkx as nx
 import matplotlib.pyplot as plt
-
-from test_images import RandomImage
+import networkx as nx
+import numpy as np
+from images import generate_node_pos_img
 from plots import plot_bgr_img
-from test_images import test_data_path, img_length
-
-from tools.PolyGraph import PolyGraph
-from tools.NodeContainer import NodeContainer, sort_list_of_nodes
+from test_images import RandomImage, img_length, test_data_path
 
 from tools.im2graph import extract_graph
-from images import generate_node_pos_img
-from tools.plots import plot_graph_on_img_straight, node_types_image
+from tools.NodeContainer import NodeContainer, sort_list_of_nodes
+from tools.plots import node_types_image, plot_graph_on_img_straight
+from tools.PolyGraph import PolyGraph
 
 
 class TestGraph(RandomImage):
@@ -72,7 +69,7 @@ class TestGraph(RandomImage):
         Visual test for checking that the nodes are classified correctly.
         """
         if self.nodes:
-            lm_fp = self.img_raw_fp.replace('raw', 'landmarks')
+            lm_fp = self.img_raw_fp.replace("raw", "landmarks")
 
             old_lm_img = cv2.imread(lm_fp, cv2.IMREAD_COLOR)
             new_lm_img = node_types_image(self.nodes, image_length=img_length)
@@ -94,12 +91,13 @@ class TestReadGraph(TestGraph):
     Implements TestGraph checks for pre-generated (already saved)
     json graph pf a ramdom image.
     """
+
     @classmethod
     def setUpClass(cls) -> None:
         super(TestReadGraph, cls).setUpClass()
 
         fp = cls.img_skeletonised_fp
-        graph_fp = fp.replace('skeleton', 'graphs').replace('.png', '.json')
+        graph_fp = fp.replace("skeleton", "graphs").replace(".png", ".json")
 
         cls.graph = PolyGraph.load(graph_fp)
         cls.nodes = NodeContainer(graph_fp=graph_fp)
@@ -119,13 +117,13 @@ class TestGenerateGraph(TestGraph):
     def setUpClass(cls) -> None:
         super(TestGenerateGraph, cls).setUpClass()
 
-        cls.graph, cls.nodes, _, _, _ = extract_graph(cls.img_skel, '')
+        cls.graph, cls.nodes, _, _, _ = extract_graph(cls.img_skel, "")
 
         cls.adj_matr = nx.to_numpy_array(cls.graph)
         cls.positions = cls.graph.positions
 
 
-@unittest.skip('Not reading from numpy files anymore.')
+@unittest.skip("Not reading from numpy files anymore.")
 class TestReadNumpyFiles(TestGraph):
     """
     Implements TestGraph checks for pre-generated (already saved)
@@ -138,11 +136,13 @@ class TestReadNumpyFiles(TestGraph):
 
         fp = cls.img_skeletonised_fp
 
-        adj_matr_fp = fp.replace('skeleton', 'adj_matr').replace('.png', '.npy')
+        adj_matr_fp = fp.replace("skeleton", "adj_matr").replace(".png", ".npy")
         ext_adj_matr = np.load(adj_matr_fp)
         cls.adj_matr = ext_adj_matr[0, :, 2:].astype(np.uint8)
 
-        node_pos_vec_fp = fp.replace('skeleton', 'node_positions').replace('.png', '.npy')
+        node_pos_vec_fp = fp.replace("skeleton", "node_positions").replace(
+            ".png", ".npy"
+        )
         node_pos = np.load(node_pos_vec_fp).astype(np.uint8)
         cls.positions = np.ndarray.tolist(node_pos)
 
@@ -159,7 +159,7 @@ class TestSaveSimpleGraph(unittest.TestCase):
         _, cls.sorted_nodes = sort_list_of_nodes(list_of_nodes)
         cls.graph = cls.create_graph()
 
-        cls.filepath = os.path.join(test_data_path, 'graph.json')
+        cls.filepath = os.path.join(test_data_path, "graph.json")
 
         assert not os.path.isfile(cls.filepath)
 
@@ -167,10 +167,12 @@ class TestSaveSimpleGraph(unittest.TestCase):
     def create_graph(cls):
         graph = nx.Graph()
 
-        list_of_edges = [[[0, 0], [2, 2]],
-                         [[4, 0], [2, 2]],
-                         [[0, 3], [2, 2]],
-                         [[7, 2.5], [2, 2]]]
+        list_of_edges = [
+            [[0, 0], [2, 2]],
+            [[4, 0], [2, 2]],
+            [[0, 3], [2, 2]],
+            [[7, 2.5], [2, 2]],
+        ]
         edge_attrs = [1, 1, 1, 3]
 
         # define nodes with attribute position
@@ -208,7 +210,7 @@ class TestSaveSimpleGraph(unittest.TestCase):
         #            {'id': 3, 'pos': (4, 0)},
         #            {'id': 4, 'pos': (7, 2.5)}]}
 
-        with open(self.filepath, 'w') as f:
+        with open(self.filepath, "w") as f:
             json.dump(data_dict, f)
         assert os.path.isfile(self.filepath)
 
@@ -218,18 +220,22 @@ class TestSaveSimpleGraph(unittest.TestCase):
 
         read_positions = read_graph.positions
         read_adj_matr = nx.to_numpy_array(read_graph)
-        read_length_matr = nx.to_numpy_array(read_graph, weight='length')
+        read_length_matr = nx.to_numpy_array(read_graph, weight="length")
 
-        true_adj_matr = [[0., 0., 1., 0., 0.],
-                         [0., 0., 1., 0., 0.],
-                         [1., 1., 0., 1., 1.],
-                         [0., 0., 1., 0., 0.],
-                         [0., 0., 1., 0., 0.]]
-        true_length_matrix = [[0., 0., 1., 0., 0.],
-                              [0., 0., 1., 0., 0.],
-                              [1., 1., 0., 1., 3.],
-                              [0., 0., 1., 0., 0.],
-                              [0., 0., 3., 0., 0.]]
+        true_adj_matr = [
+            [0.0, 0.0, 1.0, 0.0, 0.0],
+            [0.0, 0.0, 1.0, 0.0, 0.0],
+            [1.0, 1.0, 0.0, 1.0, 1.0],
+            [0.0, 0.0, 1.0, 0.0, 0.0],
+            [0.0, 0.0, 1.0, 0.0, 0.0],
+        ]
+        true_length_matrix = [
+            [0.0, 0.0, 1.0, 0.0, 0.0],
+            [0.0, 0.0, 1.0, 0.0, 0.0],
+            [1.0, 1.0, 0.0, 1.0, 3.0],
+            [0.0, 0.0, 1.0, 0.0, 0.0],
+            [0.0, 0.0, 3.0, 0.0, 0.0],
+        ]
 
         self.assertTrue(self.sorted_nodes == read_positions)
 

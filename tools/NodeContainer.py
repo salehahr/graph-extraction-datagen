@@ -1,10 +1,9 @@
 import cv2
 import numpy as np
 
-from tools.PolyGraph import PolyGraph
+from config import border_radius, border_size, image_centre, image_length
 from tools.NodeType import NodeType
-
-from config import image_length, image_centre, border_radius, border_size
+from tools.PolyGraph import PolyGraph
 
 
 def flip_node_coordinates(list_of_nodes_yx):
@@ -22,7 +21,9 @@ def get_border_coordinates() -> np.ndarray:
     The border zone is used to differentiate between valid and invalid nodes.
     """
     border_mask = np.zeros((image_length, image_length), np.float32)
-    cv2.circle(border_mask, image_centre, int(border_radius), (1., 0., 0.), border_size)
+    cv2.circle(
+        border_mask, image_centre, int(border_radius), (1.0, 0.0, 0.0), border_size
+    )
 
     return np.argwhere(border_mask).tolist()
 
@@ -36,11 +37,9 @@ class NodeContainer(object):
     Auto-classification of border nodes is carried out upon initialisation.
     """
 
-    def __init__(self,
-                 crossing_nodes=None,
-                 end_nodes=None,
-                 border_nodes=None,
-                 graph_fp: str = ''):
+    def __init__(
+        self, crossing_nodes=None, end_nodes=None, border_nodes=None, graph_fp: str = ""
+    ):
 
         self._crossing_nodes_yx = crossing_nodes if crossing_nodes else []
         self._end_nodes_yx = end_nodes if end_nodes else []
@@ -98,12 +97,14 @@ class NodeContainer(object):
         Sets the list of all nodes,
         as well as the corresponding node types
         """
-        self._all_nodes_yx = self.crossing_nodes_yx \
-                            + self.end_nodes_yx \
-                            + self.border_nodes_yx
-        self._node_types = [NodeType.CROSSING] * self.num_crossing_nodes \
-                          + [NodeType.END] * self.num_end_nodes \
-                          + [NodeType.BORDER] * self.num_border_nodes
+        self._all_nodes_yx = (
+            self.crossing_nodes_yx + self.end_nodes_yx + self.border_nodes_yx
+        )
+        self._node_types = (
+            [NodeType.CROSSING] * self.num_crossing_nodes
+            + [NodeType.END] * self.num_end_nodes
+            + [NodeType.BORDER] * self.num_border_nodes
+        )
 
     def _sort_all_nodes(self):
         """

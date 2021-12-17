@@ -1,7 +1,7 @@
 import os
-import sys
 import random
 import shutil
+import sys
 
 
 def make_folder(folder_name: str) -> None:
@@ -9,7 +9,7 @@ def make_folder(folder_name: str) -> None:
 
     if not os.path.isdir(path):
         try:
-            print(f'\t ...{path}')
+            print(f"\t ...{path}")
             os.makedirs(path)
         except Exception as e:
             print(e)
@@ -17,7 +17,7 @@ def make_folder(folder_name: str) -> None:
 
 
 def make_folders(config):
-    print('Creating folders ...')
+    print("Creating folders ...")
     for f in config.list_of_folders:
         make_folder(f)
 
@@ -42,7 +42,7 @@ def get_random_video_path(base_path):
     generator = os.walk(base_path)
     path, subfolder_names = next(generator)[:2]
 
-    if 'raw' not in subfolder_names:
+    if "raw" not in subfolder_names:
         # choose random video from subfolder
         video_id = random.randint(1, len(subfolder_names)) - 1
         video_path = os.path.join(path, subfolder_names[video_id])
@@ -52,7 +52,7 @@ def get_random_video_path(base_path):
 
 
 def get_random_raw_image(video_path):
-    dir_raw = os.path.join(video_path, 'raw')
+    dir_raw = os.path.join(video_path, "raw")
 
     generator = os.walk(dir_raw)
     img_list = next(generator)[-1]
