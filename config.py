@@ -110,7 +110,7 @@ class Config:
         self.filtered_img_folder = f"{self.basename}/filtered"
         self.masked_img_folder = f"{self.basename}/masked"
         self.threshed_img_folder = f"{self.basename}/threshed"
-        self.preproc_img_folder = f"{self.basename}/skeleton"
+        self.skeleton_img_folder = f"{self.basename}/skeleton"
         self.landmarks_img_folder = f"{self.basename}/landmarks"
         self.node_positions_folder = f"{self.basename}/node_positions"
         self.adj_matr_folder = f"{self.basename}/adj_matr"
@@ -173,7 +173,7 @@ class Config:
                 self.filtered_img_folder,
                 self.masked_img_folder,
                 self.threshed_img_folder,
-                self.preproc_img_folder,
+                self.skeleton_img_folder,
                 self.landmarks_img_folder,
                 self.poly_graph_img_folder,
                 self.overlay_img_folder,

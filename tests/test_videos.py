@@ -5,7 +5,7 @@ from after_filter import after_filter
 from before_filter import before_filter
 from config import Config
 from tools.files import delete_files, make_folders
-from tools.videos import trim_video
+from tools.videos import make_video_clip, trim_video
 
 base_path = "/graphics/scratch/schuelej/sar/graph-training/data"
 test_path = "/graphics/scratch/schuelej/sar/graph-training/tests"
@@ -186,3 +186,22 @@ class TestTrimVideoSections(unittest.TestCase):
         for fp in sections:
             self.assertTrue(os.path.isfile(fp))
             os.remove(fp)
+
+
+class TestMakeVideoClip(unittest.TestCase):
+    @classmethod
+    def setUpClass(cls) -> None:
+        pass
+
+    def test_make_video_clip(self):
+        source_path = os.path.join(os.getcwd(), "filtered")
+        target_fp = os.path.join(os.getcwd(), "filtered.mp4")
+
+        if os.path.isfile(target_fp):
+            os.remove(target_fp)
+
+        self.assertTrue(os.path.isdir(source_path))
+
+        make_video_clip(source_path, target_fp, fps=25)
+
+        self.assertTrue(os.path.isfile(target_fp))

@@ -1,8 +1,11 @@
+import glob
 import os
 import re
 
 import cv2
+from moviepy.editor import ImageSequenceClip
 from moviepy.video.io.VideoFileClip import VideoFileClip
+from natsort import natsorted
 from pymediainfo import MediaInfo
 
 
@@ -128,3 +131,14 @@ def trim_video(config, targets: list = []):
             trim_video_section(config.filepath, interval)
             for interval in config.trim_times
         ]
+
+
+def make_video_clip(source_folder: str, target: str, fps: int = 25):
+    fp_sequence = glob.glob(os.path.join(source_folder, "*.png"))
+    fp_sequence = natsorted(fp_sequence, reverse=False)
+
+    img_sequence = [cv2.imread(fp, cv2.IMREAD_COLOR) for fp in fp_sequence]
+    img_sequence = [cv2.cvtColor(img, cv2.COLOR_BGR2RGB) for img in img_sequence]
+
+    clip = ImageSequenceClip(img_sequence, fps=fps, load_images=False, with_mask=False)
+    clip.write_videofile(target)
