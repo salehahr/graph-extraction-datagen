@@ -81,11 +81,11 @@ def centre_crop(img: np.ndarray, is_synthetic):
 
     if not is_synthetic:
         cx, cy = get_centre(img)
-        crop_radius = 575
+        crop_radius = int(img.shape[0] / 2)
     else:
         cx = int(img.shape[1] / 2)
         cy = int(img.shape[0] / 2)
-        crop_radius = int(img.shape[0] / 2)
+        crop_radius = 575
 
     # get crop dimensions
     crop_left = cx - crop_radius
