@@ -142,3 +142,14 @@ def make_video_clip(source_folder: str, target: str, fps: int = 25):
 
     clip = ImageSequenceClip(img_sequence, fps=fps, load_images=False, with_mask=False)
     clip.write_videofile(target)
+
+
+def convert_to_mp4(filepath: str) -> str:
+    base_fp, _ = os.path.splitext(filepath)
+    new_fp = base_fp + ".mp4"
+
+    if not os.path.isfile(new_fp):
+        clip = VideoFileClip(filepath)
+        clip.write_videofile(new_fp)
+
+    return new_fp

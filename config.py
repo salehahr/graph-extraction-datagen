@@ -2,7 +2,7 @@ import glob
 import os
 import re
 
-from tools.videos import generate_time_tag_from_interval, trim_video
+from tools.videos import convert_to_mp4, generate_time_tag_from_interval, trim_video
 
 # Time tag pattern
 pattern = "(.*)_(\d{4}_\d{5}__\d{4}_\d{5})"
@@ -47,9 +47,14 @@ class Config:
         end=None,
         synthetic: bool = False,
     ):
+        ext = os.path.splitext(filepath)[1]
+        if "mp4" not in ext.lower():
+            filepath = convert_to_mp4(filepath)
+            self.ext = ".mp4"
+        else:
+            self.ext = ext
 
         self.filepath = filepath
-        self.ext = os.path.splitext(filepath)[1]
         self.trim_times = trim_times
         self.sections = [self]
         self.frequency = frequency
