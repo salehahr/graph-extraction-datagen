@@ -1,4 +1,5 @@
 import os
+from typing import Tuple
 
 import cv2
 import numpy as np
@@ -21,7 +22,14 @@ def get_rgb(img):
         return cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
 
 
-def get_centre(img):
+def get_centre(img: np.ndarray, moments_from: str = "thresh") -> Tuple[int, int]:
+    """
+    Sometimes the thresholded image given out is bad.
+    In that case switch to calculating moemnts from the grayscale image instead
+    of the thresholded.
+    :param img: BGR frame from endoscopic video
+    :param moments_from: option to calculate moments from greyscale image or thresholded
+    """
     img_grey = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
 
     def get_thresholded():
@@ -40,7 +48,10 @@ def get_centre(img):
         return thresh
 
     # calculate moments of binary image
-    moments = cv2.moments(get_thresholded())
+    if "thresh" in moments_from:
+        moments = cv2.moments(get_thresholded())
+    else:
+        moments = cv2.moments(img_grey)
 
     # calculate x,y coordinate of center
     cx = int(moments["m10"] / moments["m00"])
@@ -80,7 +91,7 @@ def centre_crop(img: np.ndarray, is_synthetic):
     max_y, max_x, _ = img.shape
 
     if not is_synthetic:
-        cx, cy = get_centre(img)
+        cx, cy = get_centre(img, moments_from="thresh")
         crop_radius = int(img.shape[0] / 2)
     else:
         cx = int(img.shape[1] / 2)
