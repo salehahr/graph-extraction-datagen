@@ -4,7 +4,7 @@ import unittest
 from config import Config
 from tools.files import clone_data_folders, make_folders, remove_data_folders
 
-base_path = "/graphics/scratch/schuelej/sar/graph-training/data/test"
+base_path = os.path.join(os.getcwd(), "../data/test")
 
 
 class TestFileFunctions(unittest.TestCase):

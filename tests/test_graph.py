@@ -7,14 +7,16 @@ import cv2
 import matplotlib.pyplot as plt
 import networkx as nx
 import numpy as np
-from images import generate_node_pos_img
-from plots import plot_bgr_img
-from test_images import RandomImage, img_length, test_data_path
 
 from tools.im2graph import extract_graph
+from tools.images import generate_node_pos_img
 from tools.NodeContainer import NodeContainer, sort_list_of_nodes
-from tools.plots import node_types_image, plot_graph_on_img_straight
+from tools.plots import node_types_image, plot_bgr_img, plot_graph_on_img_straight
 from tools.PolyGraph import PolyGraph
+
+from .test_images import RandomImage, img_length
+
+data_path = os.path.join(os.getcwd(), "../data/test")
 
 
 class TestGraph(RandomImage):
@@ -41,7 +43,7 @@ class TestGraph(RandomImage):
     @classmethod
     def plot_skeletonised(cls):
         plot_bgr_img(cls.img_skel)
-        plt.title(os.path.relpath(cls.img_skeletonised_fp, start=cls.base_path))
+        plt.title(cls.title)
         plt.show()
 
     def plot_adj_matr(self, adj_matr):
@@ -159,7 +161,7 @@ class TestSaveSimpleGraph(unittest.TestCase):
         _, cls.sorted_nodes = sort_list_of_nodes(list_of_nodes)
         cls.graph = cls.create_graph()
 
-        cls.filepath = os.path.join(test_data_path, "graph.json")
+        cls.filepath = os.path.join(data_path, "graph.json")
 
         assert not os.path.isfile(cls.filepath)
 

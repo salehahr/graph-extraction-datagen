@@ -1,19 +1,14 @@
-import os
-
 import cv2
 import matplotlib.pyplot as plt
 import numpy as np
-from plots import plot_bgr_img
-from test_images import ImageWithBorderNodes
 
 from tools.im2graph import extract_nodes_and_edges
 from tools.NodeContainer import NodeContainer, get_border_coordinates
-from tools.plots import node_types_image
+from tools.plots import node_types_image, plot_bgr_img
 
-test_data_path = "/graphics/scratch/schuelej/sar/graph-training/data/test"
+from .test_images import ImageWithBorderNodes
 
 img_length = 256
-base_path = f"/graphics/scratch/schuelej/sar/data/{img_length}"
 
 
 class TestExtractNodes(ImageWithBorderNodes):

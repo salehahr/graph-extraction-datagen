@@ -6,19 +6,19 @@ from time import time
 import cv2
 import matplotlib.pyplot as plt
 import numpy as np
-from im2graph import (
+
+from tools.im2graph import (
     extract_nodes_and_edges,
     generate_graph,
     helper_polyfit,
     helper_structural_graph,
     polyfit_training,
 )
-from images import create_mask
-from plots import plot_img
-
+from tools.images import create_mask
+from tools.plots import plot_img
 from tools.PolyGraph import PolyGraph
 
-base_path = os.path.join(os.getcwd(), "edges-0000_00400")
+data_path = os.path.join(os.getcwd(), "../data/test")
 
 
 def timer(func):
@@ -38,21 +38,21 @@ def timer(func):
 class TestExtractEdges(unittest.TestCase):
     @classmethod
     def setUpClass(cls) -> None:
+        base_path = os.path.join(data_path, "edges-0000_00400")
+
         cls.skeleton_fp = os.path.join(base_path, "skeleton.png")
         cls.simple_skeleton_fp = os.path.join(base_path, "simple-skeleton.png")
-        cls.landmarks_fp = os.path.join(base_path, "landmarks.png")
         cls.graph_fp = os.path.join(base_path, "graph.json")
 
         cls.img_skel = cv2.imread(cls.skeleton_fp, cv2.IMREAD_GRAYSCALE)
         cls.img_simple_skel = cv2.imread(cls.simple_skeleton_fp, cv2.IMREAD_GRAYSCALE)
-        cls.img_lm = cv2.cvtColor(
-            cv2.imread(cls.landmarks_fp, cv2.IMREAD_COLOR), cv2.COLOR_BGR2RGB
-        )
         cls.graph = PolyGraph.load(cls.graph_fp)
 
         cls.num_edges = 18
 
     def test_extract_edges(self):
+        """Ensures that the number of extracted edges matches the true number
+        of edges in the graph."""
         nodes, edges, _ = extract_nodes_and_edges(self.img_skel)
 
         helper_pf_edges, _ = helper_polyfit(nodes, edges)
@@ -67,6 +67,7 @@ class TestExtractEdges(unittest.TestCase):
         self.assertEqual(len(edges_extracted), len(edges_in_graph))
 
 
+@unittest.skip("Not using RGB images yet.")
 class TestMaskRGB(unittest.TestCase):
     """Tests three methods for loading a mask from file and masking
     a sample RGB photo (pre-cropped."""
@@ -74,7 +75,7 @@ class TestMaskRGB(unittest.TestCase):
     @classmethod
     def setUpClass(cls) -> None:
         # image
-        fp_rgb = os.path.join(os.getcwd(), "synth-rgb.png")
+        fp_rgb = os.path.join(data_path, "synth-rgb.png")
         img_bgr = cv2.imread(fp_rgb, cv2.IMREAD_COLOR)
         cls.img_rgb = cv2.cvtColor(img_bgr, cv2.COLOR_BGR2RGB)
         cls.img_masked = None
