@@ -194,6 +194,10 @@ class NodeContainer(object):
 
     @node_types.setter
     def node_types(self, values):
+        if 0 in values:
+            corrected_vals = [3 if v == 0 else v for v in values]
+            values = corrected_vals
+
         self._node_types = [NodeType(v) for v in values]
 
     @property
