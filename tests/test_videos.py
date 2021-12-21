@@ -1,4 +1,5 @@
 import os
+import shutil
 import unittest
 
 from after_filter import after_filter
@@ -67,7 +68,9 @@ class TestShortVideo(TestVideo):
 class TestTrimmedVideo(TestVideo):
     @classmethod
     def setUpClass(cls) -> None:
-        video_fp = os.path.join(data_path, "trimmed_0000_02000__0000_03000.mp4")
+        video_fp = os.path.join(
+            data_path, "512/trimmed/trimmed_0000_02000__0000_03000.mp4"
+        )
         cls.config = Config(video_fp, frequency=2, img_length=512, trim_times=[])
 
     def test_is_trimmed(self):
@@ -113,42 +116,46 @@ class TestTrimVideo(unittest.TestCase):
         cls.orig_filename = os.path.join(data_path, "GRK021_test.mp4")
         trim_times = [[2, 3]]
         cls.config = Config(
-            cls.orig_filename, frequency=2, img_length=512, trim_times=trim_times
-        )
-        cls.target_filename = os.path.join(
-            data_path, "trimmed_0000_02000__0000_03000.mp4"
+            cls.orig_filename,
+            frequency=2,
+            img_length=512,
+            trim_times=trim_times,
+            do_trim=False,
         )
 
     def test_trim_video_with_target(self):
+        target_filename = os.path.join(
+            data_path, "512/trimmed/trimmed_0000_02000__0000_03000.mp4"
+        )
         self.assertTrue(os.path.isfile(self.orig_filename))
         try:
-            os.remove(self.target_filename)
+            os.remove(target_filename)
         except FileNotFoundError:
             pass
 
-        trim_video(self.config, [self.target_filename])
+        trim_video(self.config, [target_filename])
 
-        self.assertTrue(os.path.isfile(self.target_filename))
+        self.assertTrue(os.path.isfile(target_filename))
 
     def test_trim_video_without_target(self):
         self.assertTrue(os.path.isfile(self.orig_filename))
-        trimmed_fp = os.path.join(data_path, "GRK021_test_0000_02000__0000_03000.mp4")
-        try:
-            os.remove(trimmed_fp)
-        except FileNotFoundError:
-            pass
+        trimmed_fp = os.path.join(
+            self.config.base_folder, f"{self.config.name}_0000_02000__0000_03000.mp4"
+        )
+
+        os.makedirs(self.config.base_folder)
 
         trim_video(self.config)
-
         self.assertTrue(os.path.isfile(trimmed_fp))
-        os.remove(trimmed_fp)
+
+        shutil.rmtree(self.config.base_folder)
 
 
 @unittest.skip("Skip trimming video")
 class TestTrimVideoSections(unittest.TestCase):
     @classmethod
     def setUpClass(cls) -> None:
-        cls.orig_filename = os.path.join(data_path, "test/GRK021_test.mp4")
+        cls.orig_filename = os.path.join(data_path, "GRK021_test.mp4")
         trim_times = [[2, 3], [4, 5]]
         cls.config = Config(
             cls.orig_filename,
@@ -158,34 +165,38 @@ class TestTrimVideoSections(unittest.TestCase):
             do_trim=False,
         )
 
-        cls.target_filename_1 = os.path.join(
-            data_path, "test/trimmed_0000_02000__0000_03000.mp4"
-        )
-        cls.target_filename_2 = os.path.join(
-            data_path, "trimmed_0000_04000__0000_05000.mp4"
-        )
-        cls.target_filenames = [cls.target_filename_1, cls.target_filename_2]
-
     def test_trim_video_with_target(self):
         self.assertTrue(os.path.isfile(self.orig_filename))
 
-        for fn in self.target_filenames:
+        target_filename_1 = os.path.join(
+            data_path, "512/trimmed/trimmed_0000_02000__0000_03000.mp4"
+        )
+        target_filename_2 = os.path.join(
+            data_path, "512/trimmed/trimmed_0000_04000__0000_05000.mp4"
+        )
+        target_filenames = [target_filename_1, target_filename_2]
+
+        for fn in target_filenames:
             if os.path.isfile(fn):
                 os.remove(fn)
 
-        trim_video(self.config, self.target_filenames)
+        trim_video(self.config, target_filenames)
 
-        for fn in self.target_filenames:
+        for fn in target_filenames:
             self.assertTrue(os.path.isfile(fn))
 
     def test_trim_video_without_target(self):
         self.assertTrue(os.path.isfile(self.orig_filename))
+
+        os.makedirs(self.config.base_folder)
 
         sections = trim_video(self.config)
 
         for fp in sections:
             self.assertTrue(os.path.isfile(fp))
             os.remove(fp)
+
+        shutil.rmtree(self.config.base_folder)
 
 
 class TestMakeVideoClip(unittest.TestCase):

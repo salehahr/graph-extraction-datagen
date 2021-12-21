@@ -16,14 +16,14 @@ class TestFileFunctions(unittest.TestCase):
             remove_data_folders(cls.temp_folder)
 
         cls.config = Config(video_fp, frequency=2, img_length=512, trim_times=None)
-        cls.originals_exist = True if os.path.isdir(cls.config.basename) else False
+        cls.originals_exist = True if os.path.isdir(cls.config.base_folder) else False
 
         if cls.originals_exist:
-            clone_data_folders(cls.config.basename, cls.temp_folder)
-            remove_data_folders(cls.config.basename)
+            clone_data_folders(cls.config.base_folder, cls.temp_folder)
+            remove_data_folders(cls.config.base_folder)
 
     def test_make_folders(self):
-        self.assertFalse(os.path.isdir(self.config.basename))
+        self.assertFalse(os.path.isdir(self.config.base_folder))
         if self.originals_exist:
             self.assertTrue(os.path.isdir(self.temp_folder))
 
@@ -37,6 +37,6 @@ class TestFileFunctions(unittest.TestCase):
     def tearDownClass(cls) -> None:
         """Restore data if originals present."""
         if cls.originals_exist:
-            remove_data_folders(cls.config.basename)
-            clone_data_folders(cls.temp_folder, cls.config.basename)
+            remove_data_folders(cls.config.base_folder)
+            clone_data_folders(cls.temp_folder, cls.config.base_folder)
             remove_data_folders(cls.temp_folder)

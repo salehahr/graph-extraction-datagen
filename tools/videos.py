@@ -84,21 +84,24 @@ def video2img(config) -> None:
     print(f"{count} images were extracted into {config.raw_img_folder}.")
 
 
-def trim_video_section(orig: str, interval: list, target: str = None) -> str:
+def trim_video_section(config, interval: list, target: str = None) -> str:
     """
     Extracts a section from a video.
-    :param orig: original video filepath
+    :param config:
     :param interval: list of start trim in s and end trim in s
     :param target: target video filepath
     :return: trimmed video filepath
     """
     time_tag = generate_time_tag_from_interval(interval)
 
-    base_name, ext = os.path.splitext(orig)
-    target = base_name + "_" + time_tag + ext if target is None else target
+    target = (
+        os.path.join(config.base_folder, f"{config.name}_{time_tag}{config.ext}")
+        if target is None
+        else target
+    )
 
     if not os.path.isfile(target):
-        video = VideoFileClip(orig).subclip(interval[0], interval[1])
+        video = VideoFileClip(config.filepath).subclip(interval[0], interval[1])
         video.write_videofile(target)
         video.close()
 
@@ -123,14 +126,11 @@ def trim_video(config, targets: list = []):
     if targets:
         assert len(config.trim_times) == len(targets)
         return [
-            trim_video_section(config.filepath, interval, target=targets[i])
+            trim_video_section(config, interval, target=targets[i])
             for i, interval in enumerate(config.trim_times)
         ]
     else:
-        return [
-            trim_video_section(config.filepath, interval)
-            for interval in config.trim_times
-        ]
+        return [trim_video_section(config, interval) for interval in config.trim_times]
 
 
 def make_video_clip(source_folder: str, target: str, fps: int = 25):

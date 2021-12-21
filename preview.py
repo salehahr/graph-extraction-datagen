@@ -14,13 +14,13 @@ def preview_folder_as_video(conf: Config, folder_name: str):
             section_name = os.path.basename(section_path)
 
             vid_filename = f"{folder_name}_{section_name}" + conf.ext
-            target_fp = os.path.join(conf.basename, vid_filename)
+            target_fp = os.path.join(conf.base_folder, vid_filename)
 
             make_video_clip(source_path, target_fp, fps=25)
     else:
         source_path = conf.__dict__[f"{folder_name}_img_folder"]
         vid_filename = folder_name + conf.ext
-        target_fp = os.path.join(conf.basename, vid_filename)
+        target_fp = os.path.join(conf.base_folder, vid_filename)
         make_video_clip(source_path, target_fp, fps=25)
 
 
