@@ -16,16 +16,16 @@ def preview_folder_as_video(conf: Config, folder_name: str):
             vid_filename = f"{folder_name}_{section_name}" + conf.ext
             target_fp = os.path.join(conf.base_folder, vid_filename)
 
-            make_video_clip(source_path, target_fp, fps=25)
+            make_video_clip(source_path, target_fp, fps=conf.frequency)
     else:
         source_path = conf.__dict__[f"{folder_name}_img_folder"]
         vid_filename = folder_name + conf.ext
         target_fp = os.path.join(conf.base_folder, vid_filename)
-        make_video_clip(source_path, target_fp, fps=25)
+        make_video_clip(source_path, target_fp, fps=conf.frequency)
 
 
 if __name__ == "__main__":
-    folder_name = "overlay"
+    folder_name = "cropped"
 
     print(f"Generating preview ({folder_name}) for\n", f"\t{video_filepath}")
     conf = Config(
@@ -34,5 +34,6 @@ if __name__ == "__main__":
         img_length=image_length,
         trim_times=trim_times,
         synthetic=is_synthetic,
+        do_trim=False,
     )
     preview_folder_as_video(conf, folder_name)

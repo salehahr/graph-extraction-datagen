@@ -2,6 +2,7 @@
 # * Crops the video stills
 
 from config import Config, image_length
+from preview import preview_folder_as_video
 from tools.files import make_folders
 from tools.images import crop_imgs
 from tools.videos import video2img
@@ -28,3 +29,4 @@ if __name__ == "__main__":
         synthetic=is_synthetic,
     )
     before_filter(conf)
+    preview_folder_as_video(conf, "cropped")
