@@ -8,6 +8,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 
 from tools.im2graph import (
+    extract_graph,
     extract_nodes_and_edges,
     generate_graph,
     helper_polyfit,
@@ -156,3 +157,17 @@ class TestMaskRGB(unittest.TestCase):
 
     def tearDown(self) -> None:
         self._plot(self.img_masked, self.plot_title)
+
+
+class TestExtractGraph(unittest.TestCase):
+    @classmethod
+    def setUpClass(cls) -> None:
+        base_path = os.path.join(data_path, "extract_graph-GRK021-0000_26640")
+
+        cls.skeleton_fp = os.path.join(base_path, "3-skeleton.png")
+
+        cls.img_skel = cv2.imread(cls.skeleton_fp, cv2.IMREAD_GRAYSCALE)
+
+    def test_extract_graph(self):
+        graph, _, _, _, _ = extract_graph(self.img_skel, self.skeleton_fp, False)
+        self.assertIsNotNone(graph)
