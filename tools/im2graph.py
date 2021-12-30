@@ -389,22 +389,24 @@ def helper_polyfit(nodes, edges: dict):
         len_end = len_begin + len_check
         check_again = []
         for i in range(len_begin, len_end):
-            edge_se = ese_helperedges[i]
-            edge_start, edge_end = edge_se
+            edge_se_i = ese_helperedges[i]
+            edge_start, edge_end = edge_se_i
 
             # edge is a circle
             if edge_start == edge_end:
-                if len(helperedges[i]) == 1:
+                edge_i = helperedges[i]
+
+                if len(edge_i) == 1:
                     # del helperedges[i]
                     # del ese_helperedges[i]
                     # can't delete because this will break the indexing
                     continue
 
                 # same start and end (too short)
-                if len(helperedges[i]) < 6:
-                    del helperedges[i][-1]
-                    ese_helperedges[i][1] = helperedges[i][-1]
-                    helpernodescoor.append(helperedges[i][-1])
+                if len(edge_i) < 6:
+                    del edge_i[-1]
+                    edge_se_i[-1] = edge_i[-1]
+                    helpernodescoor.append(edge_i[-1])
                     continue
 
                 # edge is a circle
@@ -416,7 +418,7 @@ def helper_polyfit(nodes, edges: dict):
 
             # occurences of edge_se within ese_helperedges
             indices = [
-                j for j, points in enumerate(ese_helperedges) if points == edge_se
+                j for j, points in enumerate(ese_helperedges) if points == edge_se_i
             ]
 
             # parallel edges (if any; loop doesn't execute if len(indices) == 1)
@@ -528,7 +530,7 @@ def split_edge(i, edges_se, edges_path) -> list:
 
     # shorted the old edge
     num_to_delete = len(new_half_edge) - 1
-    edges_path[9] = edges_path[9][:-num_to_delete]
+    edges_path[i] = edges_path[i][:-num_to_delete]
 
     return edge_xy_mid
 
