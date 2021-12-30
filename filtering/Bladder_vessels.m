@@ -2,8 +2,13 @@ clear
 close all
 clc
 
+%% Powershell commands
+% Expand-Archive .\cropped.zip . -Force
+% Write-Host (dir .\**\filtered\*.png | measure).Count;
+% ..\7z.exe a -r .\filtered.zip .\**\filtered\*.png
+
 %% get video filepath
-extract_video_filepath;
+% extract_video_filepath;
 
 %%
 % If you use this software please cite the following paper:
@@ -22,7 +27,7 @@ skip_existing_files = false;
 
 %% Read Image
 % VIDEO_FILEPATH = VIDEO_FILEPATH_EXT(1:end-4); % read from config.py
-VIDEO_FILEPATH = 'S:/data/256/synthetic-bladder3/cropped'; % manual entry
+VIDEO_FILEPATH = 'M:/data/256/GRK022'; % manual entry
 
 imageFolder = sprintf('%s/', VIDEO_FILEPATH);
 
@@ -39,10 +44,20 @@ cropped_imgs = imds.Files(crop_filter>0);
 imds.Files =  natsortfiles(cropped_imgs);
 
 %% Filter params
-new_params = [10, 10, 1, 0, 10, 20, 2, 0];      % only coarse structures
 old_params = [7, 5, 1, 0, 2.5, 20, 1, 0];       % Studienarbeit Regine
+new_params = [10, 10, 1, 0, 10, 20, 2, 0];      % only coarse structures
+
 synth_params = [2.3, 3, 1, 0.5, 1, 2, 1.5, 0];  % optimized for synthetic data
-params = synth_params;
+
+params_GRK016 = [5, 3, 1, 2, 1, 20, 1, 0];
+params_GRK012 = [2.5, 5, 1, 2, 1.5, 10, 1, 0];
+params_GRK021 = [3, 5, 1, 0.5, 1.5, 20, 1.5, 0];
+params_GRK015 = [2.3, 5, 1, 0.5, 1.5, 13, 0.5, 0];
+params_GRK014 = [2.3, 5, 1, 0.5, 1.5, 13, 0.5, 0];
+params_GRK007 = [3.5, 7, 1, 0.5, 1, 20, 1.5, 0];
+params_GRK022 = [4, 6, 1, 2, 0.5, 10, 1, 0];
+
+params = params_GRK022;
 
 %% Symmetric filter params
 symmfilter = struct();
