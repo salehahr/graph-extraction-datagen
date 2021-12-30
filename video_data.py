@@ -21,7 +21,7 @@ video_filepath = "/graphics/scratch/schuelej/sar/data/synthetic-bladder6.mp4"
 trim_times = None
 is_synthetic = True
 
-# note/status: need to refilter
+# note/status: need to process refiltered images
 video_filepath = "/graphics/scratch/schuelej/sar/data/GRK022.MP4"
 trim_times = [
     # [4, 10],
@@ -57,17 +57,16 @@ video_filepath = "/graphics/scratch/schuelej/sar/data/GRK016.mpg"
 trim_times = [[19, 25]]  # [0, 10],
 is_synthetic = False
 
-# note/status: might discard, too dense
-video_filepath = "/graphics/scratch/schuelej/sar/data/GRK012-vlc.mp4"
-trim_times = [
-    [5.16, 18],
-    [35, 36],
-    [60 + 27, 60 + 33],
-]
-is_synthetic = False
+# # note/status: discard, too dense
+# video_filepath = "/graphics/scratch/schuelej/sar/data/GRK012-vlc.mp4"
+# trim_times = [
+#     [5.16, 18],
+#     [35, 36],
+#     [60 + 27, 60 + 33],
+# ]
+# is_synthetic = False
 
-# note/status: not processed yet because of a bug in extract_graph
-# last successful: 0000_26600
+# note/status: done
 video_filepath = "/graphics/scratch/schuelej/sar/data/GRK021.mpg"
 trim_times = [
     [12, 19],
@@ -81,17 +80,17 @@ trim_times = [
 ]
 is_synthetic = False
 
-# note/status: not processed yet
+# note/status: done
 video_filepath = "/graphics/scratch/schuelej/sar/data/GRK015.mpg"
 trim_times = [
     [1, 4],
     [10, 12],
     [60 + 28, 60 + 30],
-    [60 + 41, 60 + 42],
+    # [60 + 41, 60 + 42],
 ]
 is_synthetic = False
 
-# note/status: not processed yet
+# note/status: done
 video_filepath = "/graphics/scratch/schuelej/sar/data/GRK014.mpg"
 trim_times = [
     [2 * 60 + 8, 2 * 60 + 9.44005],
