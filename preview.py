@@ -25,9 +25,8 @@ def preview_folder_as_video(conf: Config, folder_name: str):
 
 
 if __name__ == "__main__":
-    folder_name = "cropped"
+    folder_names = ["cropped", "filtered", "overlay"]
 
-    print(f"Generating preview ({folder_name}) for\n", f"\t{video_filepath}")
     conf = Config(
         video_filepath,
         frequency,
@@ -36,4 +35,7 @@ if __name__ == "__main__":
         synthetic=is_synthetic,
         do_trim=False,
     )
-    preview_folder_as_video(conf, folder_name)
+
+    for folder in folder_names:
+        print(f"Generating preview ({folder}) for\n", f"\t{video_filepath}")
+        preview_folder_as_video(conf, folder)
