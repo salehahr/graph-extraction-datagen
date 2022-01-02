@@ -27,7 +27,7 @@ skip_existing_files = false;
 
 %% Read Image
 % VIDEO_FILEPATH = VIDEO_FILEPATH_EXT(1:end-4); % read from config.py
-VIDEO_FILEPATH = 'M:/data/256/GRK022'; % manual entry
+VIDEO_FILEPATH = 'M:/data/256/GRK014'; % manual entry
 
 imageFolder = sprintf('%s/', VIDEO_FILEPATH);
 
@@ -53,11 +53,13 @@ params_GRK016 = [5, 3, 1, 2, 1, 20, 1, 0];
 params_GRK012 = [2.5, 5, 1, 2, 1.5, 10, 1, 0];
 params_GRK021 = [3, 5, 1, 0.5, 1.5, 20, 1.5, 0];
 params_GRK015 = [2.3, 5, 1, 0.5, 1.5, 13, 0.5, 0];
-params_GRK014 = [2.3, 5, 1, 0.5, 1.5, 13, 0.5, 0];
+params_GRK014 = [3, 6, 1, 0.5, 3, 10, 0.5, 0];
 params_GRK007 = [3.5, 7, 1, 0.5, 1, 20, 1.5, 0];
 params_GRK022 = [4, 6, 1, 2, 0.5, 10, 1, 0];
+params_GRK011 = [2, 6, 1, 0, 6, 1, 2, 0];
+params_GRK008 = [2, 6, 1, 0, 6, 1, 2, 0];
 
-params = params_GRK022;
+params = params_GRK014;
 
 %% Symmetric filter params
 symmfilter = struct();
