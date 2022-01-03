@@ -25,4 +25,4 @@ if __name__ == "__main__":
         trim_times=trim_times,
         synthetic=is_synthetic,
     )
-    after_filter(conf, skip_existing=True)
+    after_filter(conf, skip_existing=False)
