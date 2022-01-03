@@ -9,16 +9,19 @@ trim_times = [
     [32.4, 38.4],
     [39.4, 44],
 ]
+test_set = None
 is_synthetic = False
 
 # note/status: done
 video_filepath = "/graphics/scratch/schuelej/sar/data/GRK011.MP4"
 trim_times = [[0, 39], [68, 77], [2 * 60 + 17, 2 * 60 + 21]]  # [60 + 57, 60 + 59],
+test_set = [False, True, True]
 is_synthetic = False
 
 # note/status: done; these settings are for all synthetic recordings
 video_filepath = "/graphics/scratch/schuelej/sar/data/synthetic-bladder6.mp4"
 trim_times = None
+test_set = None
 is_synthetic = True
 
 # note/status: done
@@ -36,6 +39,7 @@ trim_times = [
     [60 + 33, 60 + 34],
     [60 + 43, 60 + 47],
 ]
+test_set = None
 is_synthetic = False
 
 # note/status: video very jumpy, done but not much data
@@ -50,11 +54,13 @@ trim_times = [
     # [39, 39.2],
     # [42.5, 43.7],
 ]
+test_set = None
 is_synthetic = False
 
 # note/status: done, but not much data
 video_filepath = "/graphics/scratch/schuelej/sar/data/GRK016.mpg"
 trim_times = [[19, 25]]  # [0, 10],
+test_set = None
 is_synthetic = False
 
 # # note/status: discard, too dense
@@ -78,6 +84,7 @@ trim_times = [
     [60 + 40, 60 + 43],
     [60 + 46, 60 + 52],
 ]
+test_set = None
 is_synthetic = False
 
 # note/status: done
@@ -88,6 +95,7 @@ trim_times = [
     [60 + 28, 60 + 30],
     # [60 + 41, 60 + 42],
 ]
+test_set = None
 is_synthetic = False
 
 # note/status: done
@@ -102,6 +110,7 @@ trim_times = [
     [9 * 60 + 7, 9 * 60 + 8],
     [9 * 60 + 11, 9 * 60 + 13],
 ]
+test_set = None
 is_synthetic = False
 
 # note/status: done
@@ -114,6 +123,7 @@ trim_times = [
     [3 * 60 + 36, 3 * 60 + 39],
     [4 * 60 + 16.5, 4 * 60 + 20],
 ]
+test_set = [False, False, False, False, True, True]
 is_synthetic = False
 frequency = 25  # Hz
 
@@ -129,6 +139,7 @@ trim_times = [
     [38, 42],
     [46, 48],
 ]
+test_set = [False, False, False]
 fft_filter = False
 is_synthetic = True
 frequency = 10  # Hz

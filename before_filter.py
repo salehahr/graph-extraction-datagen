@@ -10,6 +10,7 @@ from video_data import (
     fft_filter,
     frequency,
     is_synthetic,
+    test_set,
     trim_times,
     use_images,
     video_filepath,
@@ -38,6 +39,7 @@ if __name__ == "__main__":
         img_length=image_length,
         trim_times=trim_times,
         synthetic=is_synthetic,
+        test_sets=test_set,
     )
     before_filter(conf)
     if not conf.use_images:

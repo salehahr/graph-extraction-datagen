@@ -1,6 +1,7 @@
 import glob
 import os
 import re
+from typing import List, Optional
 
 from tools.videos import convert_to_mp4, generate_time_tag_from_interval, trim_video
 
@@ -47,6 +48,8 @@ class Config:
         end=None,
         synthetic: bool = False,
         use_images: bool = False,
+        test_sets: Optional[List[bool]] = None,
+        is_test: Optional[bool] = None,
     ):
         self.use_images = use_images
 
@@ -62,6 +65,8 @@ class Config:
         self.filepath = os.path.abspath(filepath)
         self.img_length = img_length
         self.is_synthetic = synthetic
+        self.is_test = is_test
+
         if not self.use_images:
             self.trim_times = trim_times
             self.sections = [self]
@@ -128,8 +133,22 @@ class Config:
                     )
                     for i, fp in enumerate(section_filepaths)
                 ]
-            else:
-                self._generate_folder_paths()
+
+            self.sections = [
+                Config(
+                    fp,
+                    frequency=self.frequency,
+                    img_length=self.img_length,
+                    trim_times=[],
+                    start=trim_times[i][0],
+                    end=trim_times[i][1],
+                    synthetic=synthetic,
+                    is_test=False if test_sets is None else test_sets[i],
+                )
+                for i, fp in enumerate(section_filepaths)
+            ]
+        else:
+            self._generate_folder_paths()
 
             self._generate_start_time(start)
 
