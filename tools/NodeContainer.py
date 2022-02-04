@@ -152,19 +152,19 @@ class NodeContainer(object):
     # xy nodes
     @property
     def crossing_nodes_xy(self):
-        return flip_node_coordinates(self._crossing_nodes_yx)
+        return flip_node_coordinates(self._crossing_nodes_yx).copy()
 
     @property
     def end_nodes_xy(self):
-        return flip_node_coordinates(self._end_nodes_yx)
+        return flip_node_coordinates(self._end_nodes_yx).copy()
 
     @property
     def border_nodes_xy(self):
-        return flip_node_coordinates(self._border_nodes_yx)
+        return flip_node_coordinates(self._border_nodes_yx).copy()
 
     @property
     def all_nodes_xy(self):
-        return flip_node_coordinates(self._all_nodes_yx)
+        return flip_node_coordinates(self._all_nodes_yx).copy()
 
     @all_nodes_xy.setter
     def all_nodes_xy(self, nodes):
