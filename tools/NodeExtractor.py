@@ -32,7 +32,7 @@ class NodeExtractor:
 
     def _extract_from_rc(self, row: int, col: int) -> None:
         point = Point(row, col)
-        point.find_positive_neighbours(self.orig_img)
+        point.find_neighbours(self.orig_img)
 
         num_nb8 = point.num_neighbours
 
