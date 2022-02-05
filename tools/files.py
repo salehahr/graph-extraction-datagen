@@ -42,7 +42,7 @@ def get_random_video_path(base_path):
     generator = os.walk(base_path)
     path, subfolder_names = next(generator)[:2]
 
-    if "raw" not in subfolder_names:
+    if "cropped" not in subfolder_names:
         # choose random video from subfolder
         video_id = random.randint(1, len(subfolder_names)) - 1
         video_path = os.path.join(path, subfolder_names[video_id])

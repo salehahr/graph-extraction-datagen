@@ -12,6 +12,12 @@ from config import border_radius, border_size, image_centre
 blur_kernel = (5, 5)
 
 
+def normalise(img: np.ndarray) -> np.ndarray:
+    img = img.copy()
+    img[img == 255] = 1
+    return np.uint8(img)
+
+
 def get_rgb(img):
     """Gets RGB image for matplotlib plots."""
     n_channels = img.shape[2] if len(img.shape) >= 3 else 1
@@ -258,7 +264,14 @@ def set_black_border(img: np.ndarray):
     np.uint8(np.multiply(mask, img))
 
 
-def four_connectivity(a: int, b: int):
+def four_connectivity(*args):
+    if len(args) == 1:
+        a, b = args[0]
+    elif len(args) == 2:
+        a, b = args[0], args[1]
+    else:
+        raise Exception
+
     # list of pixels in 4-connectivity of [a,b]
     return [[a + 1, b], [a - 1, b], [a, b + 1], [a, b - 1]]
 

@@ -20,17 +20,22 @@ def plot_img(img, cmap=None, title=""):
     plt.title(title)
 
 
-def plot_bgr_img(img, title=""):
+def plot_bgr_img(img, title="", show: bool = False):
     n_channels = img.shape[2] if len(img.shape) >= 3 else 1
     cmap = "gray" if n_channels == 1 else None
 
     image = get_rgb(img)
 
-    plt.figure()
+    if show:
+        plt.figure()
+
     plt.imshow(image, cmap=cmap)
     plt.xticks([])
     plt.yticks([])
     plt.title(title)
+
+    if show:
+        plt.show()
 
 
 def plot_graph_on_img_straight(
@@ -85,6 +90,10 @@ def plot_landmarks_img(
 
 
 def node_types_image(nodes, image_length=None, skeleton=None):
+    if skeleton is not None:
+        if np.max(skeleton) == 1:
+            skeleton = skeleton * 255
+
     img = (
         cv2.cvtColor(skeleton.copy(), cv2.COLOR_GRAY2RGB)
         if skeleton is not None

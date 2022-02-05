@@ -5,7 +5,7 @@ import os
 import cv2
 import numpy as np
 
-from tools.images import four_connectivity, generate_node_pos_img
+from tools.images import four_connectivity, generate_node_pos_img, normalise
 from tools.NodeContainer import NodeContainer, flip_node_coordinates
 from tools.plots import plot_landmarks_img, plot_overlay, plot_poly_graph
 from tools.PolyGraph import PolyGraph
@@ -44,7 +44,7 @@ def distance(a: list, b: list):
 
 def clean_skeleton_img(img_skeleton: np.ndarray):
     cleaned_skeleton = img_skeleton.copy()
-    binary = np.uint8(img_skeleton.copy() / 255)
+    binary = normalise(img_skeleton)
 
     kernel = 3
 
@@ -151,11 +151,7 @@ def clean_skeleton_img(img_skeleton: np.ndarray):
 
 
 def edge_extraction(skeleton: np.ndarray, nodes) -> dict:
-    def flip_edge_coordinates(list_of_edges):
-        return [flip_node_coordinates(edge_yx) for edge_yx in list_of_edges]
-
-    img_binary = skeleton.copy()
-    img_binary[img_binary == 255] = 1
+    img_binary = normalise(skeleton)
 
     endpoints = nodes.end_nodes_yx + nodes.border_nodes_yx
     bcnodes = nodes.crossing_nodes_yx
@@ -264,7 +260,7 @@ def edge_extraction(skeleton: np.ndarray, nodes) -> dict:
 
         n1 = positive_neighbours(point1[0], point1[1], img_binary)
         n1_original = n1.copy()
-        n1_4conn = four_connectivity(point1[0], point1[1])
+        n1_4conn = four_connectivity(point1)
         img_binary[point1[0], point1[1]] = 0
         bcnodes_temp.remove(point1)
         if len(n1) > 0:
@@ -373,6 +369,10 @@ def get_sorted_neighbours(point, img):
         n = [neighb for _, neighb in dist_sorted]
 
     return n
+
+
+def flip_edge_coordinates(list_of_edges):
+    return [flip_node_coordinates(edge_yx) for edge_yx in list_of_edges]
 
 
 def helper_polyfit(nodes, edges: dict):
