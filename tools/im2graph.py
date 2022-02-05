@@ -1,165 +1,18 @@
 import copy
-import math
 import os
-from typing import List, Tuple
+from typing import Any, Dict, List, Tuple
 
 import cv2
 import numpy as np
 
-from tools.images import four_connectivity, generate_node_pos_img, normalise
-from tools.NodeContainer import NodeContainer, flip_node_coordinates
+from tools.images import generate_node_pos_img, normalise
+from tools.NodeExtractor import NodeExtractor
 from tools.plots import plot_landmarks_img, plot_overlay, plot_poly_graph
+from tools.Point import all_neighbours, distance, four_connectivity, positive_neighbours
 from tools.PolyGraph import PolyGraph
 
 
-def positive_neighbours(a: int, b: int, image: np.ndarray):
-    # list of pixels with value 1 in in neighbourhood of [a,b]
-
-    nb = []
-    for xx in range(a - 1, a + 2):
-        for yy in range(b - 1, b + 2):
-            if image[xx, yy] == 1:
-                nb.append([xx, yy])
-
-    if [a, b] in nb:
-        nb.remove([a, b])
-
-    return nb
-
-
-def all_neighbours(middlepoint: list):
-    # list of all pixels in neihgbourhood of [a,b]
-
-    nb = []
-    for xx in range(middlepoint[0] - 1, middlepoint[0] + 2):
-        for yy in range(middlepoint[1] - 1, middlepoint[1] + 2):
-            nb.append([xx, yy])
-
-    return nb
-
-
-def distance(a: list, b: list):
-    # distance between point a and point b
-    return math.sqrt((a[0] - b[0]) ** 2 + (a[1] - b[1]) ** 2)
-
-
-def node_extraction(
-    img_skeleton: np.ndarray,
-) -> Tuple[List[List[int]], List[List[int]], np.ndarray]:
-    """Extracts nodes from skeletonised image, also returns the cleaned skeleton."""
-    cleaned_skeleton = img_skeleton.copy()
-    orig_skeleton = normalise(img_skeleton)
-    height, width = img_skeleton.shape
-
-    kernel = 3
-
-    bcnodes_yx = []
-    endnodes_yx = []
-    kn = int(np.floor(kernel / 2))
-
-    for row in range(kn, height - kn):
-        for col in range(kn, width - kn):
-            if orig_skeleton[row, col] == 1:
-                # Anzahl der Pixel mit 1 in der 8-neighbourhood
-                # werden gezählt (inkl. Mittelpunkt)
-                aux = np.sum(
-                    orig_skeleton[row - kn : row + kn + 1, col - kn : col + kn + 1]
-                )
-
-                if aux == 2:  # endpoint
-                    endnodes_yx.append([row, col])
-
-                elif aux == 3:  # straight line or bend
-                    n1, n2 = positive_neighbours(row, col, orig_skeleton)
-                    if n2 in four_connectivity(n1):  # 90 degree bend
-                        endnodes_yx.append([row, col])
-
-                elif aux == 4:
-                    # Vergabelung = 4 Pixel mit 1
-                    # -> Punkt wird gelöscht, Koordinaten werden gespeichert
-                    neighbours = positive_neighbours(row, col, orig_skeleton)
-
-                    # all 4-neighbours of each neighbour: 4x3
-                    neighbours_nn = [
-                        nn for n in neighbours for nn in four_connectivity(n)
-                    ]
-
-                    neighbours_are_connected = False
-                    for n in neighbours:
-                        if n in neighbours_nn:
-                            neighbours_are_connected = True
-                            break
-
-                    if not neighbours_are_connected:
-                        cleaned_skeleton[row, col] = 0
-                        bcnodes_yx.append([row, col])
-
-                elif aux >= 5:  # Vergabelung oder Kreuzung
-                    neighbours = positive_neighbours(row, col, orig_skeleton)
-
-                    dist_one_nneighbours = []
-                    for n in neighbours:
-                        dist_one_neighbours = [
-                            n_p for n_p in neighbours if distance(n, n_p) == 1
-                        ]
-                        dist_one_nneighbours.append(dist_one_neighbours)
-
-                    # Wenn der Abstand zwischen zwei Nachbarn des Nodes 1 beträgt,
-                    # dann darf kein weiterer Nachbar des Nodes existieren, der Abstand 1 zu einem der Beiden hat
-                    neighbours_are_connected = False
-                    for nn in dist_one_nneighbours:
-                        if len(nn) >= 2:
-                            neighbours_are_connected = True
-                            break
-
-                    # Es muss mind einen Nachbarn des Nodes geben,
-                    # der nicht direkt neben einem anderen Nachbarn des Nodes liegt
-                    num_dist_one_nneighbours = [len(n) for n in dist_one_nneighbours]
-                    if 0 not in num_dist_one_nneighbours:
-                        neighbours_are_connected = True
-
-                    if not neighbours_are_connected:
-                        cleaned_skeleton[row, col] = 0
-                        bcnodes_yx.append([row, col])
-
-                if is_crossing_node((row, col), orig_skeleton):
-                    bcnodes_yx.append([row, col])
-                    bcnodes_yx.append([row - 1, col - 1])
-                    bcnodes_yx.append([row, col - 1])
-                    bcnodes_yx.append([row - 1, col])
-
-                    # blacken
-                    cleaned_skeleton[row, col] = 0
-                    cleaned_skeleton[row - 1, col - 1] = 0
-                    cleaned_skeleton[row, col - 1] = 0
-                    cleaned_skeleton[row - 1, col] = 0
-
-    return bcnodes_yx, endnodes_yx, cleaned_skeleton
-
-
-def is_crossing_node(rc: Tuple[int, int], img: np.ndarray) -> bool:
-    cross = []
-    row, col = rc
-
-    if img[row - 1, col - 1] == 1:
-        cross.append(True)
-    if img[row + 1, col - 2] == 1:
-        cross.append(True)
-    if img[row, col - 1] == 1:
-        cross.append(True)
-    if img[row - 1, col] == 1:
-        cross.append(True)
-    if img[row - 2, col - 2] == 1:
-        cross.append(True)
-    if img[row - 2, col + 1] == 1:
-        cross.append(True)
-    if img[row + 1, col + 1] == 1:
-        cross.append(True)
-
-    return len(cross) == 7
-
-
-def edge_extraction(skeleton: np.ndarray, nodes) -> dict:
+def edge_extraction(skeleton: np.ndarray, nodes) -> Dict[str, List[List]]:
     img_binary = normalise(skeleton)
 
     endpoints = nodes.end_nodes_yx + nodes.border_nodes_yx
@@ -378,6 +231,10 @@ def get_sorted_neighbours(point, img):
         n = [neighb for _, neighb in dist_sorted]
 
     return n
+
+
+def flip_node_coordinates(list_of_nodes_yx):
+    return [[yx[1], yx[0]] for yx in list_of_nodes_yx]
 
 
 def flip_edge_coordinates(list_of_edges):
@@ -712,7 +569,7 @@ def generate_graph(
     return graph
 
 
-def extract_graphs(conf, skip_existing):
+def extract_graphs(conf, skip_existing: bool) -> None:
     """Starting with the thresholded images, performs the operations
     skeletonise, node extraction, edge extraction"""
 
@@ -800,10 +657,12 @@ def extract_graphs(conf, skip_existing):
                 )
 
 
-def extract_graph(img_preproc, skel_fp, graph_save=False):
-    graph_fp = os.path.splitext(skel_fp.replace("skeleton", "graphs"))[0] + ".json"
+def extract_graph(
+    skel_img: np.ndarray, skel_fp: str, graph_save: bool = False
+) -> Tuple[PolyGraph, Any, List[List], Dict[str, List]]:
+    graph_fp = skel_fp.replace("skeleton", "graphs").replace(".png", ".json")
 
-    nodes, edges = extract_nodes_and_edges(img_preproc)
+    nodes, edges = extract_nodes_and_edges(skel_img)
     helper_pf_edges, helper_pf_nodes = helper_polyfit(nodes, edges)
     helper_sg_edges, helper_sg_nodes = helper_structural_graph(nodes, edges)
 
@@ -820,15 +679,15 @@ def extract_graph(img_preproc, skel_fp, graph_save=False):
     )
 
 
-def extract_nodes_and_edges(img_preproc: np.ndarray):
+def extract_nodes_and_edges(
+    skel_img: np.ndarray,
+) -> Tuple[Any, Dict[str, List[List]]]:
     """
     Extracts the nodes and edges from the skeletonised image.
     """
     # clean the skeletonised image
-    bcnodes_yx, endpoints_yx, _ = node_extraction(img_preproc)
-
     # extract nodes and edges
-    nodes = NodeContainer(bcnodes_yx, endpoints_yx, [])
-    edges = edge_extraction(img_preproc, nodes)
+    nodes = NodeExtractor(skel_img).nodes
+    edges = edge_extraction(skel_img, nodes)
 
     return nodes, edges

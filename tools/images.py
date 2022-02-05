@@ -1,4 +1,3 @@
-import os
 from typing import Tuple
 
 import cv2
@@ -8,6 +7,7 @@ from skimage import morphology
 from skimage.morphology import skeletonize
 
 from config import border_radius, border_size, image_centre
+from tools.Point import num_in_4connectivity
 
 blur_kernel = (5, 5)
 
@@ -262,30 +262,6 @@ def set_black_border(img: np.ndarray):
     mask[-1, :] = 0
 
     np.uint8(np.multiply(mask, img))
-
-
-def four_connectivity(*args):
-    if len(args) == 1:
-        a, b = args[0]
-    elif len(args) == 2:
-        a, b = args[0], args[1]
-    else:
-        raise Exception
-
-    # list of pixels in 4-connectivity of [a,b]
-    return [[a + 1, b], [a - 1, b], [a, b + 1], [a, b - 1]]
-
-
-def num_in_4connectivity(a: int, b: int, image: np.ndarray):
-    # how many pixel with value 255 are in 4-connectivity of [a,b]
-    neighbours = four_connectivity(a, b)
-
-    count = 0
-    for nr, nc in neighbours:
-        if image[nr, nc] == 255:
-            count += 1
-
-    return count
 
 
 def overlay_border(img: np.ndarray):
