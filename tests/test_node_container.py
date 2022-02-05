@@ -25,7 +25,7 @@ class TestExtractNodes(ImageWithBorderNodes):
 
     @classmethod
     def extract_nodes(cls):
-        nodes, _, _ = extract_nodes_and_edges(cls.img_skel)
+        nodes, _ = extract_nodes_and_edges(cls.img_skel)
         assert isinstance(nodes, NodeContainer)
         return nodes
 

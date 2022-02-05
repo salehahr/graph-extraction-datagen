@@ -54,7 +54,7 @@ class TestExtractEdges(unittest.TestCase):
     def test_extract_edges(self):
         """Ensures that the number of extracted edges matches the true number
         of edges in the graph."""
-        nodes, edges, _ = extract_nodes_and_edges(self.img_skel)
+        nodes, edges = extract_nodes_and_edges(self.img_skel)
 
         helper_pf_edges, _ = helper_polyfit(nodes, edges)
         helper_sg_edges, _ = helper_structural_graph(nodes, edges)
@@ -169,5 +169,5 @@ class TestExtractGraph(unittest.TestCase):
         cls.img_skel = cv2.imread(cls.skeleton_fp, cv2.IMREAD_GRAYSCALE)
 
     def test_extract_graph(self):
-        graph, _, _, _, _ = extract_graph(self.img_skel, self.skeleton_fp, False)
+        graph, _, _, _ = extract_graph(self.img_skel, self.skeleton_fp, False)
         self.assertIsNotNone(graph)
