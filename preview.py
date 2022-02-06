@@ -1,6 +1,6 @@
 import os
 
-from config import Config, image_length
+from tools.config import Config, image_length
 from tools.videos import make_video_clip
 from video_data import frequency, is_synthetic, trim_times, video_filepath
 

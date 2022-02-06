@@ -4,7 +4,7 @@ import unittest
 
 from after_filter import after_filter
 from before_filter import before_filter
-from config import Config
+from tools.config import Config
 from tools.files import delete_files, make_folders
 from tools.videos import make_video_clip, trim_video
 

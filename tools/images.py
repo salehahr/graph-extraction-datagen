@@ -6,7 +6,7 @@ from matplotlib import pyplot as plt
 from skimage import morphology
 from skimage.morphology import skeletonize
 
-from config import border_radius, border_size, image_centre
+from tools.config import border_radius, border_size, image_centre
 from tools.Point import num_in_4connectivity
 
 blur_kernel = (5, 5)

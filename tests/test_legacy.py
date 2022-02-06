@@ -1,38 +1,44 @@
 import os
-from typing import List, Tuple
 
 import cv2
 import matplotlib.pyplot as plt
 import numpy as np
 
 from tests.test_images import RandomImage
+from tools import EdgeExtractor, NodeContainer, NodeExtractor, legacy
+from tools.Edge import flip_edge_coordinates
+from tools.im2graph import edge_extraction
 from tools.images import normalise
-from tools.NodeContainer import NodeContainer
-from tools.NodeExtractor import NodeExtractor
-from tools.plots import node_types_image, plot_bgr_img
-from tools.Point import distance, four_connectivity, positive_neighbours
+from tools.plots import node_types_image, plot_bgr_img, plot_edges
 
 data_path = os.path.join(os.getcwd(), "../data/test")
 
 
-class TestNodeExtraction(RandomImage):
+class TestLegacyFunctions(RandomImage):
     @classmethod
     def setUpClass(cls) -> None:
-        random = True
+        random = False
 
         if random:
-            super(TestNodeExtraction, cls).setUpClass()
+            super(TestLegacyFunctions, cls).setUpClass()
         if not random:
-            base_path = os.path.join(data_path, "extract_nodes-GRK014-0002-08360")
+            # base_path = os.path.join(data_path, "extract_nodes-GRK014-0002-08360")
+            base_path = os.path.join(data_path, "extract_nodes-synth09-04560")
             cls.img_skeletonised_fp = os.path.join(base_path, "skeleton.png")
             cls.title = os.path.relpath(cls.img_skeletonised_fp, start=data_path)
 
         cls.img_skel = cv2.imread(cls.img_skeletonised_fp, cv2.IMREAD_GRAYSCALE)
-        # cls.plot_skeletonised()
+        cls.plot_skeletonised()
 
-        l_crossing_nodes, l_end_nodes, l_skel = cls.legacy_node_extraction()
+        l_crossing_nodes, l_end_nodes, l_skel = legacy.node_extraction(cls.img_skel)
         cls.legacy_nodes = NodeContainer(l_crossing_nodes, l_end_nodes, [])
         cls.legacy_skel = normalise(l_skel)
+
+        cls.legacy_se_yx, cls.legacy_paths_yx = legacy.edge_extraction(
+            skeleton=cls.img_skel,
+            endpoints=cls.legacy_nodes.end_nodes_yx + cls.legacy_nodes.border_nodes_yx,
+            bcnodes=cls.legacy_nodes.crossing_nodes_yx,
+        )
 
     @classmethod
     def plot_skeletonised(cls):
@@ -41,9 +47,9 @@ class TestNodeExtraction(RandomImage):
 
     def test_node_extractor(self):
         ne = NodeExtractor(self.img_skel)
-        self._compare(ne.img, ne.nodes)
+        self._compare_nodes(ne.img, ne.nodes)
 
-    def _compare(self, skel: np.ndarray, nodes: NodeContainer):
+    def _compare_nodes(self, skel: np.ndarray, nodes: NodeContainer):
         skel = normalise(skel)
         self._plot_comparison(skel, nodes)
 
@@ -84,144 +90,53 @@ class TestNodeExtraction(RandomImage):
         plt.suptitle(self.title)
         plt.show()
 
-    @classmethod
-    def legacy_node_extraction(
-        cls,
-    ) -> Tuple[List[List[int]], List[List[int]], np.ndarray]:
-        cleaned_skeleton = cls.img_skel
-        node_thick = 3
+    def test_edge_extractor(self):
+        # Currently there are discrepancies;
+        # EdgeExtractor stops searching a path once it encounters an end/a crossing node,
+        # also doesn't save edges with length 1.
 
-        skeleton = cleaned_skeleton.copy()
-        skeleton_img = skeleton.copy()
-        kernel = 3
-        bc = []
-        endpoints = []
-        binary = skeleton_img.copy()
-        binary[binary == 255] = 1
-        result = skeleton_img.copy()
-        n = int(np.floor(kernel / 2))
-        for it_x in range(n, binary.shape[0] - n):
-            for it_y in range(n, binary.shape[1] - n):
-                neighbours_nodeall = []
-                neighbours_nn = []
-                bo = []
-                cross = []
-                aux = 0
-                if binary[it_x, it_y] == 1:
-                    aux += np.sum(
-                        binary[it_x - n : it_x + n + 1, it_y - n : it_y + n + 1]
-                    )  # Anzahl der Pixel mit 1 in der neighbourhood werden gezählt (inkl. Mittelpunkt)
-                    if aux == 2:  # endpoint
-                        endpoints.append([it_x, it_y])
-                    if aux == 3:  # endpoint bei 90° Winkel
-                        neighbours_nodeall = positive_neighbours(it_x, it_y, binary)
-                        conn = four_connectivity(
-                            neighbours_nodeall[0][0], neighbours_nodeall[0][1]
-                        )
-                        if neighbours_nodeall[1] in conn:
-                            endpoints.append([it_x, it_y])
-                    if (
-                        aux == 4
-                    ):  # Vergabelung = 4 Pixel mit 1 -> Punkt wird gelöscht, Koordinaten werden gespeichert
-                        neighbours_nodeall = positive_neighbours(it_x, it_y, binary)
-                        for q in range(0, len(neighbours_nodeall)):
-                            neighbours_nn.append(
-                                four_connectivity(
-                                    neighbours_nodeall[q][0], neighbours_nodeall[q][1]
-                                )
-                            )
-                        for p in range(0, len(neighbours_nodeall)):
-                            for j in range(0, len(neighbours_nn)):
-                                if neighbours_nodeall[p] in neighbours_nn[j]:
-                                    bo.append(True)
-                                else:
-                                    bo.append(False)
-                        if not any(bo):
-                            result[it_x, it_y] = 0
-                            bc.append([it_x, it_y])
-                    elif aux >= 5:  # Vergabelung oder Kreuzung
-                        neighbours_nodeall = positive_neighbours(it_x, it_y, binary)
-                        distone_nodes = []
-                        for q in range(0, len(neighbours_nodeall)):
-                            distone = []
-                            for p in range(0, len(neighbours_nodeall)):
-                                dist = distance(
-                                    neighbours_nodeall[q], neighbours_nodeall[p]
-                                )
-                                if dist == 1:
-                                    distone.append(neighbours_nodeall[p])
-                            distone_nodes.append(distone)
-                        numneighbours = []
-                        for q in range(0, len(distone_nodes)):
-                            numneighbours.append(len(distone_nodes[q]))
-                            if (
-                                len(distone_nodes[q]) >= 2
-                            ):  # Wenn der Abstand zwischen zwei Nachbarn des Nodes 1 beträgt,
-                                bo.append(
-                                    True
-                                )  # dann darf kein weiterer Nachbar des Nodes existieren, der Abstand 1 zu einem der Beiden hat
-                            else:
-                                bo.append(False)
-                        if (
-                            0 not in numneighbours
-                        ):  # Es muss mind einen Nachbarn des Nodes geben, der nicht direkt neben einem anderen Nachbarn des Nodes liegt
-                            bo.append(True)
-                        if not any(bo):
-                            result[it_x, it_y] = 0
-                            bc.append([it_x, it_y])
-                    if it_x < binary.shape[0] and it_y < binary.shape[1]:
-                        if binary[it_x - 1, it_y - 1] == 1:
-                            cross.append(True)
-                        if binary[it_x + 1, it_y - 2] == 1:
-                            cross.append(True)
-                        if binary[it_x, it_y - 1] == 1:
-                            cross.append(True)
-                        if binary[it_x - 1, it_y] == 1:
-                            cross.append(True)
-                        if binary[it_x - 2, it_y - 2] == 1:
-                            cross.append(True)
-                        if binary[it_x - 2, it_y + 1] == 1:
-                            cross.append(True)
-                        if binary[it_x + 1, it_y + 1] == 1:
-                            cross.append(True)
-                        if len(cross) == 7:
-                            # print('crossing at ', [it_x, it_y])
-                            bc.append([it_x, it_y])
-                            bc.append([it_x - 1, it_y - 1])
-                            bc.append([it_x, it_y - 1])
-                            bc.append([it_x - 1, it_y])
-                            result[it_x, it_y] = 0
-                            result[it_x - 1, it_y - 1] = 0
-                            result[it_x, it_y - 1] = 0
-                            result[it_x - 1, it_y] = 0
+        ee = EdgeExtractor(self.img_skel, self.legacy_nodes)
+        plot_edges([self.legacy_paths_yx, ee.paths_yx])
 
-        # plot landmarks
-        bcnodes = bc.copy()
-        bcnodescoor = []
-        allnodes = []
-        allnodescoor = []
-        endpoints_coor = []
-        pltimage = result.copy()
-        pltimage = cv2.cvtColor(pltimage, cv2.COLOR_GRAY2RGB)
-        for i in range(len(bc)):
-            allnodescoor.append([bc[i][1], bc[i][0]])
-            allnodes.append([bc[i][0], bc[i][1]])
-            bcnodescoor.append([bc[i][1], bc[i][0]])
-            cv2.circle(pltimage, (bc[i][1], bc[i][0]), 0, (255, 0, 0), node_thick)
-        for i in range(len(endpoints)):
-            endpoints_coor.append([endpoints[i][1], endpoints[i][0]])
-            cv2.circle(
-                pltimage, (endpoints[i][1], endpoints[i][0]), 0, (0, 0, 255), node_thick
-            )
-            allnodes.append([endpoints[i][0], endpoints[i][1]])
-            allnodescoor.append([endpoints[i][1], endpoints[i][0]])
+        # cleaned (no edges with length 1)
+        def print_warning(l_paths):
+            num_warnings = 0
+            for i, (path, l_path) in enumerate(zip(ee.paths_yx, l_paths)):
+                if path != l_path and path not in l_paths:
+                    num_warnings += 1
+                    print(f"\nDiscrepancy at iter: {i}")
+                    print(f"\tLegacy: {l_path}")
+                    print(f"\tNew   : {path}")
+            if num_warnings > 0:
+                print(
+                    f"+++ {num_warnings} WARNING{'S' if num_warnings > 1 else ''}! +++"
+                )
 
-        return bcnodes, endpoints, result  # (
-        #     bcnodes,
-        #     bcnodescoor,
-        #     endpoints,
-        #     endpoints_coor,
-        #     allnodes,
-        #     allnodescoor,
-        #     pltimage,
-        # )
+        legacy_paths_cleaned = [p for p in self.legacy_paths_yx if len(p) > 2]
+        diff_img_cleaned = plot_edges([legacy_paths_cleaned, ee.paths_yx], plot=False)
+        print_warning(legacy_paths_cleaned)
+
+        if ee.bad_nodes:
+            print("Nodes to discard:")
+            for n in ee.bad_nodes:
+                print(n)
+
+        bug_pixels = np.argwhere(diff_img_cleaned)
+        if bug_pixels.any():
+            print(f"Bug pixels: {bug_pixels}")
+
+            # double check that the bad nodes are set to 0
+            for n in ee.bad_nodes:
+                diff_img_cleaned[n.row, n.col] = 0
+
+        np.testing.assert_equal(diff_img_cleaned, np.zeros(diff_img_cleaned.shape))
+
+    def test_edge_extraction(self):
+        ee = edge_extraction(self.img_skel, self.legacy_nodes)
+        se_yx = flip_edge_coordinates(ee["ese"])
+        paths_yx = flip_edge_coordinates(ee["path"])
+
+        plot_edges([self.legacy_paths_yx, paths_yx])
+
+        self.assertEqual(se_yx, self.legacy_se_yx)
+        self.assertEqual(paths_yx, self.legacy_paths_yx)

@@ -1,3 +1,5 @@
+from typing import List
+
 import cv2
 import matplotlib.pyplot as plt
 import networkx as nx
@@ -186,3 +188,33 @@ def plot_border_overlay(img_lm_fp):
 
     plot_bgr_img(img_lm_border, title="landmarks")
     plt.show()
+
+
+def plot_edges(set_of_edges: List, plot: bool = True) -> np.ndarray:
+    num = len(set_of_edges)
+    imgs = []
+    for es in set_of_edges:
+        img = np.zeros((256, 256))
+        for e in es:
+            for (r, c) in e:
+                img[r, c] = 1
+        imgs.append(img)
+    titles = ["Legacy"] + ["New {i}" if num > 2 else "New" for i in range(1, num + 1)]
+
+    im_diff = np.abs(imgs[0] - imgs[1]) if len(imgs) == 2 else None
+
+    if plot:
+        if im_diff is not None:
+            plt.figure()
+            plot_bgr_img(im_diff)
+            plt.title("Diff")
+            plt.show()
+
+        plt.figure()
+        for i, (t, img) in enumerate(zip(titles, imgs), start=1):
+            plt.subplot(1, num, i)
+            plot_bgr_img(img)
+            plt.title(t)
+        plt.show()
+
+    return im_diff

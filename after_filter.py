@@ -1,4 +1,4 @@
-from config import Config, image_length
+from tools.config import Config, image_length
 from tools.im2graph import extract_graphs
 from tools.images import apply_img_mask, skeletonise_imgs, threshold_imgs
 from video_data import frequency, is_synthetic, trim_times, video_filepath

@@ -1,7 +1,7 @@
 import cv2
 import numpy as np
 
-from config import border_radius, border_size, image_centre, image_length
+from tools.config import border_radius, border_size, image_centre, image_length
 from tools.NodeType import NodeType
 from tools.PolyGraph import PolyGraph
 
