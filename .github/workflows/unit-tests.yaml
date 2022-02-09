@@ -1,6 +1,7 @@
 name: unit-tests
 
 on:
+  pull_request:
   push:
     branches:
       - master
@@ -37,3 +38,4 @@ jobs:
           pytest test_file_functions.py
           pytest test_graph.py -k "TestSaveSimpleGraph"
           pytest test_image_processing.py test_node_container.py test_videos.py
+          pytest test_legacy.py
