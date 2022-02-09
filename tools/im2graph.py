@@ -5,9 +5,9 @@ from typing import Any, Dict, List, Tuple
 import cv2
 import numpy as np
 
+from tools import EdgeExtractor, NodeExtractor, PolyGraph
 from tools.Edge import flip_edge_coordinates
 from tools.images import generate_node_pos_img, normalise
-from tools.NodeExtractor import NodeExtractor
 from tools.plots import plot_landmarks_img, plot_overlay, plot_poly_graph
 from tools.Point import (
     all_neighbours,
@@ -16,7 +16,6 @@ from tools.Point import (
     get_sorted_neighbours,
     positive_neighbours,
 )
-from tools.PolyGraph import PolyGraph
 
 
 def edge_extraction(skeleton: np.ndarray, nodes) -> Dict[str, List[List]]:
@@ -220,9 +219,9 @@ def edge_extraction(skeleton: np.ndarray, nodes) -> Dict[str, List[List]]:
     return {"ese": ese_xy, "path": edge_course_xy}
 
 
-def helper_polyfit(nodes, edges: dict):
-    helperedges = copy.deepcopy(edges["path"])
-    ese_helperedges = copy.deepcopy(edges["ese"])
+def helper_polyfit(nodes, edges: EdgeExtractor):
+    helperedges = edges.paths_xy
+    ese_helperedges = edges.se_xy
 
     helpernodescoor = nodes.all_nodes_xy
 
@@ -285,9 +284,9 @@ def helper_polyfit(nodes, edges: dict):
     return {"path": helperedges, "ese": ese_helperedges}, helpernodescoor
 
 
-def helper_structural_graph(nodes, edges: dict):
-    helperedges = copy.deepcopy(edges["path"])
-    ese_helperedges = copy.deepcopy(edges["ese"])
+def helper_structural_graph(nodes, edges: EdgeExtractor):
+    helperedges = edges.paths_xy
+    ese_helperedges = edges.se_xy
 
     new_helpers = []
 
@@ -660,13 +659,13 @@ def extract_graph(
 
 def extract_nodes_and_edges(
     skel_img: np.ndarray,
-) -> Tuple[Any, Dict[str, List[List]]]:
+) -> Tuple[Any, EdgeExtractor]:
     """
     Extracts the nodes and edges from the skeletonised image.
     """
     # clean the skeletonised image
     # extract nodes and edges
     nodes = NodeExtractor(skel_img).nodes
-    edges = edge_extraction(skel_img, nodes)
+    edges = EdgeExtractor(skel_img, nodes)
 
     return nodes, edges

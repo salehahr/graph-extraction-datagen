@@ -119,7 +119,7 @@ class TestGenerateGraph(TestGraph):
     def setUpClass(cls) -> None:
         super(TestGenerateGraph, cls).setUpClass()
 
-        cls.graph, cls.nodes, _, _, _ = extract_graph(cls.img_skel, "")
+        cls.graph, cls.nodes, _, _ = extract_graph(cls.img_skel, "")
 
         cls.adj_matr = nx.to_numpy_array(cls.graph)
         cls.positions = cls.graph.positions

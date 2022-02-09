@@ -7,6 +7,7 @@ import cv2
 import matplotlib.pyplot as plt
 import numpy as np
 
+from tools import PolyGraph
 from tools.im2graph import (
     extract_graph,
     extract_nodes_and_edges,
@@ -17,7 +18,6 @@ from tools.im2graph import (
 )
 from tools.images import create_mask
 from tools.plots import plot_img
-from tools.PolyGraph import PolyGraph
 
 data_path = os.path.join(os.getcwd(), "../data/test")
 
@@ -62,7 +62,7 @@ class TestExtractEdges(unittest.TestCase):
         polyfit_params = polyfit_training(helper_pf_edges)
         graph = generate_graph(helper_sg_edges, nodes, polyfit_params, False, "")
 
-        edges_extracted = edges["path"]
+        edges_extracted = edges.paths_xy
         edges_in_graph = graph.edges
 
         self.assertEqual(len(edges_extracted), len(edges_in_graph))
@@ -171,3 +171,5 @@ class TestExtractGraph(unittest.TestCase):
     def test_extract_graph(self):
         graph, _, _, _ = extract_graph(self.img_skel, self.skeleton_fp, False)
         self.assertIsNotNone(graph)
+        self.assertNotEqual(len(graph), 0)
+        self.assertNotEqual(len(graph.edges), 0)
