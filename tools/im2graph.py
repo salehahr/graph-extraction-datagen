@@ -552,7 +552,10 @@ def extract_graphs(conf, skip_existing: bool) -> None:
     skeletonise, node extraction, edge extraction"""
 
     for fp in conf.skeletonised_image_files:
-        cropped_fp = fp.replace("skeleton", "cropped")
+        if conf.use_images:
+            cropped_fp = conf.filepath + "\\crop" + (fp.split("\\")[-1]).replace("skeleton", "cropped")
+        else:
+            cropped_fp = fp.replace("skeleton", "cropped")
         landmarks_fp = fp.replace("skeleton", "landmarks")
         poly_fp = fp.replace("skeleton", "poly_graph")
         overlay_fp = fp.replace("skeleton", "overlay")

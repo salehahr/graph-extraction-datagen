@@ -46,14 +46,17 @@ class Config:
         start=None,
         end=None,
         synthetic: bool = False,
+        use_images: bool = False,
     ):
+        self.use_images = use_images
         # convert non mp4 files to mp4
-        ext = os.path.splitext(filepath)[1]
-        if "mp4" not in ext.lower():
-            filepath = convert_to_mp4(filepath)
-            self.ext = ".mp4"
-        else:
-            self.ext = ext
+        if not use_images:
+            ext = os.path.splitext(filepath)[1]
+            if "mp4" not in ext.lower():
+                filepath = convert_to_mp4(filepath)
+                self.ext = ".mp4"
+            else:
+                self.ext = ext
 
         self.filepath = os.path.abspath(filepath)
         self.trim_times = trim_times
@@ -67,15 +70,17 @@ class Config:
         self._end = end
 
         # trim properties
-        ttag_match = re.search(ttag_pattern, self.filepath)
-        self.is_trimmed = True if ttag_match is not None else False
-        self.has_trimmed = True if self.trim_times else False
+        if not use_images:
+            ttag_match = re.search(ttag_pattern, self.filepath)
+            self.is_trimmed = True if ttag_match is not None else False
+            self.has_trimmed = True if self.trim_times else False
 
         # base folder
-        self.name, self.ttag = self._get_video_name_ttag()
-        self.base_folder = self._generate_base_folder_name()
-        if not os.path.isdir(self.base_folder):
-            os.makedirs(self.base_folder)
+        if not use_images:
+            self.name, self.ttag = self._get_video_name_ttag()
+            self.base_folder = self._generate_base_folder_name()
+            if not os.path.isdir(self.base_folder):
+                os.makedirs(self.base_folder)
 
         # plot/save options
         self.thr_plot = thr_plot
@@ -96,32 +101,33 @@ class Config:
         self.graph_save = graph_save
 
         # trim video if trim_times given, else
-        if self.has_trimmed:
-            if do_trim:
-                section_filepaths = trim_video(self)
-            else:
-                section_filepaths = [
-                    os.path.join(
-                        self.base_folder,
-                        f"{self.name}_" + generate_time_tag_from_interval(i) + self.ext,
+        if not use_images:
+            if self.has_trimmed:
+                if do_trim:
+                    section_filepaths = trim_video(self)
+                else:
+                    section_filepaths = [
+                        os.path.join(
+                            self.base_folder,
+                            f"{self.name}_" + generate_time_tag_from_interval(i) + self.ext,
+                        )
+                        for i in trim_times
+                    ]
+                self.sections = [
+                    Config(
+                        fp,
+                        frequency=self.frequency,
+                        img_length=self.img_length,
+                        trim_times=[],
+                        start=trim_times[i][0],
+                        end=trim_times[i][1],
                     )
-                    for i in trim_times
+                    for i, fp in enumerate(section_filepaths)
                 ]
-            self.sections = [
-                Config(
-                    fp,
-                    frequency=self.frequency,
-                    img_length=self.img_length,
-                    trim_times=[],
-                    start=trim_times[i][0],
-                    end=trim_times[i][1],
-                )
-                for i, fp in enumerate(section_filepaths)
-            ]
-        else:
-            self._generate_folder_paths()
+            else:
+                self._generate_folder_paths()
 
-        self._generate_start_time(start)
+            self._generate_start_time(start)
 
     def _generate_folder_paths(self):
         # TODO: raw images on outside of directory
@@ -209,49 +215,99 @@ class Config:
 
     @property
     def raw_image_files(self):
-        return glob.glob(os.path.join(self.base_folder, "**/raw/*.png"), recursive=True)
+        if self.use_images:
+            dir_list = []
+
+            for root, dirs, files in os.walk(self.filepath):
+                for file in files:
+                    dir_list.append(os.path.join(root, file))
+        else:
+            dir_list = glob.glob(os.path.join(self.base_folder, "**/raw/*.png"), recursive=True)
+        return dir_list
 
     @property
     def cropped_image_files(self):
-        return glob.glob(
-            os.path.join(self.base_folder, "**/cropped/*.png"), recursive=True
-        )
+        if self.use_images:
+            dir_list = []
+
+            for root, dirs, files in os.walk(self.filepath):
+                for file in files:
+                    dir_list.append(os.path.join(root, file))
+        else:
+            dir_list = glob.glob(os.path.join(self.base_folder, "**/cropped/*.png"), recursive=True)
+        return dir_list
 
     @property
     def filtered_image_files(self):
-        return glob.glob(
-            os.path.join(self.base_folder, "**/filtered/*.png"), recursive=True
-        )
+        if self.use_images:
+            dir_list = []
+
+            for root, dirs, files in os.walk(self.filepath + "\\crop"):
+                for file in files:
+                    dir_list.append(os.path.join(root, file))
+        else:
+            dir_list = glob.glob(os.path.join(self.base_folder, "**/filtered/*.png"), recursive=True)
+        return dir_list
 
     @property
     def masked_image_files(self):
-        return glob.glob(
-            os.path.join(self.base_folder, "**/masked/*.png"), recursive=True
-        )
+        if self.use_images:
+            dir_list = []
+
+            for root, dirs, files in os.walk(self.filepath + "\\mask"):
+                for file in files:
+                    dir_list.append(os.path.join(root, file))
+        else:
+            dir_list = glob.glob(os.path.join(self.base_folder, "**/masked/*.png"), recursive=True)
+        return dir_list
 
     @property
     def threshed_image_files(self):
-        return glob.glob(
-            os.path.join(self.base_folder, "**/threshed/*.png"), recursive=True
-        )
+        if self.use_images:
+            dir_list = []
+
+            for root, dirs, files in os.walk(self.filepath + "\\thresh"):
+                for file in files:
+                    dir_list.append(os.path.join(root, file))
+        else:
+            dir_list = glob.glob(os.path.join(self.base_folder, "**/threshed/*.png"), recursive=True)
+        return dir_list
 
     @property
     def skeletonised_image_files(self):
-        return glob.glob(
-            os.path.join(self.base_folder, "**/skeleton/*.png"), recursive=True
-        )
+        if self.use_images:
+            dir_list = []
+
+            for root, dirs, files in os.walk(self.filepath + "\\skel"):
+                for file in files:
+                    dir_list.append(os.path.join(root, file))
+        else:
+            dir_list = glob.glob(os.path.join(self.base_folder, "**/skeleton/*.png"), recursive=True)
+        return dir_list
 
     @property
     def node_position_files(self):
-        return glob.glob(
-            os.path.join(self.base_folder, "**/node_positions/*.npy"), recursive=True
-        )
+        if self.use_images:
+            dir_list = []
+
+            for root, dirs, files in os.walk(self.filepath):
+                for file in files:
+                    dir_list.append(os.path.join(root, file))
+        else:
+            dir_list = glob.glob(os.path.join(self.base_folder, "**/node_positions/*.npy"), recursive=True)
+        return dir_list
 
     @property
     def node_position_img_files(self):
-        return glob.glob(
-            os.path.join(self.base_folder, "**/node_positions/*.png"), recursive=True
-        )
+        if self.use_images:
+            dir_list = []
+
+            for root, dirs, files in os.walk(self.filepath):
+                for file in files:
+                    dir_list.append(os.path.join(root, file))
+        else:
+            dir_list = glob.glob(os.path.join(self.base_folder, "**/node_positions/*.png"), recursive=True)
+        return dir_list
 
     @property
     def adj_matrix_files(self):

@@ -117,3 +117,5 @@ trim_times = [
 is_synthetic = False
 
 frequency = 25  # Hz
+
+

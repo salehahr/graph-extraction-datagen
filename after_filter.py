@@ -11,7 +11,7 @@ def after_filter(conf: Config, skip_existing: bool) -> None:
     :param skip_existing: False to overwrite existing graph file.
     """
     apply_img_mask(conf)
-    threshold_imgs(conf)
+    threshold_imgs(conf,48)
     skeletonise_imgs(conf)
     extract_graphs(conf, skip_existing)
 
@@ -19,10 +19,11 @@ def after_filter(conf: Config, skip_existing: bool) -> None:
 if __name__ == "__main__":
     print(f"Generating {image_length}px data for\n", f"\t{video_filepath}")
     conf = Config(
-        video_filepath,
+        "C:\johann\\07_HiWi\Git\SB_20220124_006 - Kopie",
         frequency,
         img_length=image_length,
         trim_times=trim_times,
         synthetic=is_synthetic,
+        use_images=True,
     )
     after_filter(conf, skip_existing=False)

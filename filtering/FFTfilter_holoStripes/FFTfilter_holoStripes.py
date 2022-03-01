@@ -2,6 +2,8 @@ import os
 import numpy as np
 import cv2
 import math
+from tools.images import crop_resize_square
+from tools.config import image_length
 
 
 def filter_stripes(img):
@@ -98,9 +100,23 @@ def filter_stripes(img):
     # cv2.imwrite("pattern_lines_notched.png", notched)
 
 
+def crop_imgs(conf):
+    for fp in conf.raw_image_files:
+        new_fp = fp.replace("raw", "cropped")
+
+        # uncomment to skip existing files
+        # if os.path.isfile(new_fp):
+        #     continue
+
+        img = cv2.imread(fp, cv2.IMREAD_COLOR)
+        img_cropped = crop_resize_square(img, conf.img_length, conf.is_synthetic)
+
+        cv2.imwrite(new_fp, img_cropped)
+
+
 # # Press the green button in the gutter to run the script.
 # if __name__ == '__main__':
-dirPath = '.\images'
+dirPath = 'images'
 files = os.listdir(dirPath)
 for file in files:
     imgPath = os.path.join(dirPath, file)
@@ -111,9 +127,11 @@ for file in files:
     g = filter_stripes(g)
     r = filter_stripes(r)
     imresult = cv2.merge([b, g, r])
-    cv2.imwrite(f'./filtered_images/filtered_{file}', imresult)
+    # img_cropped = crop_resize_square(imresult, conf.img_length, conf.is_synthetic)
+    cv2.imwrite(f'filtered_images/filtered_{file}', imresult)
 
     # cv2.imshow("before", img)
     # cv2.imshow("after", imresult)
     # cv2.waitKey(0)
     # cv2.destroyAllWindows()
+
