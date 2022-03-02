@@ -550,12 +550,28 @@ def generate_graph(
 def extract_graphs(conf, skip_existing: bool) -> None:
     """Starting with the thresholded images, performs the operations
     skeletonise, node extraction, edge extraction"""
+    if conf.use_images:
+        landmarkpath = (conf.filepath + "\\landmarks").replace("\\", "/")
+        if not os.path.exists(landmarkpath):
+            os.mkdir(landmarkpath)
+        polygraphpath = (conf.filepath + "\\poly_graph").replace("\\", "/")
+        if not os.path.exists(polygraphpath):
+            os.mkdir(polygraphpath)
+        overlaypath = (conf.filepath + "\\overlay").replace("\\", "/")
+        if not os.path.exists(overlaypath):
+            os.mkdir(overlaypath)
+        nodepospath = (conf.filepath + "\\node_positions").replace("\\", "/")
+        if not os.path.exists(nodepospath):
+            os.mkdir(nodepospath)
+        adjpath = (conf.filepath + "\\adj_matrix").replace("\\", "/")
+        if not os.path.exists(adjpath):
+            os.mkdir(adjpath)
+        graphpath = (conf.filepath + "\\graphs").replace("\\", "/")
+        if not os.path.exists(graphpath):
+            os.mkdir(graphpath)
 
     for fp in conf.skeletonised_image_files:
-        if conf.use_images:
-            cropped_fp = conf.filepath + "\\crop" + (fp.split("\\")[-1]).replace("skeleton", "cropped")
-        else:
-            cropped_fp = fp.replace("skeleton", "cropped")
+        cropped_fp = fp.replace("skeleton", "cropped")
         landmarks_fp = fp.replace("skeleton", "landmarks")
         poly_fp = fp.replace("skeleton", "poly_graph")
         overlay_fp = fp.replace("skeleton", "overlay")

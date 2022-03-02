@@ -6,7 +6,7 @@ from tools.config import Config, image_length
 from tools.files import make_folders
 from tools.images import crop_imgs, fft_filter_vert_stripes
 from tools.videos import video2img
-from video_data import frequency, is_synthetic, trim_times, video_filepath
+from video_data import frequency, is_synthetic, trim_times, video_filepath, use_images, fft_filter
 
 
 def before_filter(conf=None):
@@ -15,7 +15,8 @@ def before_filter(conf=None):
             make_folders(section)
             video2img(section)
 
-    fft_filter_vert_stripes(conf)
+    if fft_filter:
+        fft_filter_vert_stripes(conf)
     crop_imgs(conf)
 
     assert len(conf.raw_image_files) == len(conf.cropped_image_files)
@@ -24,12 +25,13 @@ def before_filter(conf=None):
 if __name__ == "__main__":
     print(f"Generating {image_length}px data for\n", f"\t{video_filepath}")
     conf = Config(
-        'C:\johann\\07_HiWi\Git\SB_20220124_006 - Kopie',
+        video_filepath,
         frequency,
+        use_images=use_images,
         img_length=image_length,
         trim_times=trim_times,
         synthetic=is_synthetic,
-        use_images=True,
+
     )
     before_filter(conf)
     if not conf.use_images:

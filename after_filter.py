@@ -1,7 +1,7 @@
 from tools.config import Config, image_length
 from tools.im2graph import extract_graphs
 from tools.images import apply_img_mask, skeletonise_imgs, threshold_imgs
-from video_data import frequency, is_synthetic, trim_times, video_filepath
+from video_data import frequency, is_synthetic, trim_times, video_filepath, use_images
 
 
 def after_filter(conf: Config, skip_existing: bool) -> None:
@@ -19,11 +19,11 @@ def after_filter(conf: Config, skip_existing: bool) -> None:
 if __name__ == "__main__":
     print(f"Generating {image_length}px data for\n", f"\t{video_filepath}")
     conf = Config(
-        "C:\johann\\07_HiWi\Git\SB_20220124_006 - Kopie",
+        video_filepath,
         frequency,
         img_length=image_length,
         trim_times=trim_times,
         synthetic=is_synthetic,
-        use_images=True,
+        use_images=use_images,
     )
     after_filter(conf, skip_existing=False)

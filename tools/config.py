@@ -49,6 +49,7 @@ class Config:
         use_images: bool = False,
     ):
         self.use_images = use_images
+
         # convert non mp4 files to mp4
         if not use_images:
             ext = os.path.splitext(filepath)[1]
@@ -59,15 +60,15 @@ class Config:
                 self.ext = ext
 
         self.filepath = os.path.abspath(filepath)
-        self.trim_times = trim_times
-        self.sections = [self]
-        self.frequency = frequency
         self.img_length = img_length
-
         self.is_synthetic = synthetic
+        if not self.use_images:
+            self.trim_times = trim_times
+            self.sections = [self]
+            self.frequency = frequency
+            self._start = start
+            self._end = end
 
-        self._start = start
-        self._end = end
 
         # trim properties
         if not use_images:
@@ -81,6 +82,8 @@ class Config:
             self.base_folder = self._generate_base_folder_name()
             if not os.path.isdir(self.base_folder):
                 os.makedirs(self.base_folder)
+        else:
+            self.base_folder = self.filepath
 
         # plot/save options
         self.thr_plot = thr_plot
@@ -242,7 +245,7 @@ class Config:
         if self.use_images:
             dir_list = []
 
-            for root, dirs, files in os.walk(self.filepath + "\\crop"):
+            for root, dirs, files in os.walk(self.filepath + "\\filtered"):
                 for file in files:
                     dir_list.append(os.path.join(root, file))
         else:
@@ -254,7 +257,7 @@ class Config:
         if self.use_images:
             dir_list = []
 
-            for root, dirs, files in os.walk(self.filepath + "\\mask"):
+            for root, dirs, files in os.walk(self.filepath + "\\masked"):
                 for file in files:
                     dir_list.append(os.path.join(root, file))
         else:
@@ -266,7 +269,7 @@ class Config:
         if self.use_images:
             dir_list = []
 
-            for root, dirs, files in os.walk(self.filepath + "\\thresh"):
+            for root, dirs, files in os.walk(self.filepath + "\\threshed"):
                 for file in files:
                     dir_list.append(os.path.join(root, file))
         else:
@@ -278,7 +281,7 @@ class Config:
         if self.use_images:
             dir_list = []
 
-            for root, dirs, files in os.walk(self.filepath + "\\skel"):
+            for root, dirs, files in os.walk(self.filepath + "\\skeleton"):
                 for file in files:
                     dir_list.append(os.path.join(root, file))
         else:

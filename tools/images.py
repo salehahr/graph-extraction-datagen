@@ -69,7 +69,7 @@ def get_centre(img: np.ndarray, moments_from: str = "thresh") -> Tuple[int, int]
 
 def crop_imgs(conf):
     if conf.use_images:
-        croppath = (conf.filepath + "\\crop").replace("\\", "/")
+        croppath = (conf.filepath + "\\cropped").replace("\\", "/")
         if not os.path.exists(croppath):
             os.mkdir(croppath)
     for fp in conf.raw_image_files:
@@ -145,7 +145,7 @@ def centre_crop(img: np.ndarray, is_synthetic):
 
 def apply_img_mask(conf):
     if conf.use_images:
-        maskpath = (conf.filepath + "\\mask").replace("\\", "/")
+        maskpath = (conf.filepath + "\\masked").replace("\\", "/")
         if not os.path.exists(maskpath):
             os.mkdir(maskpath)
 
@@ -176,7 +176,7 @@ def create_mask(img_length: int) -> np.ndarray:
 
 def threshold_imgs(conf, bin_threshold: int = 0):
     if conf.use_images:
-        threshpath = (conf.filepath + "\\thresh").replace("\\", "/")
+        threshpath = (conf.filepath + "\\threshed").replace("\\", "/")
         if not os.path.exists(threshpath):
             os.mkdir(threshpath)
 
@@ -206,7 +206,7 @@ def threshold(
 
 def skeletonise_imgs(conf):
     if conf.use_images:
-        skelpath = (conf.filepath + "\\skel").replace("\\", "/")
+        skelpath = (conf.filepath + "\\skeleton").replace("\\", "/")
         if not os.path.exists(skelpath):
             os.mkdir(skelpath)
     for fp in conf.threshed_image_files:
@@ -358,11 +358,15 @@ def fft_filter_vert_stripes(conf):
 
             # threshold the spectrum to find bright spots
             thresh = (255*spec).astype(np.uint8)
-            thresh = cv2.threshold(thresh, 155, 255, cv2.THRESH_BINARY)[1]
+            thresh = cv2.threshold(thresh, 170, 255, cv2.THRESH_BINARY)[1]
 
             # cover the center columns of thresh with black
+            # center_y = www // 2
+            # center_x = hhh // 2
+            # center = (center_y, center_x)
+            # cv2.circle(thresh, center=center, radius=40, color=0, thickness=-1)
             xc = www // 2
-            cv2.line(thresh, (xc,0), (xc,hhh-1), 0, 5)
+            cv2.line(thresh, (xc,0), (xc,hhh-1), 0, 80)
 
             # get the x coordinates of the bright spots
             points = np.column_stack(np.nonzero(thresh))
@@ -370,10 +374,17 @@ def fft_filter_vert_stripes(conf):
 
             # create mask from spectrum drawing vertical lines at bright spots
             mask = thresh.copy()
+            # center_y = www//2
+            # center_x = hhh//2
+            # center = (center_y, center_x)
             for p in points:
-                x = p[0]
-                cv2.line(mask, (x,0), (x,hhh-1), 255, 5)
+                # x = p[0]
+                y = p[1]
+                # radius = round(math.sqrt((x-center_x)**2 + (y-center_y)**2))
+                # cv2.circle(mask, center=center, radius=radius, color=200, thickness=2)
+                cv2.line(mask, (y, 0), (y, hhh-1), 255, 5)
 
+            #cv2.imshow("MASK", mask)
             # apply mask to magnitude such that magnitude is made black where mask is white
             mag[mask!=0] = 0
 
@@ -406,7 +417,7 @@ def fft_filter_vert_stripes(conf):
             # # cv2.imshow("PHASE", phase)
             # cv2.imshow("SPECTRUM", spec)
             # cv2.imshow("THRESH", thresh)
-            # cv2.imshow("MASK", mask)
+
             # cv2.imshow("NOTCHED", notched)
             # cv2.waitKey(0)
             # cv2.destroyAllWindows()
@@ -419,6 +430,12 @@ def fft_filter_vert_stripes(conf):
             # cv2.imwrite("pattern_lines_mask.png", mask)
             # cv2.imwrite("pattern_lines_notched.png", notched)
 
-        imresult = cv2.merge([imgbr_res[0], imgbr_res[1], imgbr_res[2]])
-        cv2.imwrite(imgPath, imresult)
+        if not len(imgbr_res) == 0:
+            imresult = cv2.merge([imgbr_res[0], imgbr_res[1], imgbr_res[2]])
+            # cv2.imshow("MASK", mask)
+            # cv2.imshow("Original", image)
+            # cv2.imshow("Result", imresult)
+            # cv2.waitKey(0)
+            # cv2.destroyAllWindows()
+            cv2.imwrite(imgPath, imresult)
         #cv2.imwrite(f'./filtered_images/filtered_{file}', imresult)
