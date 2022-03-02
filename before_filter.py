@@ -36,3 +36,4 @@ if __name__ == "__main__":
     before_filter(conf)
     if not conf.use_images:
         preview_folder_as_video(conf, "cropped")
+

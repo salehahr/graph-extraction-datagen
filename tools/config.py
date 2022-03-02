@@ -317,3 +317,4 @@ class Config:
         return glob.glob(
             os.path.join(self.base_folder, "**/adj_matr/*.npy"), recursive=True
         )
+

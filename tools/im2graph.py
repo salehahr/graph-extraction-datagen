@@ -688,3 +688,4 @@ def extract_nodes_and_edges(
     edges = EdgeExtractor(skel_img, nodes)
 
     return nodes, edges
+
