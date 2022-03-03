@@ -15,9 +15,10 @@ def before_filter(conf=None):
             make_folders(section)
             video2img(section)
 
+
+    crop_imgs(conf)
     if fft_filter:
         fft_filter_vert_stripes(conf)
-    crop_imgs(conf)
 
     assert len(conf.raw_image_files) == len(conf.cropped_image_files)
 

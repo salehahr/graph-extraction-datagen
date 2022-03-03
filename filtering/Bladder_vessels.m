@@ -27,7 +27,7 @@ skip_existing_files = false;
 
 %% Read Image
 % VIDEO_FILEPATH = VIDEO_FILEPATH_EXT(1:end-4); % read from config.py
-VIDEO_FILEPATH = 'C:\johann\07_HiWi\Git\SB_20220124_006\cropped'; % manual entry
+VIDEO_FILEPATH = 'C:\johann\07_HiWi\Git\SB_20220124_006'; % manual entry
 
 imageFolder = sprintf('%s/', VIDEO_FILEPATH);
 

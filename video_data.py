@@ -119,6 +119,6 @@ is_synthetic = False
 frequency = 25  # Hz
 
 # note/status: testing workflow for image folder
-video_filepath = "C:/johann/07_HiWi/Git/FFT_Filter Test"
+video_filepath = "C:/johann/07_HiWi/Git/SB_20220124_006"
 use_images = True
 fft_filter = True

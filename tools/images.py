@@ -83,9 +83,10 @@ def crop_imgs(conf):
         #     continue
 
         img = cv2.imread(fp, cv2.IMREAD_COLOR)
-        img_cropped = crop_resize_square(img, conf.img_length, conf.is_synthetic)
+        if img is not None:
+            img_cropped = crop_resize_square(img, conf.img_length, conf.is_synthetic)
 
-        cv2.imwrite(new_fp, img_cropped)
+            cv2.imwrite(new_fp, img_cropped)
 
 
 def crop_resize_square(img: np.ndarray, length: int, is_synthetic: bool):
@@ -318,9 +319,12 @@ def generate_node_pos_img(graph, img_length):
 
 #By Johann
 def fft_filter_vert_stripes(conf):
-    files = [f for f in os.listdir(conf.filepath) if os.path.isfile(os.path.join(conf.filepath, f))]
+    tespath = conf.filepath + "/cropped"
+    tes1 = os.listdir(tespath)
+    tes2 = os.path.join(conf.filepath + "/cropped", tes1[1])
+    files = [f for f in os.listdir(conf.filepath + "/cropped") if os.path.isfile(os.path.join(conf.filepath + "/cropped", f))]
     for file in files:
-        imgPath = os.path.join(conf.filepath, file)
+        imgPath = os.path.join(conf.filepath + "/cropped", file)
         image = cv2.imread(imgPath)
         imgbr = cv2.split(image)
         imgbr_res = []
@@ -358,7 +362,7 @@ def fft_filter_vert_stripes(conf):
 
             # threshold the spectrum to find bright spots
             thresh = (255*spec).astype(np.uint8)
-            thresh = cv2.threshold(thresh, 170, 255, cv2.THRESH_BINARY)[1]
+            thresh = cv2.threshold(thresh, 140, 255, cv2.THRESH_BINARY)[1]
 
             # cover the center columns of thresh with black
             # center_y = www // 2
@@ -366,7 +370,7 @@ def fft_filter_vert_stripes(conf):
             # center = (center_y, center_x)
             # cv2.circle(thresh, center=center, radius=40, color=0, thickness=-1)
             xc = www // 2
-            cv2.line(thresh, (xc,0), (xc,hhh-1), 0, 80)
+            cv2.line(thresh, (xc,0), (xc,hhh-1), 0, 30)
 
             # get the x coordinates of the bright spots
             points = np.column_stack(np.nonzero(thresh))
@@ -382,9 +386,9 @@ def fft_filter_vert_stripes(conf):
                 y = p[1]
                 # radius = round(math.sqrt((x-center_x)**2 + (y-center_y)**2))
                 # cv2.circle(mask, center=center, radius=radius, color=200, thickness=2)
-                cv2.line(mask, (y, 0), (y, hhh-1), 255, 5)
+                cv2.line(mask, (y, 0), (y, hhh-1), 200, 2)
 
-            #cv2.imshow("MASK", mask)
+            cv2.imshow("MASK", mask)
             # apply mask to magnitude such that magnitude is made black where mask is white
             mag[mask!=0] = 0
 
@@ -417,7 +421,7 @@ def fft_filter_vert_stripes(conf):
             # # cv2.imshow("PHASE", phase)
             # cv2.imshow("SPECTRUM", spec)
             # cv2.imshow("THRESH", thresh)
-
+            #
             # cv2.imshow("NOTCHED", notched)
             # cv2.waitKey(0)
             # cv2.destroyAllWindows()
