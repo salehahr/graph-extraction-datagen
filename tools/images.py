@@ -76,7 +76,7 @@ def crop_imgs(conf):
         if conf.use_images:
             new_fp = croppath.replace("/", "\\") + "\\" + "cropped_" + fp.split("\\")[-1]
             if not new_fp.endswith(".png"):
-                new_fp = ".".join(new_fp.split(".").pop()) + ".png"
+                new_fp = ".".join(new_fp.split(".")[:-1]) + ".png"
         else:
             new_fp = fp.replace("raw", "cropped")
 
