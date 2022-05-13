@@ -2,12 +2,12 @@ from __future__ import annotations
 
 import copy
 import os
-from typing import TYPE_CHECKING, Any, Dict, List, Tuple
+from typing import TYPE_CHECKING, Dict, List, Tuple
 
 import cv2
 import numpy as np
 
-from tools import EdgeExtractor, NodeExtractor, PolyGraph
+from tools import EdgeExtractor, NodeExtractor, PolyGraphDirected
 from tools.Edge import flip_edge_coordinates
 from tools.images import generate_node_pos_img, normalise
 from tools.plots import plot_landmarks_img, plot_overlay, plot_poly_graph
@@ -474,7 +474,9 @@ def polyfit_visualize(helper_edges: dict):
     return polyfit_coordinates
 
 
-def polyfit_training(helper_edges: Dict[str, List[List[XYCoord]]]) -> Dict:
+def polyfit_training(
+    helper_edges: Dict[str, List[List[XYCoord]]]
+) -> Dict[str, List[float]]:
     """
     Generates edge attributes, making use of polynomial fitting.
     :param helper_edges: dictionary of edges and their start and end coordinates.
@@ -484,7 +486,15 @@ def polyfit_training(helper_edges: Dict[str, List[List[XYCoord]]]) -> Dict:
 
     edges = helper_edges["path"].copy()
     ese = helper_edges["ese"].copy()
-    training_parameters = {"deg3": [], "deg2": [], "length": []}
+    training_parameters = {
+        "cb_dir1": [],
+        "ca_dir1": [],
+        "c3_dir1": [],
+        "cb_dir2": [],
+        "ca_dir2": [],
+        "c3_dir2": [],
+        "length": [],
+    }
 
     for edge_se, edge in zip(ese, edges):
         # global
@@ -498,24 +508,97 @@ def polyfit_training(helper_edges: Dict[str, List[List[XYCoord]]]) -> Dict:
 
         one_pixel_edge = len(edge) <= 1
         if one_pixel_edge:
-            deg_coeffs = [0, 0]
+            cb_dir1, ca_dir1, c3_dir1 = 0, 0, 0
+            cb_dir2, ca_dir2, c3_dir2 = 0, 0, 0
         else:
             m = max(x_rotated)
-            x_rotated_norm = [xr / m for xr in x_rotated]
-            p_norm_deg3 = np.polyfit(x_rotated_norm, y_rotated, 3)
 
-            is_cubic = abs(p_norm_deg3[0]) > cubic_thresh
-            deg_norm = 3 if is_cubic else 2
+            # 2 Richtungen je nachdem von welchem Knoten das Polynom startet
+            # dir1: von edges[i][0] nach edges[i][-1]
+            # dir2: von edges[i][-1] nach edges[i][0]
+            x_rotated_norm_dir1 = [xr / m for xr in x_rotated]
+            x_rotated_norm_dir2 = [xr / m - 1 for xr in x_rotated]
 
-            p_norm = np.polyfit(x_rotated_norm, y_rotated, deg_norm)
+            # returns fitted coeffs for x^3, x^2, x^1, x^0
+            p_norm_deg3_dir1 = np.polyfit(x_rotated_norm_dir1, y_rotated, 3)
 
-            deg_coeffs = [p_norm[0], p_norm[1]] if is_cubic else [0, p_norm[0]]
+            # polynomial fitting for
+            #   equation:   cb * (x - ca)^2 + c3 * x^3
+            #   coeffs:     [cb, ca, c3]
+            is_cubic = abs(p_norm_deg3_dir1[0]) > cubic_thresh
+            if is_cubic:
+                p_norm_deg3_dir2 = np.polyfit(x_rotated_norm_dir2, y_rotated, 3)
 
-        training_parameters["deg3"].append(deg_coeffs[0])
-        training_parameters["deg2"].append(deg_coeffs[1])
+                cb_dir1, ca_dir1, c3_dir1 = _get_poly3_coeffs(p_norm_deg3_dir1)
+                cb_dir2, ca_dir2, c3_dir2 = _get_poly3_coeffs(p_norm_deg3_dir2)
+            else:
+                p_norm_dir1 = np.polyfit(x_rotated_norm_dir1, y_rotated, 2)
+                p_norm_dir2 = np.polyfit(x_rotated_norm_dir2, y_rotated, 2)
+
+                cb_dir1, ca_dir1, c3_dir1 = _get_poly2_coeffs(p_norm_dir1)
+                cb_dir2, ca_dir2, c3_dir2 = _get_poly2_coeffs(p_norm_dir2)
+
+        training_parameters["cb_dir1"].append(cb_dir1)
+        training_parameters["ca_dir1"].append(ca_dir1)
+        training_parameters["c3_dir1"].append(c3_dir1)
+        training_parameters["cb_dir2"].append(cb_dir2)
+        training_parameters["ca_dir2"].append(ca_dir2)
+        training_parameters["c3_dir2"].append(c3_dir2)
         training_parameters["length"].append(len(edge))
 
     return training_parameters
+
+
+def _get_poly2_coeffs(coeffs_deg2) -> Tuple[float, float, float]:
+    """
+    Obtains polynomial coefficients (cb, ca, c3) which parametrise an equation in the form
+        cb * (x - ca)^2 + c3 * x^3
+
+    Um auf diese Schreibweise zu kommen,
+    wird die x-Position (= ca) des Maximums/Minimums bestimmt.
+
+    Dazu wird zunächst die Gleichung ohne kubischen Anteil betrachtet.
+
+    :param coeffs_deg2: quadratic polynomial coefficients starting with highest order
+    :return: polynomial coefficients (cb, ca, c3)
+    """
+    coeff = np.poly1d(coeffs_deg2)
+
+    # crit gibt die x-Position des Maximums/Minimums an
+    crit = coeff.deriv().r
+
+    if len(crit) > 0:  # Prüfen ob es ein Maximum gibt
+        cb, ca = coeff[2], crit[0]
+    else:
+        cb, ca = (0, 0)
+    c3 = 0
+
+    return cb, ca, c3
+
+
+def _get_poly3_coeffs(coeffs_deg3) -> Tuple[float, float, float]:
+    """
+    Obtains polynomial coefficients (cb, ca, c3) which parametrise an equation in the form
+        cb * (x - ca)^2 + c3 * x^3
+
+    Um auf diese Schreibweise zu kommen,
+    wird die x-Position (= ca) des Maximums/Minimums bestimmt.
+
+    Dazu wird zunächst die Gleichung ohne kubischen Anteil betrachtet.
+
+    :param coeffs_deg3: cubic polynomial coefficients starting with highest order
+    :return: polynomial coefficients (cb, ca, c3)
+    """
+    coeff = np.poly1d(coeffs_deg3[1:])
+
+    # crit gibt die x-Position des Maximums/Minimums an
+    crit = coeff.deriv().r
+
+    cb = coeff[2]
+    ca = crit[0]
+    c3 = coeffs_deg3[0]
+
+    return cb, ca, c3
 
 
 def get_rotated_coords(edge_local: List[XYCoord]) -> Tuple[List, List, Tuple[int, int]]:
@@ -525,7 +608,7 @@ def get_rotated_coords(edge_local: List[XYCoord]) -> Tuple[List, List, Tuple[int
     :return: (x, y) coordinates of rotated local edge and the rotation parameters
     """
     xo_local, yo_local = 0, 0
-    xe_local, ye_local = edge_local[-1]
+    xe_local, ye_local = edge_local[-1] if edge_local[0] == [0, 0] else edge_local[0]
 
     dx = xe_local - xo_local
     dy = ye_local - yo_local
@@ -556,11 +639,25 @@ def get_local_edge_coords(
 
 
 def generate_graph(
-    ese_helper_edges, nodes, training_parameters: dict, save: bool, graph_fp: str
-):
-    graph = PolyGraph()
+    edges: List[List[XYCoord]],
+    nodes: NodeContainer,
+    edge_attributes: Dict[str, List[float]],
+    save: bool,
+    graph_fp: str,
+) -> PolyGraphDirected:
+    """
+    Generates graph object from the given nodes and edges.
+    :param edges: list of edges
+    :param nodes: node container object
+    :param edge_attributes: dictionary of edge attributes
+    :param save: whether to save graph to disk or not
+    :param graph_fp: destination filepath (json file)
+    :return:
+    """
+    graph = PolyGraphDirected()
+
     graph.add_nodes(nodes)
-    graph.add_edges(ese_helper_edges, training_parameters, nodes)
+    graph.add_edges(edges, edge_attributes, nodes)
 
     if save:
         graph.save(graph_fp)
@@ -677,7 +774,7 @@ def extract_graphs(conf, skip_existing: bool) -> None:
 
 def extract_graph(
     skel_img: np.ndarray, skel_fp: str, graph_save: bool = False
-) -> Tuple[PolyGraph, Any, List[List], Dict[str, List]]:
+) -> Tuple[PolyGraphDirected, NodeContainer, List[List], Dict[str, List[XYCoord]]]:
     graph_fp = skel_fp.replace("skeleton", "graphs").replace(".png", ".json")
 
     nodes, edges = extract_nodes_and_edges(skel_img)
@@ -685,14 +782,14 @@ def extract_graph(
     helper_sg_edges, helper_sg_nodes = helper_structural_graph(nodes, edges)
 
     polyfit_params = polyfit_training(helper_pf_edges)
-    pf_coords = polyfit_visualize(helper_pf_edges)
+    polyfit_coords = polyfit_visualize(helper_pf_edges)
 
     graph = generate_graph(helper_sg_edges, nodes, polyfit_params, graph_save, graph_fp)
 
     return (
         graph,
         nodes,
-        pf_coords,
+        polyfit_coords,
         {"pf": helper_pf_nodes, "sg": helper_sg_nodes},
     )
 

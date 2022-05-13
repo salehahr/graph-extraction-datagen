@@ -65,8 +65,6 @@ class PolyGraph(nx.Graph):
                     endidx,
                     label=i,
                     length=attributes["length"][i],
-                    deg3=attributes["deg3"][i],
-                    deg2=attributes["deg2"][i],
                 )
 
     def save(self, filepath: str) -> None:
@@ -108,7 +106,52 @@ class PolyGraph(nx.Graph):
         extended_adj_matrix[0, :, 2:] = nx.convert_matrix.to_numpy_array(self)
 
         extended_adj_matrix[1, :, 2:] = nx.attr_matrix(self, edge_attr="length")[0]
-        extended_adj_matrix[2, :, 2:] = nx.attr_matrix(self, edge_attr="deg3")[0]
-        extended_adj_matrix[3, :, 2:] = nx.attr_matrix(self, edge_attr="deg2")[0]
 
         return extended_adj_matrix
+
+
+class PolyGraphDirected(PolyGraph):
+    """
+    Graph with directed polynomial edge attributes.
+    cb * (x - ca)^2 + c3 * x^3
+
+    Direction 1: start -> end
+    Direction 2: end -> start
+    """
+
+    def __init__(self):
+        super(PolyGraphDirected, self).__init__()
+
+    def add_edges(
+        self,
+        ese_xy: List[List[List[int]]],
+        attributes: Dict[str, List[float]],
+        nodes: NodeContainer,
+    ) -> None:
+        """
+        Appends edges and their attributes to the graph.
+        :param ese_xy: list of start and end points of the edges (in xy format)
+        :param attributes: dictionary containing edge length and polynomial coefficients
+        :param nodes: node container object
+        """
+        all_nodes = nodes.all_nodes_xy
+
+        for i, edge_se in enumerate(ese_xy):
+            start, end = edge_se
+
+            if start in all_nodes and end in all_nodes:
+                startidx = all_nodes.index(start)
+                endidx = all_nodes.index(end)
+
+                self.add_edge(
+                    startidx,
+                    endidx,
+                    label=i,
+                    length=attributes["length"][i],
+                    cb_dir1=attributes["cb_dir1"][i],
+                    ca_dir1=attributes["ca_dir1"][i],
+                    c3_dir1=attributes["c3_dir1"][i],
+                    cb_dir2=attributes["cb_dir2"][i],
+                    ca_dir2=attributes["ca_dir2"][i],
+                    c3_dir2=attributes["c3_dir2"][i],
+                )
