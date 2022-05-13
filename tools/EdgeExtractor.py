@@ -127,8 +127,12 @@ class EdgeExtractor:
                     num_neighbours = len(p_neighbours)
 
                     # full circle
-                    if num_neighbours == 0 and c_point in point.all_neighbours:
-                        self._next_is_node(c_point)
+                    if num_neighbours == 0:
+                        if c_point in point.neighbours:
+                            self._next_is_node(c_point)
+                        else:
+                            self.reached = True
+                            break
 
                     # move along path
                     elif num_neighbours == 1:
