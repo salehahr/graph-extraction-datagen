@@ -8,13 +8,17 @@ from tests.test_images import RandomImage
 from tools import EdgeExtractor, NodeContainer, NodeExtractor, legacy
 from tools.Edge import flip_edge_coordinates
 from tools.im2graph import edge_extraction
-from tools.images import normalise
+from tools.images import normalise, skeletonise_and_clean
 from tools.plots import node_types_image, plot_bgr_img, plot_edges
 
 data_path = os.path.join(os.getcwd(), "../data/test")
 
 
 class TestLegacyFunctions(RandomImage):
+    """
+    Tests to compare the equivalence of the old and new functions.
+    """
+
     @classmethod
     def setUpClass(cls) -> None:
         random = False
@@ -140,3 +144,65 @@ class TestLegacyFunctions(RandomImage):
 
         self.assertEqual(se_yx, self.legacy_se_yx)
         self.assertEqual(paths_yx, self.legacy_paths_yx)
+
+
+class TestCleanSkeleton(RandomImage):
+    """
+    Test to compare the equivalence of the old and new functions
+    to get a skeletonised image from a thresholded image.
+    """
+
+    @classmethod
+    def setUpClass(cls) -> None:
+        base_path_skel = os.path.join(data_path, "synth01-0000_00040")
+        thresh_fp = os.path.join(base_path_skel, "threshed.png")
+        thresh_fp2 = os.path.join(base_path_skel, "threshed2.png")
+
+        cls.img_thresh = cv2.imread(thresh_fp, cv2.IMREAD_GRAYSCALE)
+        cls.img_thresh2 = cv2.imread(thresh_fp2, cv2.IMREAD_GRAYSCALE)
+
+    @staticmethod
+    def _plot(img_thresh, img_cleaned, img_skel_orig):
+        plt.subplot(131)
+        plt.imshow(img_thresh, cmap="gray")
+        plt.title("Thresholded")
+
+        plt.subplot(132)
+        plt.imshow(img_cleaned, cmap="gray")
+        plt.title("Refactored")
+
+        plt.subplot(133)
+        plt.imshow(img_skel_orig, cmap="gray")
+        plt.title("Legacy")
+
+        plt.show()
+
+    def test_clean(self):
+        # Images from legacy function
+        img_legacy = legacy.preprocess(self.img_thresh)
+        img_legacy2 = legacy.preprocess(self.img_thresh2)
+
+        # Images from refactored function
+        img_refactored = skeletonise_and_clean(
+            self.img_thresh, plot=False, save=False, directory=""
+        )
+        img_refactored2 = skeletonise_and_clean(
+            self.img_thresh2, plot=False, save=False, directory=""
+        )
+
+        # Visual comparison, elementwise array comparison
+        self._plot(self.img_thresh, img_refactored, img_legacy)
+        # mismatched_indices = np.argwhere(np.not_equal(img_refactored, img_legacy))
+        # d1 = os.path.join(data_path, "mod.png")
+        # d2 = os.path.join(data_path, "orig.png")
+        # cv2.imwrite(d1, img_refactored)
+        # cv2.imwrite(d2, img_legacy)
+        np.testing.assert_equal(img_refactored, img_legacy)
+
+        self._plot(self.img_thresh2, img_refactored2, img_legacy2)
+        # mismatched_indices2 = np.argwhere(np.not_equal(img_refactored2, img_legacy2))
+        # d1 = os.path.join(data_path, "mod2.png")
+        # d2 = os.path.join(data_path, "orig2.png")
+        # cv2.imwrite(d1, img_refactored2)
+        # cv2.imwrite(d2, img_legacy2)
+        np.testing.assert_equal(img_refactored2, img_legacy2)

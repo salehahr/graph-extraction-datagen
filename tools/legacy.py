@@ -2,8 +2,16 @@ from typing import List, Tuple
 
 import cv2
 import numpy as np
+from skimage import morphology
+from skimage.morphology import skeletonize
 
-from tools.Point import all_neighbours, distance, four_connectivity, positive_neighbours
+from tools.Point import (
+    all_neighbours,
+    distance,
+    four_connectivity,
+    num_in_4connectivity,
+    positive_neighbours,
+)
 
 
 def node_extraction(
@@ -371,3 +379,49 @@ def edge_extraction(skeleton, endpoints, bcnodes):
             esecoor.append(esecoor_temp)
 
     return edge_start_end, edge_course
+
+
+def preprocess(thresholded: np.ndarray):
+    edgelength = 10
+
+    img = thresholded.copy()
+    img = img / 255
+    img = img.astype(int)
+
+    skeleton = skeletonize(img)
+    skeleton = skeleton.astype(int) * 255
+
+    # remove too small edges
+    img = skeleton.copy()
+    img = img / 255
+    img = img.astype(bool)
+    labeled = morphology.label(img)
+    cleaned = morphology.remove_small_objects(labeled, edgelength + 1)
+
+    skeleton_cleaned = np.zeros(cleaned.shape)
+    skeleton_cleaned[cleaned > 0] = 255
+    skeleton_cleaned = np.uint8(skeleton_cleaned)
+
+    # bug pixel elimination based on
+    # "Preprocessing and postprocessing for skeleton-based fingerprint minutiae extraction"
+    bug_pixel = []
+    for x in range(1, skeleton_cleaned.shape[0] - 1):
+        for y in range(1, skeleton_cleaned.shape[1] - 1):
+            if skeleton_cleaned[x, y] == 255:
+                s = num_in_4connectivity(x, y, skeleton_cleaned)
+                if s > 2:
+                    bug_pixel.append([x, y])
+
+    for i in range(0, len(bug_pixel)):
+        s = num_in_4connectivity(bug_pixel[i][0], bug_pixel[i][1], skeleton_cleaned)
+        if s > 2:
+            skeleton_cleaned[bug_pixel[i][0], bug_pixel[i][1]] = 0
+
+    mask = np.ones(skeleton_cleaned.shape, dtype=np.int8)
+    mask[:, 0] = 0
+    mask[:, mask.shape[1] - 1] = 0
+    mask[0, :] = 0
+    mask[mask.shape[0] - 1, :] = 0
+    skeleton_filtered = np.uint8(np.multiply(mask, skeleton_cleaned))
+
+    return skeleton_filtered
