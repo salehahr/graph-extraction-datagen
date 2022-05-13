@@ -14,7 +14,7 @@ def all_neighbours(middlepoint: Union[List[int], np.ndarray]):
 
 
 def positive_neighbours(a: int, b: int, image: np.ndarray) -> List[List[int]]:
-    # list of pixels with value 1 in in neighbourhood of [a,b]
+    # list of pixels with value 1 in neighbourhood of [a,b]
     nb = [
         [xx, yy]
         for xx in range(a - 1, a + 2)
@@ -27,7 +27,9 @@ def positive_neighbours(a: int, b: int, image: np.ndarray) -> List[List[int]]:
     return nb
 
 
-def get_sorted_neighbours(point, img: np.ndarray) -> List[List[int]]:
+def get_sorted_neighbours(
+    point: Union[np.ndarray, List[int]], img: np.ndarray
+) -> List[List[int]]:
     """Nachbarn abhängig von Distanz sortieren."""
 
     n = positive_neighbours(point[0], point[1], img)
@@ -61,9 +63,7 @@ def num_in_4connectivity(a: int, b: int, image: np.ndarray):
     return len(pos_vals)
 
 
-def distance(
-    a: Union[List[List[int]], np.ndarray], b: Union[List[List[int]], np.ndarray]
-) -> float:
+def distance(a: Union[List[int], np.ndarray], b: Union[List[int], np.ndarray]) -> float:
     if isinstance(a, list) or isinstance(b, list):
         a, b = np.array(a), np.array(b)
     return np.linalg.norm(a - b)
@@ -79,7 +79,7 @@ def remove_cross_nodes(points: List[Point]) -> List[Point]:
 
 
 class Point:
-    def __init__(self, *args, type: NodeType = None):
+    def __init__(self, *args, node_type: NodeType = None):
         if isinstance(args, np.ndarray) or len(args) == 2:
             row, col = args[0], args[1]
         elif len(args) == 1:
@@ -89,7 +89,7 @@ class Point:
 
         self.row = row
         self.col = col
-        self.type = type
+        self.type = node_type
 
         self._all_neighbours = []
         self._neighbours = []

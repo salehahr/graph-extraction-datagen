@@ -194,23 +194,8 @@ class TestSaveSimpleGraph(unittest.TestCase):
         return graph
 
     def save_graph(self):
-        # data_dict = nx.readwrite.json_graph.cytoscape_data(self.graph)
-        # data_dict = nx.readwrite.json_graph.adjacency_data(self.graph)
         data_dict = nx.node_link_data(self.graph)
         pprint.pprint(data_dict)
-
-        # {'directed': False,
-        #  'graph': {},
-        #  'links': [{'edge_id': 0, 'length': 1, 'source': 0, 'target': 2},
-        #            {'edge_id': 2, 'length': 1, 'source': 1, 'target': 2},
-        #            {'edge_id': 1, 'length': 1, 'source': 2, 'target': 3},
-        #            {'edge_id': 3, 'length': 3, 'source': 2, 'target': 4}],
-        #  'multigraph': False,
-        #  'nodes': [{'id': 0, 'pos': (0, 0)},
-        #            {'id': 1, 'pos': (0, 3)},
-        #            {'id': 2, 'pos': (2, 2)},
-        #            {'id': 3, 'pos': (4, 0)},
-        #            {'id': 4, 'pos': (7, 2.5)}]}
 
         with open(self.filepath, "w") as f:
             json.dump(data_dict, f)

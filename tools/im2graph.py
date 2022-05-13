@@ -1,6 +1,8 @@
+from __future__ import annotations
+
 import copy
 import os
-from typing import Any, Dict, List, Tuple
+from typing import TYPE_CHECKING, Any, Dict, List, Tuple
 
 import cv2
 import numpy as np
@@ -16,6 +18,12 @@ from tools.Point import (
     get_sorted_neighbours,
     positive_neighbours,
 )
+
+if TYPE_CHECKING:
+    from tools.NodeContainer import NodeContainer
+
+    NodePosList = List[List[int]]
+    XYCoord = List[int]
 
 
 def edge_extraction(skeleton: np.ndarray, nodes) -> Dict[str, List[List]]:
@@ -219,7 +227,7 @@ def edge_extraction(skeleton: np.ndarray, nodes) -> Dict[str, List[List]]:
     return {"ese": ese_xy, "path": edge_course_xy}
 
 
-def helper_polyfit(nodes, edges: EdgeExtractor):
+def helper_polyfit(nodes, edges: EdgeExtractor) -> Tuple[Dict[str, List], NodePosList]:
     helperedges = edges.paths_xy
     ese_helperedges = edges.se_xy
 
@@ -284,7 +292,7 @@ def helper_polyfit(nodes, edges: EdgeExtractor):
     return {"path": helperedges, "ese": ese_helperedges}, helpernodescoor
 
 
-def helper_structural_graph(nodes, edges: EdgeExtractor):
+def helper_structural_graph(nodes: NodeContainer, edges: EdgeExtractor):
     helperedges = edges.paths_xy
     ese_helperedges = edges.se_xy
 
@@ -342,8 +350,8 @@ def split_edge(i, edges_se, edges_path) -> list:
     Splits the i-th edge into half.
 
     :param i: edge index
-    :param edges_se:  start and end coordinates of all edges
-    :param edges_path: path coordinates of all edges
+    :param edges_se:  start and end coordinates of all edges (volatile)
+    :param edges_path: path coordinates of all edges (volatile)
     """
     assert len(edges_se[0]) == 2
 
@@ -406,7 +414,7 @@ def polyfit_visualize(helper_edges: dict):
         coordinates_local.append(edge_local)
 
         # rotated
-        x_rotated, y_rotated, rot_params = get_rotated_coords(edge_se, edge_local)
+        x_rotated, y_rotated, rot_params = get_rotated_coords(edge_local)
         c, s = rot_params
         coordinates_rotated.append([z for z in zip(x_rotated, y_rotated)])
 
@@ -466,23 +474,27 @@ def polyfit_visualize(helper_edges: dict):
     return polyfit_coordinates
 
 
-def polyfit_training(helper_edges: dict) -> dict:
+def polyfit_training(helper_edges: Dict[str, List[List[XYCoord]]]) -> Dict:
+    """
+    Generates edge attributes, making use of polynomial fitting.
+    :param helper_edges: dictionary of edges and their start and end coordinates.
+    :return: dictionary of edge attributes
+    """
     cubic_thresh = 10  # deg3 > 10, otherwise only deg2 coefficients for training
 
     edges = helper_edges["path"].copy()
     ese = helper_edges["ese"].copy()
     training_parameters = {"deg3": [], "deg2": [], "length": []}
 
-    for i, edge in enumerate(edges):
+    for edge_se, edge in zip(ese, edges):
         # global
-        edge_se = ese[i]
         origin_global, _ = edge_se
 
         # local
         edge_local = get_local_edge_coords(edge, origin_global)
 
         # rotated
-        x_rotated, y_rotated, _ = get_rotated_coords(edge_se, edge_local)
+        x_rotated, y_rotated, _ = get_rotated_coords(edge_local)
 
         one_pixel_edge = len(edge) <= 1
         if one_pixel_edge:
@@ -506,13 +518,14 @@ def polyfit_training(helper_edges: dict) -> dict:
     return training_parameters
 
 
-def get_rotated_coords(edge_se, coursecoor_local):
-    start_xy, end_xy = edge_se
-    xo_global, yo_global = start_xy
-    xe_global, ye_global = end_xy
-
+def get_rotated_coords(edge_local: List[XYCoord]) -> Tuple[List, List, Tuple[int, int]]:
+    """
+    Transforms local edge to the rotated CS.
+    :param edge_local: edge in local coordinates
+    :return: (x, y) coordinates of rotated local edge and the rotation parameters
+    """
     xo_local, yo_local = 0, 0
-    xe_local, ye_local = xe_global - xo_global, -(ye_global - yo_global)
+    xe_local, ye_local = edge_local[-1]
 
     dx = xe_local - xo_local
     dy = ye_local - yo_local
@@ -523,13 +536,21 @@ def get_rotated_coords(edge_se, coursecoor_local):
     s = 0 if ll == 0 else dy / ll
     c = 0 if ll == 0 else dx / ll
 
-    x_rotated = [int(round(xl * c + yl * s, 0)) for xl, yl in coursecoor_local]
-    y_rotated = [int(round(-xl * s + yl * c, 0)) for xl, yl in coursecoor_local]
+    x_rotated = [int(round(xl * c + yl * s, 0)) for xl, yl in edge_local]
+    y_rotated = [int(round(-xl * s + yl * c, 0)) for xl, yl in edge_local]
 
     return x_rotated, y_rotated, (c, s)
 
 
-def get_local_edge_coords(edge_global, start_xy):
+def get_local_edge_coords(
+    edge_global: List[XYCoord], start_xy: XYCoord
+) -> List[XYCoord]:
+    """
+    Transforms an edge from global to local coordinates.
+    :param edge_global: edge in global coordinates
+    :param start_xy: starting coordinates of the edge
+    :return:
+    """
     xo_global, yo_global = start_xy
     return [[x - xo_global, -(y - yo_global)] for x, y in edge_global]
 
@@ -678,7 +699,7 @@ def extract_graph(
 
 def extract_nodes_and_edges(
     skel_img: np.ndarray,
-) -> Tuple[Any, EdgeExtractor]:
+) -> Tuple[NodeContainer, EdgeExtractor]:
     """
     Extracts the nodes and edges from the skeletonised image.
     """
