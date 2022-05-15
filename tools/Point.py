@@ -153,8 +153,12 @@ class Point:
         return distance(self.arr, other.arr)
 
     @property
-    def arr(self):
+    def arr(self) -> np.ndarray:
         return np.array([self.row, self.col])
+
+    @property
+    def list_rc(self) -> List[int]:
+        return [self.row, self.col]
 
     @property
     def all_neighbours(self):

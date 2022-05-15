@@ -26,8 +26,8 @@ class TestLegacyFunctions(RandomImage):
         if random:
             super(TestLegacyFunctions, cls).setUpClass()
         if not random:
-            # base_path = os.path.join(data_path, "extract_nodes-GRK014-0002-08360")
-            base_path = os.path.join(data_path, "extract_nodes-synth09-04560")
+            base_path = os.path.join(data_path, "extract_nodes-GRK014-0002-08360")
+            # base_path = os.path.join(data_path, "extract_nodes-synth09-04560")
             cls.img_skeletonised_fp = os.path.join(base_path, "skeleton.png")
             cls.title = os.path.relpath(cls.img_skeletonised_fp, start=data_path)
 
@@ -102,23 +102,8 @@ class TestLegacyFunctions(RandomImage):
         ee = EdgeExtractor(self.img_skel, self.legacy_nodes)
         plot_edges([self.legacy_paths_yx, ee.paths_yx])
 
-        # cleaned (no edges with length 1)
-        def print_warning(l_paths):
-            num_warnings = 0
-            for i, (path, l_path) in enumerate(zip(ee.paths_yx, l_paths)):
-                if path != l_path and path not in l_paths:
-                    num_warnings += 1
-                    print(f"\nDiscrepancy at iter: {i}")
-                    print(f"\tLegacy: {l_path}")
-                    print(f"\tNew   : {path}")
-            if num_warnings > 0:
-                print(
-                    f"+++ {num_warnings} WARNING{'S' if num_warnings > 1 else ''}! +++"
-                )
-
         legacy_paths_cleaned = [p for p in self.legacy_paths_yx if len(p) > 2]
         diff_img_cleaned = plot_edges([legacy_paths_cleaned, ee.paths_yx], plot=False)
-        print_warning(legacy_paths_cleaned)
 
         if ee.bad_nodes:
             print("Nodes to discard:")

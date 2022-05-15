@@ -1,4 +1,8 @@
-from typing import List, Tuple
+from __future__ import annotations
+
+from typing import List, Tuple, Union
+
+import numpy as np
 
 from tools.Point import Point
 
@@ -12,13 +16,25 @@ def flip_edge_coordinates(list_of_edges):
 
 
 class Edge:
-    def __init__(self, current_point: Point = None):
-        self._points = []
-
-        self._current_point = current_point
+    def __init__(self, current_point: Point = None, list_points: List[Point] = None):
+        if list_points is None:
+            self._points = []
+            self._current_point = current_point
+        else:
+            self._points = list_points
+            self._current_point = list_points[-1]
 
         self._reached: bool = False
         self.neighbour_is_node: bool = False
+
+    @classmethod
+    def from_list(cls, list_points: List[Point]) -> Edge:
+        edge = cls()
+        edge._points = [Point(p) for p in list_points]
+        return edge
+
+    def to_list(self) -> List[List[int]]:
+        return [list(p.arr) for p in self._points]
 
     def __repr__(self):
         if len(self) == 0:
@@ -40,8 +56,15 @@ class Edge:
     def __len__(self):
         return len(self._points)
 
-    def add(self, point: Point):
-        self._points.append(point)
+    def add(self, point: Union[Point, List[Point], List[int]]):
+        if isinstance(point, list):
+            if isinstance(point[0], Point):
+                for p in point:
+                    self._points.append(p)
+            else:
+                self._points.append(Point(point))
+        else:
+            self._points.append(point)
 
     def sort(self):
         edge_start, edge_end = self._points[0], self._points[-1]

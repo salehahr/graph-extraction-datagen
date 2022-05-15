@@ -359,7 +359,7 @@ def edge_extraction(skeleton, endpoints, bcnodes):
                         addpoints.reverse()
                     elif (
                         addpoints[0][1] == addpoints[l - 1][1]
-                        and addpoints[0][0] <= addpoints[l - 1][0]
+                        and addpoints[0][0] < addpoints[l - 1][0]
                     ):
                         addpoints.reverse()
                     se.append(addpoints[0])

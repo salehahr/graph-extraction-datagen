@@ -8,10 +8,11 @@ import cv2
 import numpy as np
 
 from tools import EdgeExtractor, NodeExtractor, PolyGraphDirected
-from tools.Edge import flip_edge_coordinates
+from tools.Edge import Edge, flip_edge_coordinates
 from tools.images import generate_node_pos_img, normalise
 from tools.plots import plot_landmarks_img, plot_overlay, plot_poly_graph
 from tools.Point import (
+    Point,
     all_neighbours,
     distance,
     four_connectivity,
@@ -29,202 +30,131 @@ if TYPE_CHECKING:
 def edge_extraction(skeleton: np.ndarray, nodes) -> Dict[str, List[List]]:
     img_binary = normalise(skeleton)
 
-    endpoints_yx = nodes.end_nodes_yx + nodes.border_nodes_yx
-    bcnodes = nodes.crossing_nodes_yx
+    def _blacken(point_) -> None:
+        img_binary[point_.row, point_.col] = 0
 
-    ese_yx = []
-    edge_course_yx = []
+    end_nodes = nodes.end_nodes_yx + nodes.border_nodes_yx
+    crossing_nodes = nodes.crossing_nodes_yx
 
-    addpoints_yx = []
-    se = []
-    n = []
+    edge_start_end_yx = []
+    edge_yx = []
 
-    i = 0
+    end_nodes.reverse()
+    while len(end_nodes) > 0:
+        current_edge = Edge()
 
-    while len(endpoints_yx) > 0:
-        addpoints_yx = []
-        se = []
+        point = Point(end_nodes.pop())
+        _blacken(point)
+        point.find_neighbours(img_binary)
+        neighbours = point.sorted_neighbours
 
-        point = endpoints_yx[i]
-        img_binary[point[0], point[1]] = 0
-
-        addpoints_yx.append(point)
-        endpoints_yx.remove(point)
+        current_edge.add(point)
 
         reached = False
-
-        # white pixels in 4-neighbourhood
-        n = get_sorted_neighbours(point, img_binary)
-
         while reached is False:
             bo = []
-            # Nachbarn abhängig von Distanz sortieren
-            if len(n) > 1:
-                for k in range(len(n)):
-                    if n[k] in bcnodes:
-                        bo.append(True)
-                        reached = True
-                        point = n[k]
-                        addpoints_yx.append(point)
-                    elif n[k] in endpoints_yx:
-                        # print('point ', n[k], ' in endpoints_temp')
-                        bo.append(True)
-                        reached = True
-                        point = n[k]
-                        addpoints_yx.append(point)
-                        endpoints_yx.remove(point)
-                        img_binary[point[0], point[1]] = 0
 
-                    if not any(bo):
-                        reached = False
-                        point = n[k]
-                        addpoints_yx.append(point)
-                        # print('new point = ', point)
-                        img_binary[point[0], point[1]] = 0
-
-                n = get_sorted_neighbours(point, img_binary)
-
-            elif len(n) == 1:
-                # print('len == 1')
-                if n[0] in bcnodes:
-                    # print('point ', n[0], ' in bcnodes')
+            for neighbour in neighbours:
+                if neighbour.list_rc in crossing_nodes:
                     bo.append(True)
                     reached = True
-                    point = n[0]
-                    addpoints_yx.append(point)
-                elif n[0] in endpoints_yx:
-                    # print('point ', n[0], ' in endpoints_temp')
+                    point = neighbour
+                    current_edge.add(point)
+                elif neighbour.list_rc in end_nodes:
                     bo.append(True)
                     reached = True
-                    point = n[0]
-                    addpoints_yx.append(point)
-                    endpoints_yx.remove(point)
-                    img_binary[point[0], point[1]] = 0
+                    point = neighbour
+                    current_edge.add(point)
+                    end_nodes.remove(point.list_rc)
+                    _blacken(point)
 
-                if not any(bo):
-                    reached = False
-                    point = n[0]
-                    addpoints_yx.append(point)
-                    img_binary[point[0], point[1]] = 0
-                    n = get_sorted_neighbours(point, img_binary)
-
-        l = len(addpoints_yx)
-        if addpoints_yx[0][1] > addpoints_yx[l - 1][1]:
-            addpoints_yx.reverse()
-        elif (
-            addpoints_yx[0][1] == addpoints_yx[l - 1][1]
-            and addpoints_yx[0][0] < addpoints_yx[l - 1][0]
-        ):
-            addpoints_yx.reverse()
-
-        se.append(addpoints_yx[0])
-        se.append(addpoints_yx[l - 1])
-        ese_yx.append(se)
-        edge_course_yx.append(addpoints_yx)
-
-    bcnodes_temp = bcnodes.copy()
-
-    ese_xy = []
-    edge_course_xy = []
-
-    while len(bcnodes_temp) > 0:
-        i = 0
-        point1 = bcnodes_temp[i]
-
-        n1 = positive_neighbours(point1[0], point1[1], img_binary)
-        n1_original = n1.copy()
-        n1_4conn = four_connectivity(point1)
-        img_binary[point1[0], point1[1]] = 0
-        bcnodes_temp.remove(point1)
-        if len(n1) > 0:
-            # evtl. andere nodes aus der Nachbarschaft entfernen
-            found = []
-            for j in range(len(n1)):
-                if n1[j] in bcnodes_temp:
-                    found.append(True)
+                if any(bo):
+                    continue
+                # move straight on
                 else:
-                    found.append(False)
-            indices = [i for i, f in enumerate(found) if f]
-            delete = []
-            for j in range(len(indices)):
-                delete.append(n1[indices[j]])
-            for j in range(len(indices)):
-                n1.remove(delete[j])
-        if len(n1) > 0:
-            for j in range(len(n1)):
-                point = n1[j]
-
-                # don't add the same neighbour again
-                if point not in addpoints_yx and img_binary[point[0], point[1]] == 1:
-                    addpoints_yx = []
-                    se = []
-                    addpoints_yx.append(point1)  # node
-                    addpoints_yx.append(point)  # first neighbour
-                    n = positive_neighbours(
-                        point[0], point[1], img_binary
-                    )  # neighbours of first neighbours
-                    img_binary[point[0], point[1]] = 0
                     reached = False
-                    dont_add = False
-                else:
-                    reached = True
-                    dont_add = True
-                while reached is False:
-                    bo = []
-                    for k in range(len(n)):
-                        # nicht in 4conn des ursprünglichen nodes -> damit es nicht wieder zurück geht
-                        if n[k] in bcnodes and n[k] not in n1_4conn:
-                            bo.append(True)
-                            reached = True
-                            point = n[k]
-                            addpoints_yx.append(point)
-                            # print(point, 'in bcnodes')
-                    # print(bo)
-                    if not any(bo):
-                        reached = False
-                        if len(n) == 0 and point1 in all_neighbours(point):
-                            addpoints_yx.append(point1)
-                            # print('node is start and end')
-                            reached = True
-                        if len(n) == 1:
-                            point = n[0]
-                            addpoints_yx.append(point)
-                            # print('len(n) == 1 ', point, 'added')
-                            n = positive_neighbours(point[0], point[1], img_binary)
-                            img_binary[point[0], point[1]] = 0
-                        elif len(n) > 1:
-                            dist = []
+                    point = neighbour
+                    current_edge.add(point)
+                    _blacken(point)
 
-                            for n_p in n:
-                                if n_p not in n1_original:
-                                    dist.append([distance(point, n_p), n_p])
-                                    addpoints_yx.append(n_p)
-                            dist_sorted = sorted(dist, key=lambda x: x[0])
-                            for _, n_p in dist_sorted:
-                                img_binary[n_p[0], n_p[1]] = 0
-                                point = n_p
-                                n = positive_neighbours(point[0], point[1], img_binary)
-                        else:
-                            reached = True
+            point.find_neighbours(img_binary)
+            neighbours = point.sorted_neighbours
 
-                if not dont_add:
-                    l = len(addpoints_yx)
-                    if addpoints_yx[0][1] > addpoints_yx[l - 1][1]:
-                        addpoints_yx.reverse()
-                    elif (
-                        addpoints_yx[0][1] == addpoints_yx[l - 1][1]
-                        and addpoints_yx[0][0] <= addpoints_yx[l - 1][0]
+        current_edge.sort()
+        edge_start_end_yx.append(current_edge.start_end_yx)
+        edge_yx.append(current_edge.points_yx)
+
+    crossing_nodes.reverse()
+    while len(crossing_nodes) > 0:
+        c_point = Point(crossing_nodes.pop())
+        _blacken(c_point)
+
+        c_point.find_neighbours(img_binary)
+        c_neighbours = [
+            p for p in c_point.neighbours if p.list_rc not in crossing_nodes
+        ]
+
+        current_edge = Edge()
+
+        for point in c_neighbours:
+            if point in current_edge.points:
+                continue
+
+            current_edge = Edge()
+            current_edge.add(c_point)  # node
+            current_edge.add(point)  # first neighbour
+
+            _blacken(point)
+            point.find_neighbours(img_binary)
+
+            while True:
+                next_c_neighbour = False
+                p_neighbours = point.neighbours
+                sorted_neighbours = point.sorted_neighbours
+
+                # no neighbours -- c_point is start and end
+                if len(p_neighbours) == 0 and c_point in point.all_neighbours:
+                    current_edge.add(c_point)
+                    break
+
+                # check for crossing neighbours not in 4conn
+                # nicht in 4conn des ursprünglichen nodes -> damit es nicht wieder zurück geht
+                for neighbour in p_neighbours:
+                    neighbour.find_neighbours(img_binary)
+                    if (
+                        neighbour.list_rc in crossing_nodes
+                        and neighbour not in c_point.four_connectivity
                     ):
-                        addpoints_yx.reverse()
-                    se.append(addpoints_yx[0])
-                    se.append(addpoints_yx[l - 1])
-                    ese_yx.append(se)
-                    edge_course_yx.append(addpoints_yx)
+                        current_edge.add(neighbour)
+                        next_c_neighbour = True
+                if next_c_neighbour:
+                    break
 
-        ese_xy = flip_edge_coordinates(ese_yx)
-        edge_course_xy = flip_edge_coordinates(edge_course_yx)
+                # otherwise, set new point
+                if len(p_neighbours) == 1:
+                    point = p_neighbours[0]
+                    _blacken(point)
+                    point.find_neighbours(img_binary)
+                    current_edge.add(point)
+                elif len(p_neighbours) > 1:
+                    [
+                        current_edge.add(p)
+                        for p in p_neighbours
+                        if p not in c_point.neighbours
+                    ]
+                    for neighbour in sorted_neighbours:
+                        if neighbour not in c_point.neighbours:
+                            _blacken(neighbour)
+                            point = neighbour
 
-    return {"ese": ese_xy, "path": edge_course_xy}
+            current_edge.sort()
+            edge_start_end_yx.append(current_edge.start_end_yx)
+            edge_yx.append(current_edge.points_yx)
+
+    edge_start_end_xy = flip_edge_coordinates(edge_start_end_yx)
+    edge_xy = flip_edge_coordinates(edge_yx)
+
+    return {"ese": edge_start_end_xy, "path": edge_xy}
 
 
 def helper_polyfit(nodes, edges: EdgeExtractor) -> Tuple[Dict[str, List], NodePosList]:
