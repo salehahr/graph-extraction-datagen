@@ -15,6 +15,7 @@ blur_kernel = (5, 5)
 
 
 def normalise(img: np.ndarray) -> np.ndarray:
+    """Converts image to a binary integer array."""
     img = img.copy()
     img[img == 255] = 1
     return np.uint8(img)
