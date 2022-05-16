@@ -69,7 +69,6 @@ class Config:
             self._start = start
             self._end = end
 
-
         # trim properties
         if not use_images:
             ttag_match = re.search(ttag_pattern, self.filepath)
@@ -112,7 +111,9 @@ class Config:
                     section_filepaths = [
                         os.path.join(
                             self.base_folder,
-                            f"{self.name}_" + generate_time_tag_from_interval(i) + self.ext,
+                            f"{self.name}_"
+                            + generate_time_tag_from_interval(i)
+                            + self.ext,
                         )
                         for i in trim_times
                     ]
@@ -225,7 +226,9 @@ class Config:
                 for file in files:
                     dir_list.append(os.path.join(root, file))
         else:
-            dir_list = glob.glob(os.path.join(self.base_folder, "**/raw/*.png"), recursive=True)
+            dir_list = glob.glob(
+                os.path.join(self.base_folder, "**/raw/*.png"), recursive=True
+            )
         return dir_list
 
     @property
@@ -237,7 +240,9 @@ class Config:
                 for file in files:
                     dir_list.append(os.path.join(root, file))
         else:
-            dir_list = glob.glob(os.path.join(self.base_folder, "**/cropped/*.png"), recursive=True)
+            dir_list = glob.glob(
+                os.path.join(self.base_folder, "**/cropped/*.png"), recursive=True
+            )
         return dir_list
 
     @property
@@ -249,7 +254,9 @@ class Config:
                 for file in files:
                     dir_list.append(os.path.join(root, file))
         else:
-            dir_list = glob.glob(os.path.join(self.base_folder, "**/filtered/*.png"), recursive=True)
+            dir_list = glob.glob(
+                os.path.join(self.base_folder, "**/filtered/*.png"), recursive=True
+            )
         return dir_list
 
     @property
@@ -261,7 +268,9 @@ class Config:
                 for file in files:
                     dir_list.append(os.path.join(root, file))
         else:
-            dir_list = glob.glob(os.path.join(self.base_folder, "**/masked/*.png"), recursive=True)
+            dir_list = glob.glob(
+                os.path.join(self.base_folder, "**/masked/*.png"), recursive=True
+            )
         return dir_list
 
     @property
@@ -273,7 +282,9 @@ class Config:
                 for file in files:
                     dir_list.append(os.path.join(root, file))
         else:
-            dir_list = glob.glob(os.path.join(self.base_folder, "**/threshed/*.png"), recursive=True)
+            dir_list = glob.glob(
+                os.path.join(self.base_folder, "**/threshed/*.png"), recursive=True
+            )
         return dir_list
 
     @property
@@ -285,7 +296,9 @@ class Config:
                 for file in files:
                     dir_list.append(os.path.join(root, file))
         else:
-            dir_list = glob.glob(os.path.join(self.base_folder, "**/skeleton/*.png"), recursive=True)
+            dir_list = glob.glob(
+                os.path.join(self.base_folder, "**/skeleton/*.png"), recursive=True
+            )
         return dir_list
 
     @property
@@ -297,7 +310,10 @@ class Config:
                 for file in files:
                     dir_list.append(os.path.join(root, file))
         else:
-            dir_list = glob.glob(os.path.join(self.base_folder, "**/node_positions/*.npy"), recursive=True)
+            dir_list = glob.glob(
+                os.path.join(self.base_folder, "**/node_positions/*.npy"),
+                recursive=True,
+            )
         return dir_list
 
     @property
@@ -309,7 +325,10 @@ class Config:
                 for file in files:
                     dir_list.append(os.path.join(root, file))
         else:
-            dir_list = glob.glob(os.path.join(self.base_folder, "**/node_positions/*.png"), recursive=True)
+            dir_list = glob.glob(
+                os.path.join(self.base_folder, "**/node_positions/*.png"),
+                recursive=True,
+            )
         return dir_list
 
     @property
@@ -317,4 +336,3 @@ class Config:
         return glob.glob(
             os.path.join(self.base_folder, "**/adj_matr/*.npy"), recursive=True
         )
-
