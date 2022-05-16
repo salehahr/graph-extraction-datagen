@@ -3,16 +3,12 @@ Generation of training data for the graph extraction of endoscopic images.
 
 ## Workflow
 ### Video Workflow
-1. In `video_data.py`:
-   1. update both lines of `VIDEO_FULL_FILEPATH_EXT` with the full filepath of the video.
-      1. First line: path on network drive (for MATLAB to find)
-      1. Second line: remote path (for running using a remote interpreter)
-   2. update  `frequency`, `trim_times_in_s` with the desired values.
+1. Append new video data to end of [`video_data.py`](video_data.py)
 2. Run `before_filter.py`
 3. In MATLAB, run `filtering/Bladder_vessels.m` (filepath can be input manually)
 4. Run `after_filter.py`  
 
-###Image Folder Workflow
+### Image Folder Workflow
 1. In `video_data.py`:
    1. Update/Set variable `video_filepath` = "C:/My/FullPath/ImageFolder" to folder containing the .png images
    2. Set variable `use_images` = True
@@ -34,11 +30,10 @@ Functions | Description
 Folder | Description
 ---| ---
 `raw` | Raw video stills
-`cropped` | Cropped images
+`cropped` | Cropped images, 256x256px
 `filtered` | Filtered images
-`masked` | Filtered images without vignettes
+`masked` | Filtered images masked with a circular mask
 `threshed` | Thresholded images
 `skeleton` | Skeletonised images
-`landmarks` | Extracted landmarks on the skeleton
-`poly_graph` | Polynomial graph
+`graphs` | Graphs saved as .json files
 `overlay` | Graph overlaid on cropped image
