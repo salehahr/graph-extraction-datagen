@@ -17,21 +17,13 @@ border_size = 2
 border_radius = int(mask_radius - border_size)
 
 # Plot/Save options
-thr_plot = False
-pr_plot = False
-lm_plot = False
-poly_plot = False
+threshed_plot = False
+skeleton_plot = False
 overlay_plot = False
 
-thr_save = True
-pr_save = True
-lm_save = True
-poly_save = True
+threshed_save = True
+skeleton_save = True
 overlay_save = True
-
-node_pos_save = False
-node_pos_img_save = False
-adj_matr_save = False
 graph_save = True
 
 
@@ -85,21 +77,13 @@ class Config:
             self.base_folder = self.filepath
 
         # plot/save options
-        self.thr_plot = thr_plot
-        self.pr_plot = pr_plot
-        self.lm_plot = lm_plot
-        self.poly_plot = poly_plot
+        self.threshed_plot = threshed_plot
+        self.skeleton_plot = skeleton_plot
         self.overlay_plot = overlay_plot
 
-        self.thr_save = thr_save
-        self.pr_save = pr_save
-        self.lm_save = lm_save
-        self.poly_save = poly_save
+        self.threshed_save = threshed_save
+        self.skeleton_save = skeleton_save
         self.overlay_save = overlay_save
-
-        self.node_pos_save = node_pos_save
-        self.node_pos_img_save = node_pos_img_save
-        self.adj_matr_save = adj_matr_save
         self.graph_save = graph_save
 
         # trim video if trim_times given, else
@@ -165,15 +149,9 @@ class Config:
         assert self._start is not None
 
     def save_all(self):
-        self.thr_save = True
-        self.pr_save = True
-        self.lm_save = True
-        self.poly_save = True
+        self.threshed_save = True
+        self.skeleton_save = True
         self.overlay_save = True
-
-        self.node_pos_save = True
-        self.node_pos_img_save = True
-        self.adj_matr_save = True
         self.graph_save = True
 
     def _get_video_name_ttag(self):

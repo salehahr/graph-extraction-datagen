@@ -199,7 +199,7 @@ def threshold_imgs(conf, bin_threshold: int = 0):
         else:
             new_fp = fp.replace("masked", "threshed")
         img = cv2.imread(fp, 0)
-        threshold(img, conf.thr_save, new_fp, bin_threshold)
+        threshold(img, conf.threshed_save, new_fp, bin_threshold)
 
 
 def threshold(
@@ -236,7 +236,9 @@ def skeletonise_imgs(conf):
 
         img_threshed = cv2.imread(fp, cv2.IMREAD_GRAYSCALE)
 
-        skeletonise_and_clean(img_threshed, conf.pr_plot, conf.pr_save, skel_fp)
+        skeletonise_and_clean(
+            img_threshed, conf.skeleton_plot, conf.skeleton_save, skel_fp
+        )
 
 
 def skeletonise_and_clean(

@@ -9,7 +9,7 @@ import numpy as np
 
 from tools import EdgeExtractor, NodeExtractor, PolyGraphDirected
 from tools.Edge import flip_edge_coordinates
-from tools.images import generate_node_pos_img, normalise
+from tools.images import normalise
 from tools.plots import plot_landmarks_img, plot_overlay, plot_poly_graph
 from tools.Point import (
     all_neighbours,
@@ -689,87 +689,39 @@ def extract_graphs(conf, skip_existing: bool) -> None:
             os.mkdir(graphpath)
 
     for fp in conf.skeletonised_image_files:
-        cropped_fp = fp.replace("skeleton", "cropped")
-        landmarks_fp = fp.replace("skeleton", "landmarks")
-        poly_fp = fp.replace("skeleton", "poly_graph")
-        overlay_fp = fp.replace("skeleton", "overlay")
-
-        node_pos_img_fp = fp.replace("skeleton", "node_positions")
-        node_pos_vec_fp = (
-            os.path.splitext(fp.replace("skeleton", "node_positions"))[0] + ".npy"
-        )
-        adj_matr_fp = os.path.splitext(fp.replace("skeleton", "adj_matr"))[0] + ".npy"
-
-        img_cropped = cv2.imread(cropped_fp, cv2.IMREAD_COLOR)
-        img_skel = cv2.imread(fp, cv2.IMREAD_GRAYSCALE)
-
-        # exit if no raw image found
-        if img_skel is None:
-            print(f"No skeletonised image found.")
-            raise Exception
-
         # skip already processed frames
+        overlay_fp = fp.replace("skeleton", "overlay")
         if os.path.isfile(overlay_fp) and skip_existing:
             continue
 
-        # graph
+        # exit if no skeletonised image found
+        img_skel = cv2.imread(fp, cv2.IMREAD_GRAYSCALE)
+        if img_skel is None:
+            print(f"No skeletonised image found.\n{fp}")
+            raise Exception
+
+        # graph generation
         graph, nodes, pf_coords, helper_nodes = extract_graph(
             img_skel, fp, conf.graph_save
         )
 
-        # landmarks
-        plot_landmarks_img(
-            nodes,
-            helper_nodes["sg"],
-            img_skel,
-            conf.lm_plot,
-            conf.lm_save,
-            landmarks_fp,
-        )
-
-        # numpy files
-        if conf.node_pos_save:
-            graph.save_positions(node_pos_vec_fp)
-
-        if conf.node_pos_img_save:
-            node_pos_img = generate_node_pos_img(graph, conf.img_length)
-            cv2.imwrite(node_pos_img_fp, node_pos_img)
-
-        if conf.adj_matr_save:
-            graph.save_extended_adj_matrix(adj_matr_fp)
-
-        # polynomial graph and overlay
-        visualise_poly = conf.poly_plot or conf.poly_save
-        visualise_overlay = conf.overlay_plot or conf.overlay_save
-
-        if visualise_poly or visualise_overlay:
+        # overlay image generation
+        if conf.overlay_plot or conf.overlay_save:
             edge_width = 2
+            node_size = 7
 
-            if visualise_poly:
-                node_size = 10
-                plot_poly_graph(
-                    conf.img_length,
-                    helper_nodes["pf"],
-                    pf_coords,
-                    conf.poly_plot,
-                    conf.poly_save,
-                    node_size,
-                    edge_width,
-                    poly_fp,
-                )
-
-            if visualise_overlay:
-                node_size = 7
-                plot_overlay(
-                    img_cropped,
-                    helper_nodes["pf"],
-                    pf_coords,
-                    conf.overlay_plot,
-                    conf.overlay_save,
-                    node_size,
-                    edge_width,
-                    overlay_fp,
-                )
+            cropped_fp = fp.replace("skeleton", "cropped")
+            img_cropped = cv2.imread(cropped_fp, cv2.IMREAD_COLOR)
+            plot_overlay(
+                img_cropped,
+                helper_nodes["pf"],
+                pf_coords,
+                conf.overlay_plot,
+                conf.overlay_save,
+                node_size,
+                edge_width,
+                overlay_fp,
+            )
 
 
 def extract_graph(

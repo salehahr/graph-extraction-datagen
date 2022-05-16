@@ -83,9 +83,6 @@ class PolyGraph(nx.Graph):
         """
         np.save(filepath, np.array(self.positions))
 
-    def save_extended_adj_matrix(self, filepath: str):
-        np.save(filepath, self.extended_adj_matrix)
-
     @property
     def positions(self) -> List[List[int]]:
         """(x,y) node positions."""
