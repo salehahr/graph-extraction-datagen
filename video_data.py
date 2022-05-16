@@ -115,10 +115,20 @@ trim_times = [
     [4 * 60 + 16.5, 4 * 60 + 20],
 ]
 is_synthetic = False
-
 frequency = 25  # Hz
 
 # note/status: testing workflow for image folder
 video_filepath = "C:/johann/07_HiWi/Git/SB_20220124_006"
 use_images = True
 fft_filter = True
+
+# note/status: done
+video_filepath = "/graphics/scratch/schuelej/sar/data/optitrack-220414.mp4"
+trim_times = [
+    [0, 26],
+    [38, 42],
+    [46, 48],
+]
+fft_filter = False
+is_synthetic = True
+frequency = 10  # Hz

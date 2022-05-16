@@ -59,6 +59,8 @@ params_GRK022 = [4, 6, 1, 2, 0.5, 10, 1, 0];
 params_GRK011 = [2, 6, 1, 0, 6, 1, 2, 0];
 params_GRK008 = [2, 6, 1, 0, 6, 1, 2, 0];
 
+params_ot_vlc = [2.3, 3, 1, 0.5, 7, 2, 1.5, 0]; % optitrack 2022-04-14
+
 params = params_GRK014;
 
 %% Symmetric filter params
