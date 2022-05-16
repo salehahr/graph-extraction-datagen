@@ -107,9 +107,10 @@ for currFrameIdx= 1:NOImages
     output.segmented = (output.respimage > 52);
     
     if plotImage
-        figure; imagesc(output.respimage); colormap(gray); axis off; axis image; title('B-COSFIRE response image');
-        figure; imagesc(output.segmented); colormap(gray); axis off; axis image; title('B-COSFIRE segmented image');
-        figure; imshow(image); title('Original Image')
+        figure;
+        subplot(1,2,1);
+        imagesc(output.respimage); colormap(gray); axis off; axis image; title('Filtered');
+        subplot(1,2,2); imshow(image); title('Original')
     end
     
     %% Save image
