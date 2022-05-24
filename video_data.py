@@ -1,5 +1,10 @@
+from tools.files import DataSource, get_video_filepath
+
+# modify this as necessary
+data_source = DataSource.TUEBINGEN
+
 # note/status: done
-video_filepath = "/graphics/scratch/schuelej/sar/data/GRK008.MP4"
+video_filepath = get_video_filepath(data_source, "GRK008.MP4")
 trim_times = [
     [0, 9.6],
     [15, 16.2],
@@ -12,17 +17,17 @@ trim_times = [
 is_synthetic = False
 
 # note/status: done
-video_filepath = "/graphics/scratch/schuelej/sar/data/GRK011.MP4"
+video_filepath = get_video_filepath(data_source, "GRK011.MP4")
 trim_times = [[0, 39], [68, 77], [2 * 60 + 17, 2 * 60 + 21]]  # [60 + 57, 60 + 59],
 is_synthetic = False
 
 # note/status: done; these settings are for all synthetic recordings
-video_filepath = "/graphics/scratch/schuelej/sar/data/synthetic-bladder6.mp4"
+video_filepath = get_video_filepath(data_source, "synthetic-bladder6.mp4")
 trim_times = None
 is_synthetic = True
 
 # note/status: done
-video_filepath = "/graphics/scratch/schuelej/sar/data/GRK022.MP4"
+video_filepath = get_video_filepath(data_source, "GRK022.MP4")
 trim_times = [
     # [4, 10],
     [11, 12],
@@ -39,7 +44,7 @@ trim_times = [
 is_synthetic = False
 
 # note/status: video very jumpy, done but not much data
-video_filepath = "/graphics/scratch/schuelej/sar/data/GRK020.mpg"
+video_filepath = get_video_filepath(data_source, "GRK020.mpg")
 trim_times = [
     # [0, 1],
     # [3, 5],
@@ -53,12 +58,12 @@ trim_times = [
 is_synthetic = False
 
 # note/status: done, but not much data
-video_filepath = "/graphics/scratch/schuelej/sar/data/GRK016.mpg"
+video_filepath = get_video_filepath(data_source, "GRK016.mpg")
 trim_times = [[19, 25]]  # [0, 10],
 is_synthetic = False
 
 # # note/status: discard, too dense
-# video_filepath = "/graphics/scratch/schuelej/sar/data/GRK012-vlc.mp4"
+# video_filepath = get_video_filepath(data_source, "GRK012-vlc.mp4")
 # trim_times = [
 #     [5.16, 18],
 #     [35, 36],
@@ -67,7 +72,7 @@ is_synthetic = False
 # is_synthetic = False
 
 # note/status: done
-video_filepath = "/graphics/scratch/schuelej/sar/data/GRK021.mpg"
+video_filepath = get_video_filepath(data_source, "GRK021.mpg")
 trim_times = [
     [12, 19],
     [21, 24],
@@ -81,7 +86,7 @@ trim_times = [
 is_synthetic = False
 
 # note/status: done
-video_filepath = "/graphics/scratch/schuelej/sar/data/GRK015.mpg"
+video_filepath = get_video_filepath(data_source, "GRK015.mpg")
 trim_times = [
     [1, 4],
     [10, 12],
@@ -91,7 +96,7 @@ trim_times = [
 is_synthetic = False
 
 # note/status: done
-video_filepath = "/graphics/scratch/schuelej/sar/data/GRK014.mpg"
+video_filepath = get_video_filepath(data_source, "GRK014.mpg")
 trim_times = [
     [2 * 60 + 8, 2 * 60 + 9.44005],
     [2 * 60 + 11, 2 * 60 + 16],
@@ -105,7 +110,7 @@ trim_times = [
 is_synthetic = False
 
 # note/status: done
-video_filepath = "/graphics/scratch/schuelej/sar/data/GRK007.mpg"
+video_filepath = get_video_filepath(data_source, "GRK007.mpg")
 trim_times = [
     [0, 2],
     [60 + 3, 60 + 10],
@@ -123,7 +128,7 @@ use_images = True
 fft_filter = True
 
 # note/status: done
-video_filepath = "/graphics/scratch/schuelej/sar/data/optitrack-220414.mp4"
+video_filepath = get_video_filepath(data_source, "optitrack-220414.mp4")
 trim_times = [
     [0, 26],
     [38, 42],
