@@ -1,0 +1,16 @@
+# This CITATION.cff file was generated with cffinit.
+# Visit https://bit.ly/cffinit to generate yours today!
+
+cff-version: 1.2.0
+title: ' graph-extraction-datagen'
+message: >-
+  If you use this software, please cite it using the
+  metadata from this file.
+type: software
+authors:
+  - given-names: '{AR}'
+    family-names: Salehah
+    affiliation: University of Stuttgart
+  - given-names: Regine
+    family-names: Rausch
+    affiliation: University of Stuttgart
